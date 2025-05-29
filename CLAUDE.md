@@ -20,7 +20,8 @@ This is an **Illustrious AI Studio** - a local AI application that combines Stab
 
 - **`init_sdxl()`** - Handles SDXL model loading with GPU optimization and error handling
 - **`init_ollama()`** - Establishes connection to local Ollama server and validates models
-- **`generate_image()`** - Main image generation pipeline with customizable parameters
+- **`generate_image()`** - Main image generation pipeline with automatic CUDA memory management
+- **`clear_cuda_memory()`** - Automatic CUDA cache clearing and garbage collection
 - **`chat_completion()`** - LLM interface for Ollama API communication
 - **`handle_chat()`** - Session management and command parsing (including `#generate` detection)
 - **`create_gradio_app()`** - Complex multi-tab web interface setup
@@ -116,10 +117,13 @@ Expected response format:
 - Model status tracking via global `model_status` dict with states for sdxl, ollama, and multimodal capabilities
 
 ### Image Generation Workflow
-1. Prompt enhancement via LLM (optional)
-2. SDXL pipeline execution with configurable parameters
-3. Automatic gallery saving with metadata JSON files
-4. Cross-reference between chat and image generation tabs
+1. **Pre-generation memory clearing** - Automatic CUDA cache clearing before generation
+2. **Prompt enhancement** via LLM (optional)
+3. **SDXL pipeline execution** with configurable parameters and automatic retry logic
+4. **CUDA memory management** - Automatic out-of-memory error handling with retry (up to 2 attempts)
+5. **Post-generation cleanup** - Memory clearing after successful generation
+6. **Automatic gallery saving** with metadata JSON files
+7. **Cross-reference** between chat and image generation tabs
 
 ### Chat System Architecture
 - Session-based chat history storage in `chat_history_store` global dict
@@ -152,9 +156,12 @@ Key packages: torch, diffusers, transformers, gradio, fastapi, uvicorn, PIL, req
 All model paths are centralized in `MODEL_PATHS` dict at app.py:33. Update these paths before running.
 
 ### Performance Optimization
-- CPU offloading enabled for memory efficiency (app.py:88)
-- Generator seed management for reproducible results
-- Timeout handling for Ollama requests (30-60 seconds)
+- **Automatic CUDA Memory Management**: PyTorch memory fragmentation prevention via `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
+- **Dynamic Memory Clearing**: Automatic CUDA cache clearing before/after generation and on OOM errors
+- **Smart Retry Logic**: Automatic retry with memory clearing on CUDA out-of-memory errors (up to 2 attempts)
+- **Generator seed management** for reproducible results
+- **Timeout handling** for Ollama requests (30-60 seconds)
+- **Garbage collection** integration with CUDA memory management
 
 ### Gallery and File Management
 - Temp directory creation with automatic cleanup
@@ -165,16 +172,30 @@ All model paths are centralized in `MODEL_PATHS` dict at app.py:33. Update these
 
 ### Common Issues
 
-#### Image Generation API Returns 500 Error
-**Symptoms:** Image generation via API returns "broken pipe" error while Gradio interface works fine.
+#### CUDA Out of Memory Errors
+**Symptoms:** "CUDA out of memory" errors during image generation.
+
+**Automatic Fixes (No User Action Required):**
+- System automatically clears CUDA memory cache and retries generation (up to 2 attempts)
+- PyTorch memory fragmentation prevention enabled by default
+- Garbage collection runs automatically with memory clearing
+
+**Manual Solutions (if automatic fixes fail):**
+1. **Reduce image parameters:** Lower steps (20-30), guidance scale (5-8), or image size
+2. **Close other GPU applications** to free VRAM
+3. **Restart application** if memory leaks persist
+4. **Check available VRAM:** Ensure 6GB+ free for SDXL generation
+
+#### Image Generation API Returns 500/507 Error
+**Symptoms:** Image generation via API returns HTTP 500 (general error) or 507 (insufficient storage) errors.
 
 **Cause:** SDXL pipeline memory allocation issue or model loading problem.
 
 **Solutions:**
-1. **Restart the application** to reload SDXL model properly
-2. **Check CUDA memory:** Ensure sufficient GPU memory (12GB+ recommended)
+1. **Check logs for automatic retry attempts** - system will try up to 2 times with memory clearing
+2. **HTTP 507 specifically indicates memory issues** - automatic fixes should handle this
 3. **Verify model path:** Confirm SDXL model file exists at configured path
-4. **Check logs:** Look for detailed error messages in console output
+4. **Monitor CUDA memory:** Use `nvidia-smi` to check GPU memory usage
 
 #### Chat Not Working
 **Symptoms:** Chat endpoint returns errors or empty responses.
@@ -195,5 +216,8 @@ All model paths are centralized in `MODEL_PATHS` dict at app.py:33. Update these
 
 ### Performance Optimization
 - **CUDA:** Ensure CUDA-compatible PyTorch installation for GPU acceleration
-- **Memory:** Close other GPU-intensive applications
-- **Model size:** Consider using quantized models for lower memory usage
+- **Memory Management:** Built-in automatic CUDA memory management handles most OOM issues
+- **Memory Monitoring:** Use `nvidia-smi` to monitor GPU memory usage
+- **Application Isolation:** Close other GPU-intensive applications for optimal performance
+- **Model Optimization:** Consider using quantized models for lower memory usage
+- **Parameter Tuning:** Reduce steps (20-30) and guidance scale (5-8) for faster generation with less memory

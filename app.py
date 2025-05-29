@@ -18,6 +18,7 @@ from pathlib import Path
 import asyncio
 from typing import Dict, List, Any, Optional
 import threading
+import gc
 
 # MCP Server imports
 from fastapi import FastAPI, HTTPException
@@ -28,6 +29,9 @@ import requests
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Set PyTorch memory allocation configuration to reduce fragmentation
+os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 
 # Configuration - Update these paths and model names
 MODEL_PATHS = {
@@ -171,50 +175,92 @@ def save_to_gallery(image: Image.Image, prompt: str, metadata: dict = None) -> s
     
     return str(filepath)
 
-# Generate image from prompt
+# Clear CUDA memory and run garbage collection
+def clear_cuda_memory():
+    """Clear CUDA cache and run garbage collection to free memory."""
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        torch.cuda.synchronize()
+    gc.collect()
+    logger.info("CUDA memory cleared and garbage collection performed")
+
+# Generate image from prompt with automatic memory management
 def generate_image(prompt, negative_prompt="", steps=30, guidance=7.5, seed=-1, save_to_gallery_flag=True):
     global sdxl_pipe, latest_generated_image
     
     if not sdxl_pipe:
         return None, "❌ SDXL model not loaded. Please check your model path."
     
-    try:
-        generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu")
-        if seed != -1:
-            generator.manual_seed(seed)
-        else:
-            seed = generator.initial_seed()
-        
-        logger.info(f"Generating image with prompt: {prompt[:50]}...")
-        
-        image = sdxl_pipe(
-            prompt,
-            negative_prompt=negative_prompt,
-            num_inference_steps=steps,
-            guidance_scale=guidance,
-            generator=generator,
-            width=1024,
-            height=1024
-        ).images[0]
-        
-        # Store the latest generated image
-        latest_generated_image = image
-        
-        # Save to gallery
-        if save_to_gallery_flag:
-            filepath = save_to_gallery(image, prompt, {
-                "negative_prompt": negative_prompt,
-                "steps": steps,
-                "guidance": guidance,
-                "seed": seed
-            })
-            logger.info(f"Image saved to: {filepath}")
-        
-        return image, f"✅ Image generated successfully! Seed: {seed}"
+    # Clear memory before generation
+    clear_cuda_memory()
     
-    except Exception as e:
-        logger.error(f"Image generation failed: {e}")
-        return None, f"❌ Generation failed: {str(e)}"
+    max_retries = 2
+    for attempt in range(max_retries):
+        try:
+            generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu")
+            if seed != -1:
+                generator.manual_seed(seed)
+            else:
+                seed = generator.initial_seed()
+            
+            logger.info(f"Generating image with prompt: {prompt[:50]}... (Attempt {attempt + 1}/{max_retries})")
+            
+            image = sdxl_pipe(
+                prompt,
+                negative_prompt=negative_prompt,
+                num_inference_steps=steps,
+                guidance_scale=guidance,
+                generator=generator,
+                width=1024,
+                height=1024
+            ).images[0]
+            
+            # Store the latest generated image
+            latest_generated_image = image
+            
+            # Save to gallery
+            if save_to_gallery_flag:
+                filepath = save_to_gallery(image, prompt, {
+                    "negative_prompt": negative_prompt,
+                    "steps": steps,
+                    "guidance": guidance,
+                    "seed": seed
+                })
+                logger.info(f"Image saved to: {filepath}")
+            
+            # Clear memory after successful generation
+            clear_cuda_memory()
+            
+            return image, f"✅ Image generated successfully! Seed: {seed}"
+        
+        except RuntimeError as e:
+            if "CUDA out of memory" in str(e) or "out of memory" in str(e).lower():
+                logger.warning(f"CUDA OOM error on attempt {attempt + 1}: {e}")
+                
+                # Aggressive memory clearing
+                clear_cuda_memory()
+                
+                if attempt < max_retries - 1:
+                    logger.info("Retrying image generation after memory clearing...")
+                    continue
+                else:
+                    # Final attempt failed, return helpful error message
+                    memory_info = ""
+                    if torch.cuda.is_available():
+                        try:
+                            memory_info = f" Available: {torch.cuda.get_device_properties(0).total_memory // (1024**3)}GB GPU"
+                        except:
+                            pass
+                    
+                    return None, f"❌ CUDA out of memory after {max_retries} attempts.{memory_info} Try reducing image size, steps, or guidance scale."
+            else:
+                # Non-memory related error, don't retry
+                logger.error(f"Image generation failed: {e}")
+                return None, f"❌ Generation failed: {str(e)}"
+        
+        except Exception as e:
+            logger.error(f"Image generation failed: {e}")
+            return None, f"❌ Generation failed: {str(e)}"
 
 # Generate LLM response using Ollama
 def chat_completion(messages, temperature=0.7, max_tokens=256):
@@ -428,27 +474,37 @@ async def mcp_generate_image(request: GenerateImageRequest):
     if not sdxl_pipe:
         raise HTTPException(status_code=503, detail="SDXL model not available")
     
-    image, status = generate_image(
-        request.prompt,
-        request.negative_prompt,
-        request.steps,
-        request.guidance,
-        request.seed
-    )
-    
-    if image:
-        # Convert to base64 for API response
-        buffered = io.BytesIO()
-        image.save(buffered, format="PNG")
-        img_base64 = base64.b64encode(buffered.getvalue()).decode()
+    try:
+        image, status = generate_image(
+            request.prompt,
+            request.negative_prompt,
+            request.steps,
+            request.guidance,
+            request.seed
+        )
         
-        return {
-            "success": True,
-            "image_base64": img_base64,
-            "message": status
-        }
-    else:
-        raise HTTPException(status_code=500, detail=status)
+        if image:
+            # Convert to base64 for API response
+            buffered = io.BytesIO()
+            image.save(buffered, format="PNG")
+            img_base64 = base64.b64encode(buffered.getvalue()).decode()
+            
+            return {
+                "success": True,
+                "image_base64": img_base64,
+                "message": status
+            }
+        else:
+            # Check if it's a memory error for better HTTP status
+            if "out of memory" in status.lower():
+                raise HTTPException(status_code=507, detail=status)  # Insufficient Storage
+            else:
+                raise HTTPException(status_code=500, detail=status)
+    except Exception as e:
+        if "out of memory" in str(e).lower():
+            raise HTTPException(status_code=507, detail=f"CUDA out of memory: {str(e)}")
+        else:
+            raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
 @app.post("/chat")
 async def mcp_chat(request: ChatRequest):
@@ -577,14 +633,34 @@ def create_gradio_app():
             
             refresh_btn = gr.Button("🔄 Refresh Status", variant="secondary")
             
+            gr.Markdown("### CUDA Memory Management")
+            gr.Markdown("""
+            **Automatic Memory Management Features:**
+            - 🔄 **Auto-retry**: Up to 2 attempts with memory clearing on CUDA OOM errors
+            - 🧹 **Memory clearing**: Automatic CUDA cache clearing before/after generation
+            - 🗑️ **Garbage collection**: Automatic Python garbage collection with memory clearing
+            - ⚡ **Fragmentation prevention**: `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
+            - 📊 **Smart error handling**: Helpful suggestions when memory limits are reached
+            
+            **Memory Tips:**
+            - Reduce steps (20-30) and guidance (5-8) if you encounter persistent memory issues
+            - Close other GPU applications for optimal performance
+            - Monitor GPU memory with `nvidia-smi` command
+            """)
+            
             gr.Markdown("### MCP Server")
             gr.Markdown("**Base URL:** http://localhost:8000")
             gr.Markdown("""
             **Available Endpoints:**
             - `GET /status` - Server status
-            - `POST /generate-image` - Generate images
+            - `POST /generate-image` - Generate images (with automatic memory management)
             - `POST /chat` - Chat with LLM  
             - `POST /analyze-image` - Analyze images (if multimodal available)
+            
+            **HTTP Status Codes:**
+            - `200` - Success
+            - `500` - General generation error
+            - `507` - CUDA out of memory (automatic retry triggered)
             """)
         
         # Event handlers
