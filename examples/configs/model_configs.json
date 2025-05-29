@@ -1,0 +1,272 @@
+{
+  "sdxl_models": {
+    "base_models": {
+      "sdxl_base": {
+        "description": "Standard SDXL 1.0 base model",
+        "recommended_for": "general purpose, balanced results",
+        "file_format": ".safetensors",
+        "vram_requirement": "12GB+",
+        "optimal_settings": {
+          "steps": 25,
+          "guidance": 7.5,
+          "resolution": "1024x1024"
+        }
+      },
+      "sdxl_turbo": {
+        "description": "Fast SDXL variant for quick generation",
+        "recommended_for": "rapid iteration, real-time generation",
+        "file_format": ".safetensors",
+        "vram_requirement": "8GB+",
+        "optimal_settings": {
+          "steps": 4,
+          "guidance": 1.0,
+          "resolution": "512x512"
+        }
+      }
+    },
+    
+    "specialized_models": {
+      "anime_focused": {
+        "examples": [
+          "AnimagineXL",
+          "PonyDiffusionXL", 
+          "WaifuDiffusionXL"
+        ],
+        "description": "Fine-tuned for anime/manga style artwork",
+        "recommended_for": "anime characters, manga-style art",
+        "optimal_settings": {
+          "steps": 28,
+          "guidance": 8.5,
+          "negative_prompt": "realistic, photography, 3d"
+        }
+      },
+      "realistic_focused": {
+        "examples": [
+          "RealVisXL",
+          "JuggernautXL",
+          "CopaxTimelessXL"
+        ],
+        "description": "Enhanced for photorealistic outputs",
+        "recommended_for": "portraits, realistic scenes, photography-style",
+        "optimal_settings": {
+          "steps": 35,
+          "guidance": 7.0,
+          "negative_prompt": "anime, cartoon, painting"
+        }
+      },
+      "artistic_focused": {
+        "examples": [
+          "AlbedoBaseXL",
+          "DynavisionXL",
+          "DreamShaperXL"
+        ],
+        "description": "Optimized for artistic and creative outputs",
+        "recommended_for": "concept art, illustrations, creative works",
+        "optimal_settings": {
+          "steps": 30,
+          "guidance": 7.8,
+          "negative_prompt": "photography, realistic"
+        }
+      }
+    }
+  },
+  
+  "ollama_models": {
+    "recommended_models": {
+      "qwen2.5:7b": {
+        "description": "Balanced performance and quality",
+        "vram_requirement": "8GB",
+        "recommended_for": "general chat, prompt enhancement",
+        "strengths": ["multilingual", "coding", "reasoning"]
+      },
+      "llama3.1:8b": {
+        "description": "Strong general-purpose model",
+        "vram_requirement": "8GB",
+        "recommended_for": "creative writing, conversations",
+        "strengths": ["creative writing", "instruction following"]
+      },
+      "mistral:7b": {
+        "description": "Fast and efficient",
+        "vram_requirement": "6GB",
+        "recommended_for": "quick responses, resource-constrained setups",
+        "strengths": ["speed", "efficiency", "multilingual"]
+      },
+      "llava:7b": {
+        "description": "Vision-language model",
+        "vram_requirement": "10GB",
+        "recommended_for": "image analysis, multimodal tasks",
+        "strengths": ["image understanding", "visual question answering"],
+        "enables_features": ["image_analysis"]
+      }
+    },
+    
+    "model_selection_guide": {
+      "for_prompt_enhancement": ["qwen2.5:7b", "llama3.1:8b"],
+      "for_creative_writing": ["llama3.1:8b", "mistral:7b"],
+      "for_image_analysis": ["llava:7b", "llava:13b"],
+      "for_low_vram": ["mistral:7b", "qwen2.5:3b"],
+      "for_multilingual": ["qwen2.5:7b", "mistral:7b"]
+    }
+  },
+  
+  "hardware_configurations": {
+    "high_end": {
+      "gpu": "RTX 4090, RTX 3090, A100",
+      "vram": "24GB+",
+      "recommended_settings": {
+        "sdxl_resolution": "1024x1024",
+        "sdxl_steps": "30-50",
+        "batch_size": 2,
+        "ollama_model": "qwen2.5:14b or larger"
+      },
+      "optimizations": {
+        "cpu_offload": false,
+        "attention_slicing": false,
+        "vae_slicing": false
+      }
+    },
+    
+    "mid_range": {
+      "gpu": "RTX 4070, RTX 3080, RTX 3070",
+      "vram": "12-16GB",
+      "recommended_settings": {
+        "sdxl_resolution": "1024x1024",
+        "sdxl_steps": "25-35",
+        "batch_size": 1,
+        "ollama_model": "qwen2.5:7b"
+      },
+      "optimizations": {
+        "cpu_offload": false,
+        "attention_slicing": true,
+        "vae_slicing": false
+      }
+    },
+    
+    "budget": {
+      "gpu": "RTX 3060, RTX 4060, GTX 1080 Ti",
+      "vram": "8-12GB",
+      "recommended_settings": {
+        "sdxl_resolution": "768x768",
+        "sdxl_steps": "20-25",
+        "batch_size": 1,
+        "ollama_model": "mistral:7b"
+      },
+      "optimizations": {
+        "cpu_offload": true,
+        "attention_slicing": true,
+        "vae_slicing": true
+      }
+    },
+    
+    "low_vram": {
+      "gpu": "RTX 3050, GTX 1660",
+      "vram": "4-8GB",
+      "recommended_settings": {
+        "sdxl_resolution": "512x512",
+        "sdxl_steps": "15-20",
+        "batch_size": 1,
+        "ollama_model": "qwen2.5:3b"
+      },
+      "optimizations": {
+        "cpu_offload": true,
+        "attention_slicing": true,
+        "vae_slicing": true,
+        "use_turbo_model": true
+      }
+    }
+  },
+  
+  "application_configuration": {
+    "model_paths": {
+      "description": "Update these paths in app.py MODEL_PATHS dict",
+      "sd_model": "/path/to/your/sdxl_model.safetensors",
+      "ollama_model": "qwen2.5:7b",
+      "ollama_base_url": "http://localhost:11434"
+    },
+    
+    "performance_settings": {
+      "torch_compile": {
+        "enabled": false,
+        "description": "Experimental PyTorch compilation for speed",
+        "note": "May cause compatibility issues"
+      },
+      "xformers": {
+        "enabled": true,
+        "description": "Memory-efficient attention",
+        "requirement": "pip install xformers"
+      },
+      "mixed_precision": {
+        "enabled": true,
+        "description": "Use FP16 for memory efficiency"
+      }
+    },
+    
+    "memory_management": {
+      "cpu_offload": {
+        "description": "Move unused model parts to CPU",
+        "use_when": "VRAM < 12GB"
+      },
+      "attention_slicing": {
+        "description": "Slice attention computation",
+        "use_when": "VRAM < 16GB"
+      },
+      "vae_slicing": {
+        "description": "Slice VAE computation",
+        "use_when": "VRAM < 8GB"
+      }
+    }
+  },
+  
+  "installation_guides": {
+    "ollama_setup": {
+      "linux": [
+        "curl -fsSL https://ollama.ai/install.sh | sh",
+        "ollama serve",
+        "ollama pull qwen2.5:7b"
+      ],
+      "windows": [
+        "Download Ollama from https://ollama.ai",
+        "Install and run Ollama",
+        "Open terminal and run: ollama pull qwen2.5:7b"
+      ],
+      "docker": [
+        "docker run -d -v ollama:/root/.ollama -p 11434:11434 --name ollama ollama/ollama",
+        "docker exec -it ollama ollama pull qwen2.5:7b"
+      ]
+    },
+    
+    "cuda_pytorch": {
+      "command": "pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121",
+      "verify": "python -c 'import torch; print(torch.cuda.is_available())'"
+    }
+  },
+  
+  "troubleshooting": {
+    "common_issues": {
+      "cuda_out_of_memory": {
+        "solutions": [
+          "Reduce resolution (512x512 instead of 1024x1024)",
+          "Enable CPU offloading",
+          "Enable attention slicing",
+          "Reduce batch size to 1",
+          "Close other GPU applications"
+        ]
+      },
+      "model_loading_failed": {
+        "solutions": [
+          "Verify model file exists and isn't corrupted",
+          "Check file permissions",
+          "Ensure sufficient disk space",
+          "Try re-downloading the model"
+        ]
+      },
+      "ollama_connection_failed": {
+        "solutions": [
+          "Verify Ollama is running: ollama serve",
+          "Check if model is pulled: ollama list",
+          "Test connection: curl http://localhost:11434/api/tags"
+        ]
+      }
+    }
+  }
+}

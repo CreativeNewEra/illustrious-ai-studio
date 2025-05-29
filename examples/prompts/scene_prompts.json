@@ -1,0 +1,296 @@
+{
+  "environments": {
+    "natural_landscapes": {
+      "mountains": {
+        "base_prompt": "mountain landscape, peaks, scenic",
+        "variations": [
+          "snow-capped mountains, alpine, pristine white peaks",
+          "rocky mountains, rugged, dramatic cliffs",
+          "mountain range at sunset, golden hour, warm lighting",
+          "misty mountains, fog, mysterious atmosphere"
+        ],
+        "elements": ["peaks", "valleys", "snow", "rocks", "pine trees", "streams"],
+        "moods": ["majestic", "serene", "dramatic", "peaceful"]
+      },
+      
+      "forests": {
+        "base_prompt": "forest scene, trees, natural",
+        "variations": [
+          "ancient forest, massive trees, mystical atmosphere",
+          "autumn forest, colorful leaves, golden light",
+          "dark forest, mysterious, shadowy depths",
+          "enchanted forest, magical, glowing elements"
+        ],
+        "elements": ["tall trees", "undergrowth", "sunbeams", "wildlife", "moss", "fallen logs"],
+        "moods": ["mystical", "peaceful", "mysterious", "vibrant"]
+      },
+      
+      "oceans": {
+        "base_prompt": "ocean scene, waves, water",
+        "variations": [
+          "calm ocean, peaceful waves, clear blue water",
+          "stormy sea, dramatic waves, dark clouds",
+          "tropical beach, crystal clear water, white sand",
+          "sunset over ocean, golden reflection, romantic"
+        ],
+        "elements": ["waves", "horizon", "clouds", "sunlight", "foam", "seabirds"],
+        "moods": ["peaceful", "dramatic", "romantic", "powerful"]
+      },
+      
+      "deserts": {
+        "base_prompt": "desert landscape, sand dunes, arid",
+        "variations": [
+          "sahara desert, endless dunes, golden sand",
+          "desert oasis, palm trees, water, refuge",
+          "desert at night, starry sky, cool blue tones",
+          "rocky desert, mesas, southwestern landscape"
+        ],
+        "elements": ["sand dunes", "cacti", "rocks", "sparse vegetation", "clear skies"],
+        "moods": ["vast", "lonely", "mystical", "harsh"]
+      }
+    },
+    
+    "urban_environments": {
+      "cityscapes": {
+        "base_prompt": "city skyline, buildings, urban",
+        "variations": [
+          "modern city, skyscrapers, glass and steel",
+          "old city, historic buildings, cobblestone streets",
+          "night city, neon lights, bustling nightlife",
+          "aerial city view, bird's eye perspective, sprawling"
+        ],
+        "elements": ["skyscrapers", "streets", "traffic", "lights", "people", "architecture"],
+        "moods": ["bustling", "modern", "historic", "vibrant"]
+      },
+      
+      "streets": {
+        "base_prompt": "city street, urban environment",
+        "variations": [
+          "busy street, pedestrians, traffic, commercial",
+          "quiet alley, narrow, atmospheric, hidden",
+          "main boulevard, wide, grand, impressive",
+          "residential street, houses, peaceful, suburban"
+        ],
+        "elements": ["buildings", "sidewalks", "vehicles", "street lights", "shops", "signs"],
+        "moods": ["busy", "quiet", "commercial", "residential"]
+      },
+      
+      "interiors": {
+        "base_prompt": "interior space, indoor environment",
+        "variations": [
+          "cozy cafe, warm lighting, comfortable seating",
+          "modern office, clean lines, professional atmosphere",
+          "old library, books, wooden shelves, scholarly",
+          "art gallery, white walls, sculptures, contemporary"
+        ],
+        "elements": ["furniture", "lighting", "decorations", "windows", "floors", "ceilings"],
+        "moods": ["cozy", "professional", "scholarly", "artistic"]
+      }
+    },
+    
+    "fantasy_worlds": {
+      "magical_places": {
+        "base_prompt": "magical environment, fantasy setting",
+        "variations": [
+          "floating islands, sky realm, clouds below",
+          "crystal caves, glowing crystals, underground wonder",
+          "fairy garden, miniature world, delicate flowers",
+          "wizard tower, spiral architecture, magical energy"
+        ],
+        "elements": ["magic", "impossible architecture", "glowing elements", "fantastical creatures"],
+        "moods": ["mystical", "wondrous", "ethereal", "powerful"]
+      },
+      
+      "medieval_settings": {
+        "base_prompt": "medieval setting, historical fantasy",
+        "variations": [
+          "castle courtyard, stone walls, medieval architecture",
+          "village marketplace, merchants, medieval life",
+          "monastery, peaceful, spiritual, ancient wisdom",
+          "tavern interior, warm fire, travelers, cozy"
+        ],
+        "elements": ["stone buildings", "wooden structures", "banners", "torches", "cobblestones"],
+        "moods": ["historic", "cozy", "grand", "spiritual"]
+      },
+      
+      "dark_fantasy": {
+        "base_prompt": "dark fantasy environment, ominous",
+        "variations": [
+          "haunted castle, gothic, crumbling walls, eerie",
+          "dark swamp, twisted trees, mysterious fog",
+          "abandoned ruins, overgrown, forgotten civilization",
+          "shadow realm, ethereal darkness, otherworldly"
+        ],
+        "elements": ["darkness", "decay", "mysterious shadows", "Gothic architecture"],
+        "moods": ["ominous", "mysterious", "haunting", "foreboding"]
+      }
+    },
+    
+    "sci_fi_environments": {
+      "space_scenes": {
+        "base_prompt": "space environment, cosmic setting",
+        "variations": [
+          "starfield, distant galaxies, cosmic wonder",
+          "alien planet, strange landscape, dual suns",
+          "space station, futuristic architecture, orbital",
+          "nebula, colorful cosmic clouds, stellar formation"
+        ],
+        "elements": ["stars", "planets", "spacecraft", "cosmic phenomena", "alien landscapes"],
+        "moods": ["vast", "mysterious", "futuristic", "alien"]
+      },
+      
+      "cyberpunk_cities": {
+        "base_prompt": "cyberpunk city, futuristic urban",
+        "variations": [
+          "neon-lit streets, rain-soaked, dystopian atmosphere",
+          "high-tech district, holograms, advanced technology",
+          "underground levels, dark, industrial, gritty",
+          "corporate towers, glass and steel, imposing"
+        ],
+        "elements": ["neon lights", "holograms", "flying vehicles", "massive screens", "rain"],
+        "moods": ["dystopian", "high-tech", "gritty", "imposing"]
+      },
+      
+      "laboratories": {
+        "base_prompt": "futuristic laboratory, high-tech research",
+        "variations": [
+          "clean lab, sterile environment, advanced equipment",
+          "experiment chamber, containment units, mysterious",
+          "AI research facility, computer arrays, digital displays",
+          "biolab, organic samples, genetic research"
+        ],
+        "elements": ["scientific equipment", "computers", "displays", "containment units"],
+        "moods": ["sterile", "high-tech", "mysterious", "advanced"]
+      }
+    }
+  },
+  
+  "atmospheric_conditions": {
+    "weather": {
+      "sunny": "bright sunlight, clear skies, warm atmosphere",
+      "cloudy": "overcast, grey clouds, diffused lighting",
+      "rainy": "rain drops, wet surfaces, storm clouds",
+      "snowy": "falling snow, white landscape, winter atmosphere",
+      "foggy": "thick fog, mysterious visibility, ethereal",
+      "stormy": "dark clouds, lightning, dramatic weather"
+    },
+    
+    "time_of_day": {
+      "dawn": "early morning, soft light, peaceful awakening",
+      "morning": "bright morning light, fresh atmosphere, energetic",
+      "noon": "strong sunlight, harsh shadows, intense brightness",
+      "afternoon": "warm light, long shadows, comfortable",
+      "sunset": "golden hour, warm colors, romantic lighting",
+      "dusk": "twilight, purple sky, transition to night",
+      "night": "darkness, artificial lights, mysterious atmosphere",
+      "midnight": "deep night, moonlight, quiet and still"
+    },
+    
+    "seasons": {
+      "spring": "fresh green, blooming flowers, renewal, soft light",
+      "summer": "lush vegetation, bright colors, warm atmosphere",
+      "autumn": "changing leaves, warm colors, harvest time",
+      "winter": "snow-covered, bare trees, cold atmosphere, crystal clear"
+    }
+  },
+  
+  "architectural_styles": {
+    "historical": {
+      "gothic": "pointed arches, flying buttresses, ornate details",
+      "classical": "columns, symmetry, marble, grandeur",
+      "baroque": "ornate decoration, curves, dramatic details",
+      "art_deco": "geometric patterns, sleek lines, metallic accents",
+      "victorian": "ornate details, bay windows, decorative elements"
+    },
+    
+    "modern": {
+      "minimalist": "clean lines, simple forms, uncluttered spaces",
+      "brutalist": "raw concrete, massive forms, imposing structures",
+      "contemporary": "glass and steel, open spaces, modern materials",
+      "industrial": "exposed pipes, brick walls, utilitarian design"
+    },
+    
+    "fantasy": {
+      "elven": "organic curves, natural materials, integrated with nature",
+      "dwarven": "stone construction, underground, carved details",
+      "human_medieval": "stone and wood, defensive walls, practical design",
+      "magical": "impossible geometry, floating elements, glowing materials"
+    }
+  },
+  
+  "composition_elements": {
+    "foreground": {
+      "natural": ["rocks", "plants", "water features", "fallen logs"],
+      "architectural": ["steps", "pillars", "walls", "decorative elements"],
+      "objects": ["statues", "furniture", "vehicles", "equipment"]
+    },
+    
+    "middle_ground": {
+      "landscape": ["hills", "buildings", "trees", "water bodies"],
+      "architectural": ["main structures", "courtyards", "plazas"],
+      "activity": ["people", "vehicles", "animals", "action"]
+    },
+    
+    "background": {
+      "natural": ["mountains", "sky", "horizon", "distant features"],
+      "urban": ["skyline", "distant buildings", "atmospheric effects"],
+      "fantasy": ["floating islands", "magical phenomena", "otherworldly elements"]
+    }
+  },
+  
+  "lighting_scenarios": {
+    "natural_lighting": {
+      "golden_hour": "warm, soft, directional light from low sun",
+      "blue_hour": "cool, even lighting just after sunset",
+      "overcast": "soft, diffused light from cloudy sky",
+      "harsh_noon": "strong, direct sunlight with sharp shadows"
+    },
+    
+    "artificial_lighting": {
+      "street_lights": "warm pools of light in darkness",
+      "neon_signs": "colorful, electric atmosphere",
+      "campfire": "warm, flickering, intimate lighting",
+      "spotlights": "dramatic, focused illumination"
+    },
+    
+    "magical_lighting": {
+      "fairy_lights": "small, twinkling points of light",
+      "magical_glow": "soft, ethereal illumination",
+      "energy_effects": "bright, electric, supernatural",
+      "bioluminescence": "natural, organic glowing elements"
+    }
+  },
+  
+  "prompt_templates": {
+    "landscape": "[environment_type] [weather] [time_of_day], [atmospheric_elements], [lighting_description], [mood_descriptors]",
+    "architectural": "[building_type] in [architectural_style], [materials], [details], [surroundings], [lighting]",
+    "atmospheric": "[environment] with [weather_condition], [lighting_type], [mood], [compositional_elements]",
+    "fantasy_scene": "[magical_environment] with [fantasy_elements], [lighting_effects], [mystical_atmosphere], [architectural_details]"
+  },
+  
+  "example_scenes": {
+    "serene_mountain_lake": {
+      "prompt": "peaceful mountain lake at sunrise, crystal clear water reflecting snow-capped peaks, soft morning mist, golden hour lighting",
+      "elements": ["mountains", "lake", "sunrise", "mist", "reflection"],
+      "mood": "serene, peaceful, majestic"
+    },
+    
+    "cyberpunk_street": {
+      "prompt": "neon-lit cyberpunk street at night, rain-soaked pavement reflecting colorful signs, flying cars, towering holograms",
+      "elements": ["neon lights", "rain", "futuristic vehicles", "holograms"],
+      "mood": "futuristic, atmospheric, bustling"
+    },
+    
+    "enchanted_forest": {
+      "prompt": "magical forest with glowing mushrooms, fairy lights dancing between ancient trees, soft ethereal mist, mystical atmosphere",
+      "elements": ["ancient trees", "glowing mushrooms", "fairy lights", "mist"],
+      "mood": "mystical, enchanted, peaceful"
+    },
+    
+    "gothic_cathedral": {
+      "prompt": "grand gothic cathedral interior, soaring vaulted ceilings, colorful stained glass windows, dramatic lighting rays",
+      "elements": ["gothic architecture", "stained glass", "high ceilings", "dramatic lighting"],
+      "mood": "grand, spiritual, awe-inspiring"
+    }
+  }
+}

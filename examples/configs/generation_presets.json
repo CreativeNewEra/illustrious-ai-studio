@@ -1,0 +1,183 @@
+{
+  "quality_presets": {
+    "draft": {
+      "description": "Fast generation for testing and iteration",
+      "steps": 15,
+      "guidance": 6.0,
+      "width": 512,
+      "height": 512,
+      "use_case": "rapid prototyping, concept testing"
+    },
+    "standard": {
+      "description": "Balanced quality and speed",
+      "steps": 25,
+      "guidance": 7.5,
+      "width": 1024,
+      "height": 1024,
+      "use_case": "general purpose, most use cases"
+    },
+    "high_quality": {
+      "description": "Maximum quality for final outputs",
+      "steps": 40,
+      "guidance": 8.0,
+      "width": 1024,
+      "height": 1024,
+      "use_case": "final artwork, professional use"
+    },
+    "ultra_high": {
+      "description": "Premium quality with longer generation time",
+      "steps": 60,
+      "guidance": 7.8,
+      "width": 1024,
+      "height": 1024,
+      "use_case": "showcase pieces, competition entries"
+    }
+  },
+  
+  "style_presets": {
+    "anime": {
+      "description": "Optimized for anime/manga style artwork",
+      "steps": 28,
+      "guidance": 8.5,
+      "negative_prompt": "realistic, photography, 3d render, blurry, low quality",
+      "common_prompt_additions": "anime style, cel shading, vibrant colors, detailed"
+    },
+    "realistic": {
+      "description": "Photorealistic image generation",
+      "steps": 35,
+      "guidance": 7.0,
+      "negative_prompt": "anime, cartoon, painting, drawing, blurry, low quality",
+      "common_prompt_additions": "photorealistic, detailed, high resolution, professional photography"
+    },
+    "artistic": {
+      "description": "Artistic and painterly styles",
+      "steps": 30,
+      "guidance": 7.8,
+      "negative_prompt": "photography, realistic, blurry, low quality",
+      "common_prompt_additions": "artistic, painterly, masterpiece, detailed brushwork"
+    },
+    "fantasy": {
+      "description": "Fantasy and magical themes",
+      "steps": 32,
+      "guidance": 8.2,
+      "negative_prompt": "modern, contemporary, realistic, blurry, low quality",
+      "common_prompt_additions": "fantasy art, magical, ethereal, detailed, mystical"
+    }
+  },
+  
+  "resolution_presets": {
+    "square_small": {
+      "width": 512,
+      "height": 512,
+      "description": "Small square format",
+      "use_case": "avatars, icons, social media"
+    },
+    "square_standard": {
+      "width": 1024,
+      "height": 1024,
+      "description": "Standard square format",
+      "use_case": "general artwork, wallpapers"
+    },
+    "portrait": {
+      "width": 768,
+      "height": 1024,
+      "description": "Portrait orientation",
+      "use_case": "character art, portraits"
+    },
+    "landscape": {
+      "width": 1024,
+      "height": 768,
+      "description": "Landscape orientation",
+      "use_case": "environment art, scenes"
+    },
+    "wide": {
+      "width": 1152,
+      "height": 640,
+      "description": "Wide format",
+      "use_case": "banners, panoramic scenes"
+    }
+  },
+  
+  "subject_presets": {
+    "character_portrait": {
+      "steps": 30,
+      "guidance": 8.0,
+      "width": 768,
+      "height": 1024,
+      "negative_prompt": "multiple people, crowd, blurry, low quality, bad anatomy",
+      "suggested_prompts": [
+        "portrait of [character description], detailed face, studio lighting",
+        "[character type] with [hair color] hair, [eye color] eyes, detailed features"
+      ]
+    },
+    "environment": {
+      "steps": 28,
+      "guidance": 7.5,
+      "width": 1024,
+      "height": 768,
+      "negative_prompt": "people, characters, blurry, low quality",
+      "suggested_prompts": [
+        "[environment type] landscape, detailed, atmospheric",
+        "[time of day] [environment], [weather condition], cinematic"
+      ]
+    },
+    "object_focus": {
+      "steps": 25,
+      "guidance": 7.8,
+      "width": 1024,
+      "height": 1024,
+      "negative_prompt": "people, characters, crowded, blurry, low quality",
+      "suggested_prompts": [
+        "[object] on [background], detailed, [lighting type]",
+        "close-up of [object], [material], [style]"
+      ]
+    }
+  },
+  
+  "workflow_presets": {
+    "concept_iteration": {
+      "description": "Fast iteration for concept development",
+      "steps": 12,
+      "guidance": 6.5,
+      "width": 512,
+      "height": 512,
+      "batch_size": 4,
+      "use_case": "exploring ideas, rapid prototyping"
+    },
+    "refinement": {
+      "description": "Refining promising concepts",
+      "steps": 25,
+      "guidance": 7.5,
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 2,
+      "use_case": "developing chosen concepts"
+    },
+    "final_production": {
+      "description": "Final high-quality output",
+      "steps": 45,
+      "guidance": 8.0,
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1,
+      "use_case": "final artwork production"
+    }
+  },
+  
+  "common_negative_prompts": {
+    "quality": "blurry, low quality, bad anatomy, deformed, ugly, poorly drawn",
+    "technical": "watermark, signature, text, logo, jpeg artifacts, compression",
+    "style_specific": {
+      "anime": "realistic, photography, 3d render",
+      "realistic": "anime, cartoon, painting, drawing",
+      "artistic": "photography, realistic, mechanical"
+    }
+  },
+  
+  "usage_notes": {
+    "guidance_scale": "Higher values (8.0+) follow prompt more strictly, lower values (6.0-7.0) allow more creativity",
+    "steps": "More steps generally improve quality but increase generation time. 20-30 is usually sufficient",
+    "resolution": "Higher resolutions require more VRAM. Use 512x512 for testing, 1024x1024 for final output",
+    "negative_prompts": "Essential for quality. Combine general quality terms with style-specific exclusions"
+  }
+}

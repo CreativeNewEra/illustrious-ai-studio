@@ -1,0 +1,152 @@
+{
+  "artistic_styles": {
+    "anime": {
+      "prompt_prefix": "anime style, manga artwork,",
+      "quality_tags": "masterpiece, best quality, highly detailed, vibrant colors",
+      "negative": "realistic, photographic, 3d render, blurry",
+      "guidance": 8.0,
+      "steps": 35,
+      "description": "Japanese animation style with clean lines and vibrant colors",
+      "example_subjects": ["anime girl", "anime boy", "magical girl", "mecha"]
+    },
+    "photorealistic": {
+      "prompt_prefix": "photorealistic, ultra realistic, high resolution,",
+      "quality_tags": "8k uhd, professional photography, sharp focus",
+      "negative": "anime, cartoon, drawing, painting, art",
+      "guidance": 7.0,
+      "steps": 40,
+      "description": "Highly realistic photography-style images",
+      "example_subjects": ["portrait", "landscape", "architecture", "street photography"]
+    },
+    "cyberpunk": {
+      "prompt_prefix": "cyberpunk style, neon lights, futuristic,",
+      "quality_tags": "dark atmosphere, glowing, detailed, cinematic",
+      "negative": "medieval, fantasy, nature, bright daylight",
+      "guidance": 8.5,
+      "steps": 35,
+      "description": "Futuristic dystopian aesthetic with neon and technology",
+      "example_subjects": ["cyberpunk city", "android", "hacker", "neon street"]
+    },
+    "fantasy": {
+      "prompt_prefix": "fantasy art, magical, ethereal,",
+      "quality_tags": "enchanted, mystical, detailed, beautiful",
+      "negative": "modern, technology, urban, realistic",
+      "guidance": 7.5,
+      "steps": 30,
+      "description": "Magical and mythical themes with fantastical elements",
+      "example_subjects": ["dragon", "wizard", "fairy", "medieval castle"]
+    },
+    "minimalist": {
+      "prompt_prefix": "minimalist style, clean, simple,",
+      "quality_tags": "elegant, geometric, modern, pristine",
+      "negative": "cluttered, complex, detailed, ornate",
+      "guidance": 6.0,
+      "steps": 25,
+      "description": "Clean, simple designs with focus on essential elements",
+      "example_subjects": ["geometric shapes", "single object", "clean architecture"]
+    },
+    "oil_painting": {
+      "prompt_prefix": "oil painting, traditional art, painted,",
+      "quality_tags": "masterpiece, classical, detailed brushwork, rich colors",
+      "negative": "digital, photography, anime, cartoon",
+      "guidance": 7.8,
+      "steps": 32,
+      "description": "Traditional oil painting technique with visible brushstrokes",
+      "example_subjects": ["classical portrait", "still life", "landscape painting"]
+    },
+    "watercolor": {
+      "prompt_prefix": "watercolor painting, soft colors, flowing,",
+      "quality_tags": "artistic, delicate, transparent, beautiful",
+      "negative": "digital, sharp, mechanical, 3d render",
+      "guidance": 7.2,
+      "steps": 28,
+      "description": "Soft watercolor technique with flowing colors",
+      "example_subjects": ["flowers", "abstract art", "landscapes", "portraits"]
+    },
+    "steampunk": {
+      "prompt_prefix": "steampunk style, Victorian era, brass and copper,",
+      "quality_tags": "mechanical, gears, vintage, detailed",
+      "negative": "modern, digital, minimalist, futuristic",
+      "guidance": 8.0,
+      "steps": 35,
+      "description": "Victorian-era inspired with mechanical and steam-powered aesthetics",
+      "example_subjects": ["airship", "mechanical contraption", "Victorian gentleman", "brass goggles"]
+    },
+    "art_nouveau": {
+      "prompt_prefix": "art nouveau style, organic forms, flowing lines,",
+      "quality_tags": "elegant, decorative, natural motifs, ornate",
+      "negative": "geometric, modern, minimalist, harsh lines",
+      "guidance": 7.5,
+      "steps": 30,
+      "description": "Late 19th-century artistic style with natural forms and curves",
+      "example_subjects": ["decorative poster", "floral patterns", "elegant woman", "ornate architecture"]
+    },
+    "impressionist": {
+      "prompt_prefix": "impressionist painting, loose brushstrokes, light effects,",
+      "quality_tags": "atmospheric, painterly, soft, luminous",
+      "negative": "sharp, detailed, digital, photographic",
+      "guidance": 7.0,
+      "steps": 28,
+      "description": "19th-century art movement focusing on light and atmosphere",
+      "example_subjects": ["garden scene", "water lilies", "outdoor portrait", "countryside"]
+    },
+    "pop_art": {
+      "prompt_prefix": "pop art style, bold colors, graphic,",
+      "quality_tags": "vibrant, commercial, iconic, striking",
+      "negative": "muted colors, realistic, classical, subtle",
+      "guidance": 8.2,
+      "steps": 25,
+      "description": "1950s-60s art movement with commercial and popular culture themes",
+      "example_subjects": ["comic book style", "celebrity portrait", "consumer products", "bold graphics"]
+    },
+    "surreal": {
+      "prompt_prefix": "surreal art, dreamlike, impossible,",
+      "quality_tags": "imaginative, bizarre, creative, thought-provoking",
+      "negative": "realistic, logical, ordinary, mundane",
+      "guidance": 8.5,
+      "steps": 35,
+      "description": "Dreamlike and fantastical imagery that defies reality",
+      "example_subjects": ["melting clocks", "floating objects", "impossible architecture", "dream sequence"]
+    }
+  },
+  
+  "lighting_styles": {
+    "golden_hour": "golden hour lighting, warm sunset, soft shadows",
+    "studio_lighting": "professional studio lighting, even illumination, soft shadows",
+    "dramatic_lighting": "dramatic lighting, strong contrast, chiaroscuro",
+    "neon_lighting": "neon lighting, colorful glow, electric atmosphere",
+    "natural_lighting": "natural daylight, soft diffused light, realistic",
+    "moonlight": "moonlight, cool blue tones, mysterious atmosphere",
+    "candlelight": "candlelight, warm flickering light, intimate mood",
+    "volumetric_lighting": "volumetric lighting, god rays, atmospheric"
+  },
+  
+  "camera_angles": {
+    "close_up": "close-up shot, detailed, intimate",
+    "wide_shot": "wide shot, expansive view, environmental",
+    "low_angle": "low angle shot, dramatic perspective, powerful",
+    "high_angle": "high angle shot, bird's eye view, overview",
+    "dutch_angle": "dutch angle, tilted perspective, dynamic",
+    "macro": "macro photography, extreme close-up, detailed",
+    "portrait": "portrait orientation, vertical composition",
+    "landscape": "landscape orientation, horizontal composition"
+  },
+  
+  "mood_descriptors": {
+    "serene": "peaceful, calm, tranquil, serene",
+    "dramatic": "dramatic, intense, powerful, striking",
+    "mysterious": "mysterious, enigmatic, shadowy, intriguing",
+    "cheerful": "cheerful, bright, happy, uplifting",
+    "melancholic": "melancholic, sad, somber, contemplative",
+    "energetic": "energetic, dynamic, vibrant, lively",
+    "romantic": "romantic, intimate, tender, loving",
+    "epic": "epic, grand, majestic, awe-inspiring"
+  },
+  
+  "quality_enhancers": {
+    "general": "masterpiece, best quality, highly detailed, professional",
+    "technical": "8k resolution, sharp focus, perfect composition, expertly crafted",
+    "artistic": "beautiful, stunning, breathtaking, award-winning",
+    "specific": "intricate details, perfect lighting, vibrant colors, flawless"
+  }
+}

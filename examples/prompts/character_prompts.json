@@ -1,0 +1,246 @@
+{
+  "character_types": {
+    "fantasy": {
+      "warrior": {
+        "description": "Brave fighter with combat skills",
+        "base_prompt": "fantasy warrior, armor, sword",
+        "variations": [
+          "knight in shining armor, medieval, heroic",
+          "barbarian warrior, fur clothing, battle axe",
+          "female paladin, holy armor, radiant weapon",
+          "dark knight, black armor, mysterious"
+        ],
+        "attributes": ["brave", "strong", "determined", "battle-tested"]
+      },
+      "mage": {
+        "description": "Magic user with mystical powers",
+        "base_prompt": "fantasy mage, robes, staff",
+        "variations": [
+          "wise wizard, long beard, pointed hat",
+          "young sorceress, glowing hands, magical energy",
+          "battle mage, armored robes, combat magic",
+          "necromancer, dark robes, skull staff"
+        ],
+        "attributes": ["intelligent", "mystical", "learned", "powerful"]
+      },
+      "elf": {
+        "description": "Graceful fantasy race with pointed ears",
+        "base_prompt": "elf, pointed ears, elegant",
+        "variations": [
+          "high elf, noble, refined features, golden hair",
+          "wood elf, nature-themed, green clothing, bow",
+          "dark elf, silver hair, dark skin, mysterious",
+          "night elf, blue skin, glowing eyes, ethereal"
+        ],
+        "attributes": ["graceful", "agile", "wise", "long-lived"]
+      },
+      "dragon": {
+        "description": "Powerful mythical creature",
+        "base_prompt": "dragon, scales, wings",
+        "variations": [
+          "fire dragon, red scales, breathing flames",
+          "ice dragon, blue scales, frost breath",
+          "ancient dragon, massive, wise, golden scales",
+          "young dragon, playful, smaller, curious"
+        ],
+        "attributes": ["powerful", "ancient", "wise", "magical"]
+      }
+    },
+    
+    "modern": {
+      "businessman": {
+        "description": "Professional office worker",
+        "base_prompt": "businessman, suit, professional",
+        "variations": [
+          "CEO, executive suit, confident, office background",
+          "young professional, modern attire, laptop, startup",
+          "financial advisor, glasses, serious, documents",
+          "international businessman, travel, airport"
+        ],
+        "attributes": ["professional", "ambitious", "organized", "confident"]
+      },
+      "student": {
+        "description": "Academic learner",
+        "base_prompt": "student, casual clothes, backpack",
+        "variations": [
+          "college student, campus, books, studying",
+          "high school student, uniform, youthful, energetic",
+          "graduate student, research, laboratory, focused",
+          "art student, creative, colorful, artistic supplies"
+        ],
+        "attributes": ["curious", "energetic", "learning", "youthful"]
+      },
+      "artist": {
+        "description": "Creative professional",
+        "base_prompt": "artist, creative, paint-stained",
+        "variations": [
+          "painter, canvas, brushes, art studio",
+          "digital artist, tablet, stylus, computer setup",
+          "sculptor, clay, tools, workshop",
+          "street artist, spray paint, urban, graffiti"
+        ],
+        "attributes": ["creative", "passionate", "expressive", "artistic"]
+      }
+    },
+    
+    "anime": {
+      "schoolgirl": {
+        "description": "Japanese school student",
+        "base_prompt": "anime schoolgirl, school uniform, cute",
+        "variations": [
+          "shy bookworm, glasses, library, studious",
+          "energetic sports girl, athletic uniform, determined",
+          "popular girl, fashionable, confident, social",
+          "mysterious transfer student, aloof, intriguing"
+        ],
+        "attributes": ["youthful", "energetic", "innocent", "determined"]
+      },
+      "magical_girl": {
+        "description": "Girl with magical powers",
+        "base_prompt": "magical girl, transformation, magical powers",
+        "variations": [
+          "sailor scout, sailor uniform, tiara, moon power",
+          "card captor, magical cards, staff, cheerful",
+          "witch apprentice, hat, broom, spell book",
+          "guardian angel, wings, holy power, protective"
+        ],
+        "attributes": ["magical", "brave", "kind", "determined"]
+      },
+      "mecha_pilot": {
+        "description": "Robot pilot character",
+        "base_prompt": "mecha pilot, pilot suit, cockpit",
+        "variations": [
+          "veteran ace pilot, scarred, experienced, confident",
+          "rookie pilot, young, nervous, determined",
+          "rebel pilot, defiant, fighting system, brave",
+          "test pilot, experimental, cutting-edge, scientific"
+        ],
+        "attributes": ["brave", "skilled", "determined", "heroic"]
+      }
+    },
+    
+    "sci_fi": {
+      "space_marine": {
+        "description": "Futuristic soldier",
+        "base_prompt": "space marine, power armor, futuristic",
+        "variations": [
+          "heavy assault marine, massive armor, heavy weapons",
+          "stealth operative, sleek armor, cloaking device",
+          "medic marine, medical equipment, support gear",
+          "commander, decorated armor, leadership insignia"
+        ],
+        "attributes": ["disciplined", "loyal", "brave", "skilled"]
+      },
+      "cyborg": {
+        "description": "Part human, part machine",
+        "base_prompt": "cyborg, mechanical parts, human features",
+        "variations": [
+          "combat cyborg, weapon arms, tactical display",
+          "civilian cyborg, subtle enhancements, normal life",
+          "android, almost human, artificial intelligence",
+          "full conversion, mostly machine, human consciousness"
+        ],
+        "attributes": ["enhanced", "logical", "conflicted", "powerful"]
+      },
+      "alien": {
+        "description": "Non-human extraterrestrial",
+        "base_prompt": "alien, otherworldly, non-human",
+        "variations": [
+          "grey alien, large eyes, classic UFO visitor",
+          "humanoid alien, familiar but different, peaceful",
+          "insectoid alien, multiple limbs, hive mind",
+          "energy being, glowing, ethereal, advanced"
+        ],
+        "attributes": ["mysterious", "advanced", "otherworldly", "intelligent"]
+      }
+    }
+  },
+  
+  "character_attributes": {
+    "physical": {
+      "hair_colors": ["blonde", "brown", "black", "red", "white", "silver", "blue", "pink", "green", "purple"],
+      "eye_colors": ["blue", "brown", "green", "hazel", "grey", "amber", "violet", "gold", "red", "heterochromia"],
+      "builds": ["slim", "athletic", "muscular", "curvy", "petite", "tall", "stocky", "lean"],
+      "skin_tones": ["pale", "fair", "olive", "tan", "dark", "ebony", "porcelain", "sun-kissed"],
+      "ages": ["child", "teenager", "young adult", "adult", "middle-aged", "elderly", "ancient"]
+    },
+    
+    "personality": {
+      "positive": ["brave", "kind", "intelligent", "cheerful", "determined", "loyal", "creative", "wise", "gentle", "confident"],
+      "neutral": ["serious", "quiet", "analytical", "practical", "independent", "mysterious", "aloof", "stoic"],
+      "complex": ["conflicted", "mysterious", "complex", "troubled", "misunderstood", "reformed", "reluctant hero"]
+    },
+    
+    "roles": {
+      "hero": ["protagonist", "chosen one", "reluctant hero", "champion", "savior"],
+      "support": ["mentor", "sidekick", "ally", "guide", "healer"],
+      "neutral": ["merchant", "scholar", "artisan", "bystander", "traveler"],
+      "antagonist": ["villain", "rival", "anti-hero", "corrupt authority", "fallen hero"]
+    }
+  },
+  
+  "clothing_styles": {
+    "fantasy": {
+      "armor": ["plate armor", "chain mail", "leather armor", "scale armor", "magical armor"],
+      "robes": ["wizard robes", "priestly vestments", "noble garments", "peasant clothes", "traveling cloak"],
+      "accessories": ["sword", "staff", "shield", "amulet", "ring", "crown", "cape"]
+    },
+    
+    "modern": {
+      "casual": ["jeans and t-shirt", "hoodie", "sneakers", "baseball cap", "jacket"],
+      "formal": ["business suit", "dress", "tie", "formal shoes", "briefcase"],
+      "professional": ["lab coat", "uniform", "scrubs", "hard hat", "badge"]
+    },
+    
+    "futuristic": {
+      "tech": ["power suit", "holo-display", "neural implant", "energy weapon", "force field"],
+      "fashion": ["metallic fabric", "LED accents", "geometric patterns", "holographic elements"],
+      "equipment": ["jetpack", "scanner", "communicator", "multi-tool", "AI assistant"]
+    }
+  },
+  
+  "expression_guides": {
+    "emotions": {
+      "happy": "smiling, bright eyes, relaxed features",
+      "sad": "downturned mouth, drooping eyes, slumped posture",
+      "angry": "furrowed brow, clenched jaw, intense stare",
+      "surprised": "wide eyes, open mouth, raised eyebrows",
+      "determined": "set jaw, focused eyes, strong posture",
+      "mysterious": "slight smile, knowing look, partially shadowed",
+      "confident": "raised chin, direct gaze, relaxed shoulders",
+      "worried": "wrinkled forehead, tense features, uncertain look"
+    },
+    
+    "poses": {
+      "action": ["running", "jumping", "fighting stance", "casting spell", "drawing weapon"],
+      "casual": ["standing relaxed", "sitting", "leaning against wall", "walking", "hands in pockets"],
+      "dramatic": ["heroic pose", "arms crossed", "looking into distance", "hand on hip", "pointing"],
+      "portrait": ["three-quarter view", "profile", "front-facing", "over shoulder", "close-up"]
+    }
+  },
+  
+  "prompt_templates": {
+    "basic_character": "[character_type] [character_name], [physical_description], [clothing], [expression], [pose]",
+    "detailed_character": "[character_type] with [hair_color] hair and [eye_color] eyes, [build] build, wearing [clothing], [personality_trait], [expression], [background_setting]",
+    "action_scene": "[character_type] [action_pose], [clothing], [weapon/tool], [dramatic_lighting], [environment]",
+    "portrait_focus": "portrait of [character_type], [detailed_face_description], [clothing_upper_body], [expression], [lighting_style]"
+  },
+  
+  "example_combinations": {
+    "fantasy_warrior": {
+      "prompt": "fantasy knight in shining armor, blonde hair, blue eyes, athletic build, holding sword, determined expression, heroic pose",
+      "style_additions": "medieval, heroic lighting, detailed armor",
+      "negative_prompt": "modern, futuristic, casual clothes"
+    },
+    "anime_schoolgirl": {
+      "prompt": "anime schoolgirl, brown hair in pigtails, green eyes, school uniform, cheerful smile, waving hand",
+      "style_additions": "anime style, vibrant colors, school background",
+      "negative_prompt": "realistic, adult, dark, scary"
+    },
+    "cyberpunk_hacker": {
+      "prompt": "cyberpunk hacker, neon blue hair, augmented eyes, leather jacket, typing on holographic keyboard, focused expression",
+      "style_additions": "neon lighting, futuristic, digital effects",
+      "negative_prompt": "medieval, fantasy, natural lighting"
+    }
+  }
+}
