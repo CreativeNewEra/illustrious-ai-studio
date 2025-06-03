@@ -1,7 +1,6 @@
 # app.py
 import gradio as gr
 import torch
-from diffusers import StableDiffusionXLPipeline
 # Remove this import - we'll use Ollama instead
 # from llama_cpp import Llama
 import base64
@@ -18,6 +17,17 @@ from pathlib import Path
 import asyncio
 from typing import Dict, List, Any, Optional
 import threading
+
+from models.loader import init_sdxl, init_ollama
+from models.generator import (
+    generate_image,
+    chat_completion,
+    generate_prompt,
+    handle_chat,
+    analyze_image,
+    get_model_status,
+    get_latest_image,
+)
 
 # MCP Server imports
 from fastapi import FastAPI, HTTPException
@@ -45,7 +55,6 @@ GALLERY_DIR.mkdir(exist_ok=True)
 # Global variables for models and state
 sdxl_pipe = None
 ollama_model = None
-chat_history_store = {}
 model_status = {"sdxl": False, "ollama": False, "multimodal": False}
 
 # MCP Server Models
@@ -65,326 +74,6 @@ class ChatRequest(BaseModel):
 class AnalyzeImageRequest(BaseModel):
     image_base64: str
     question: str = "Describe this image in detail"
-
-# Initialize Stable Diffusion XL with error handling
-def init_sdxl():
-    global sdxl_pipe, model_status
-    try:
-        if not os.path.exists(MODEL_PATHS["sd_model"]):
-            logger.error(f"SDXL model not found: {MODEL_PATHS['sd_model']}")
-            return None
-        
-        logger.info("Loading Stable Diffusion XL model...")
-        pipe = StableDiffusionXLPipeline.from_single_file(
-            MODEL_PATHS["sd_model"],
-            torch_dtype=torch.float16,
-            variant="fp16",
-            use_safetensors=True
-        )
-        
-        if torch.cuda.is_available():
-            pipe.to("cuda")
-            pipe.enable_model_cpu_offload()
-            logger.info("SDXL loaded on GPU")
-        else:
-            logger.warning("CUDA not available, using CPU")
-        
-        model_status["sdxl"] = True
-        return pipe
-    except Exception as e:
-        logger.error(f"Failed to initialize SDXL: {e}")
-        model_status["sdxl"] = False
-        return None
-
-# Initialize Ollama connection
-def init_ollama():
-    global ollama_model, model_status
-    try:
-        # Test Ollama connection
-        response = requests.get(f"{MODEL_PATHS['ollama_base_url']}/api/tags", timeout=5)
-        
-        if response.status_code != 200:
-            logger.error("Ollama server not responding")
-            return None
-        
-        available_models = response.json().get('models', [])
-        model_names = [m['name'] for m in available_models]
-        
-        logger.info(f"Available Ollama models: {model_names}")
-        
-        # Check if specified model exists
-        target_model = MODEL_PATHS["ollama_model"]
-        if not any(target_model in name for name in model_names):
-            logger.error(f"Model '{target_model}' not found in Ollama. Available: {model_names}")
-            return None
-        
-        # Test model with a simple prompt
-        test_data = {
-            "model": target_model,
-            "messages": [{"role": "user", "content": "Hi"}],
-            "stream": False
-        }
-        
-        test_response = requests.post(
-            f"{MODEL_PATHS['ollama_base_url']}/api/chat",
-            json=test_data,
-            timeout=30
-        )
-        
-        if test_response.status_code == 200:
-            model_status["ollama"] = True
-            # Check if model supports vision (multimodal)
-            model_status["multimodal"] = "vision" in target_model.lower() or "llava" in target_model.lower()
-            logger.info(f"Ollama model '{target_model}' loaded successfully!")
-            return target_model
-        else:
-            logger.error(f"Failed to test Ollama model: {test_response.text}")
-            return None
-        
-    except Exception as e:
-        logger.error(f"Failed to initialize Ollama: {e}")
-        model_status["ollama"] = False
-        return None
-
-# Save image to gallery
-def save_to_gallery(image: Image.Image, prompt: str, metadata: dict = None) -> str:
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{timestamp}_{uuid.uuid4().hex[:8]}.png"
-    filepath = GALLERY_DIR / filename
-    
-    # Save image
-    image.save(filepath)
-    
-    # Save metadata
-    metadata_file = filepath.with_suffix('.json')
-    metadata_info = {
-        "prompt": prompt,
-        "timestamp": timestamp,
-        "filename": filename,
-        **(metadata or {})
-    }
-    
-    with open(metadata_file, 'w') as f:
-        json.dump(metadata_info, f, indent=2)
-    
-    return str(filepath)
-
-# Generate image from prompt
-def generate_image(prompt, negative_prompt="", steps=30, guidance=7.5, seed=-1, save_to_gallery_flag=True):
-    global sdxl_pipe
-    
-    if not sdxl_pipe:
-        return None, "❌ SDXL model not loaded. Please check your model path."
-    
-    try:
-        generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu")
-        if seed != -1:
-            generator.manual_seed(seed)
-        else:
-            seed = generator.initial_seed()
-        
-        logger.info(f"Generating image with prompt: {prompt[:50]}...")
-        
-        image = sdxl_pipe(
-            prompt,
-            negative_prompt=negative_prompt,
-            num_inference_steps=steps,
-            guidance_scale=guidance,
-            generator=generator
-        ).images[0]
-        
-        # Save to gallery
-        if save_to_gallery_flag:
-            filepath = save_to_gallery(image, prompt, {
-                "negative_prompt": negative_prompt,
-                "steps": steps,
-                "guidance": guidance,
-                "seed": seed
-            })
-            logger.info(f"Image saved to: {filepath}")
-        
-        return image, f"✅ Image generated successfully! Seed: {seed}"
-    
-    except Exception as e:
-        logger.error(f"Image generation failed: {e}")
-        return None, f"❌ Generation failed: {str(e)}"
-
-# Generate LLM response using Ollama
-def chat_completion(messages, temperature=0.7, max_tokens=256):
-    global ollama_model
-    
-    if not ollama_model:
-        return "❌ Ollama model not loaded. Please check your Ollama setup."
-    
-    try:
-        # Prepare request data for Ollama
-        data = {
-            "model": ollama_model,
-            "messages": messages,
-            "stream": False,
-            "options": {
-                "temperature": temperature,
-                "num_predict": max_tokens
-            }
-        }
-        
-        response = requests.post(
-            f"{MODEL_PATHS['ollama_base_url']}/api/chat",
-            json=data,
-            timeout=60
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            return result.get('message', {}).get('content', 'No response generated')
-        else:
-            logger.error(f"Ollama API error: {response.status_code} - {response.text}")
-            return f"❌ Chat completion failed: {response.status_code}"
-            
-    except Exception as e:
-        logger.error(f"Ollama completion failed: {e}")
-        return f"❌ Chat completion failed: {str(e)}"
-
-# Generate image prompt using LLM
-def generate_prompt(user_input):
-    if not user_input.strip():
-        return "Please enter a description first."
-    
-    system_prompt = """You are an expert AI art prompt specialist. Create detailed, creative prompts for image generation.
-    
-Guidelines:
-- Include artistic style, lighting, composition details
-- Add quality enhancers like "masterpiece, best quality, highly detailed"
-- Describe colors, mood, and atmosphere
-- Keep prompts under 200 words
-- Make them vivid and specific
-
-User request:"""
-    
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_input}
-    ]
-    
-    enhanced = chat_completion(messages, temperature=0.8)
-    return enhanced if not enhanced.startswith("❌") else user_input
-
-# Handle chat with session management
-def handle_chat(message, session_id="default", chat_history=None):
-    print(f"DEBUG: handle_chat called with message: '{message}'")
-    
-    if not message.strip():
-        return chat_history or [], ""
-    
-    # Initialize session if needed
-    if session_id not in chat_history_store:
-        chat_history_store[session_id] = []
-    
-    # Check for image generation command
-    if message.lower().startswith("#generate") or "generate image" in message.lower():
-        clean_prompt = message.replace("#generate", "").replace("generate image", "").strip()
-        if not clean_prompt:
-            response = "Please provide a description for the image you want to generate."
-        else:
-            enhanced_prompt = generate_prompt(clean_prompt)
-            response = f"🎨 I'll create an image with this enhanced prompt:\n\n'{enhanced_prompt}'\n\nGenerating now..."
-            
-            # Trigger image generation
-            image, status = generate_image(enhanced_prompt)
-            if image:
-                response += f"\n\n{status}"
-            else:
-                response += f"\n\n{status}"
-    else:
-        # Normal chat
-        print(f"DEBUG: Starting normal chat for message: '{message}'")
-        system_prompt = "You are a helpful AI assistant specializing in creative tasks and image generation. Be friendly and informative."
-        messages = [{"role": "system", "content": system_prompt}]
-        
-        # Add recent chat history for context
-        recent_history = chat_history_store[session_id][-10:]  # Last 10 messages
-        for msg in recent_history:
-            messages.extend([
-                {"role": "user", "content": msg[0]},
-                {"role": "assistant", "content": msg[1]}
-            ])
-        
-        messages.append({"role": "user", "content": message})
-        print(f"DEBUG: About to call chat_completion")
-        response = chat_completion(messages)
-        print(f"DEBUG: Got response: {response[:100]}...")
-        
-        # Clean up the response - remove thinking tags for display
-        if "<think>" in response and "</think>" in response:
-            # Extract just the actual response after </think>
-            parts = response.split("</think>")
-            if len(parts) > 1:
-                response = parts[-1].strip()
-    
-    # Update chat history
-    chat_history_store[session_id].append((message, response))
-    
-    # Return as list of tuples for compatibility
-    if chat_history is None:
-        chat_history = []
-    
-    chat_history.append([message, response])  # Use list format instead of tuple
-    return chat_history, ""
-
-# Analyze image with Ollama vision models
-def analyze_image(image, question="Describe this image in detail"):
-    global ollama_model
-    
-    if not image:
-        return "Please upload an image first."
-    
-    if not ollama_model or not model_status["multimodal"]:
-        return "❌ Ollama vision model not available. Please use a vision-capable model like 'llava' or 'bakllava'."
-    
-    try:
-        # Convert image to base64
-        buffered = io.BytesIO()
-        image.save(buffered, format="PNG")
-        img_base64 = base64.b64encode(buffered.getvalue()).decode()
-        
-        # Prepare request for Ollama vision model
-        data = {
-            "model": ollama_model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": question,
-                    "images": [img_base64]
-                }
-            ],
-            "stream": False
-        }
-        
-        response = requests.post(
-            f"{MODEL_PATHS['ollama_base_url']}/api/chat",
-            json=data,
-            timeout=60
-        )
-        
-        if response.status_code == 200:
-            result = response.json()
-            return result.get('message', {}).get('content', 'No analysis generated')
-        else:
-            logger.error(f"Ollama vision API error: {response.status_code} - {response.text}")
-            return f"❌ Analysis failed: {response.status_code}"
-    
-    except Exception as e:
-        logger.error(f"Image analysis failed: {e}")
-        return f"❌ Analysis failed: {str(e)}"
-
-# Get model status
-def get_model_status():
-    status_text = "🤖 **Model Status:**\n"
-    status_text += f"• SDXL: {'✅ Loaded' if model_status['sdxl'] else '❌ Not loaded'}\n"
-    status_text += f"• Ollama: {'✅ Connected' if model_status['ollama'] else '❌ Not connected'}\n"
-    status_text += f"• Vision: {'✅ Available' if model_status['multimodal'] else '❌ Not available'}\n"
-    status_text += f"• CUDA: {'✅ Available' if torch.cuda.is_available() else '❌ Not available'}"
-    return status_text
 
 # Initialize models
 logger.info("Initializing models...")
@@ -406,28 +95,38 @@ async def server_status():
 async def mcp_generate_image(request: GenerateImageRequest):
     if not sdxl_pipe:
         raise HTTPException(status_code=503, detail="SDXL model not available")
-    
-    image, status = generate_image(
-        request.prompt,
-        request.negative_prompt,
-        request.steps,
-        request.guidance,
-        request.seed
-    )
-    
-    if image:
-        # Convert to base64 for API response
-        buffered = io.BytesIO()
-        image.save(buffered, format="PNG")
-        img_base64 = base64.b64encode(buffered.getvalue()).decode()
-        
-        return {
-            "success": True,
-            "image_base64": img_base64,
-            "message": status
-        }
-    else:
-        raise HTTPException(status_code=500, detail=status)
+
+    try:
+        image, status = generate_image(
+            sdxl_pipe,
+            request.prompt,
+            request.negative_prompt,
+            request.steps,
+            request.guidance,
+            request.seed,
+            gallery_dir=GALLERY_DIR,
+        )
+
+        if image:
+            buffered = io.BytesIO()
+            image.save(buffered, format="PNG")
+            img_base64 = base64.b64encode(buffered.getvalue()).decode()
+
+            return {
+                "success": True,
+                "image_base64": img_base64,
+                "message": status,
+            }
+        else:
+            if "out of memory" in status.lower():
+                raise HTTPException(status_code=507, detail=status)
+            else:
+                raise HTTPException(status_code=500, detail=status)
+    except Exception as e:
+        if "out of memory" in str(e).lower():
+            raise HTTPException(status_code=507, detail=f"CUDA out of memory: {str(e)}")
+        else:
+            raise HTTPException(status_code=500, detail=f"Generation failed: {str(e)}")
 
 @app.post("/chat")
 async def mcp_chat(request: ChatRequest):
@@ -435,7 +134,13 @@ async def mcp_chat(request: ChatRequest):
         raise HTTPException(status_code=503, detail="Ollama model not available")
     
     messages = [{"role": "user", "content": request.message}]
-    response = chat_completion(messages, request.temperature, request.max_tokens)
+    response = chat_completion(
+        ollama_model,
+        MODEL_PATHS["ollama_base_url"],
+        messages,
+        request.temperature,
+        request.max_tokens,
+    )
     
     return {
         "response": response,
@@ -452,7 +157,12 @@ async def mcp_analyze_image(request: AnalyzeImageRequest):
         image_data = base64.b64decode(request.image_base64)
         image = Image.open(io.BytesIO(image_data))
         
-        analysis = analyze_image(image, request.question)
+        analysis = analyze_image(
+            ollama_model,
+            MODEL_PATHS["ollama_base_url"],
+            image,
+            request.question,
+        )
         return {"analysis": analysis}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid image data: {str(e)}")
@@ -464,7 +174,7 @@ def create_gradio_app():
         gr.Markdown("Generate amazing art with AI! Powered by Stable Diffusion XL and local LLMs.")
         
         # Model status display
-        status_display = gr.Markdown(get_model_status())
+        status_display = gr.Markdown(get_model_status(model_status))
         
         with gr.Tab("🎨 Text-to-Image"):
             with gr.Row():
@@ -567,14 +277,33 @@ def create_gradio_app():
             """)
         
         # Event handlers
+        def enhance_prompt_wrapper(text):
+            return generate_prompt(
+                ollama_model,
+                MODEL_PATHS["ollama_base_url"],
+                text,
+            )
+
         enhance_btn.click(
-            fn=generate_prompt,
+            fn=enhance_prompt_wrapper,
             inputs=prompt,
             outputs=prompt
         )
         
+        def generate_image_wrapper(p, n, s, g, seed_val, save_flag):
+            return generate_image(
+                sdxl_pipe,
+                p,
+                n,
+                s,
+                g,
+                seed_val,
+                save_flag,
+                gallery_dir=GALLERY_DIR,
+            )
+
         generate_btn.click(
-            fn=generate_image,
+            fn=generate_image_wrapper,
             inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery],
             outputs=[output_image, generation_status]
         )
@@ -599,37 +328,59 @@ def create_gradio_app():
             if not message.strip():
                 return history or [], ""
             print(f"DEBUG: Chat wrapper called with message: {message}")
-            
-            # Call the chat function - it returns list of [user, assistant] pairs
-            result_history, empty_msg = handle_chat(message, session_id="default", chat_history=history)
-            
+
+            result_history, empty_msg = handle_chat(
+                ollama_model,
+                MODEL_PATHS["ollama_base_url"],
+                message,
+                session_id="default",
+                chat_history=history,
+                pipe=sdxl_pipe,
+                gallery_dir=GALLERY_DIR,
+            )
+
             return result_history, ""
+
+        def chat_wrapper_with_image_update(message, history):
+            result_history, empty_msg = chat_wrapper(message, history)
+            if message.lower().startswith("#generate") or "generate image" in message.lower():
+                return result_history, empty_msg, get_latest_image()
+            else:
+                return result_history, empty_msg, gr.update()
         
         send_btn.click(
-            fn=chat_wrapper,
+            fn=chat_wrapper_with_image_update,
             inputs=[msg, chatbot],
-            outputs=[chatbot, msg]
+            outputs=[chatbot, msg, output_image]
         )
-        
+
         msg.submit(
-            fn=chat_wrapper,
+            fn=chat_wrapper_with_image_update,
             inputs=[msg, chatbot],
-            outputs=[chatbot, msg]
+            outputs=[chatbot, msg, output_image]
         )
         
         clear_btn.click(lambda: ([], ""), outputs=[chatbot, msg])
         
         # Analysis handler
         if model_status["multimodal"]:
+            def analyze_wrapper(img, q):
+                return analyze_image(
+                    ollama_model,
+                    MODEL_PATHS["ollama_base_url"],
+                    img,
+                    q,
+                )
+
             analyze_btn.click(
-                fn=analyze_image,
+                fn=analyze_wrapper,
                 inputs=[input_image, analysis_question],
                 outputs=analysis_output
             )
         
         # Status refresh
         refresh_btn.click(
-            fn=get_model_status,
+            fn=lambda: get_model_status(model_status),
             outputs=status_display
         )
     
