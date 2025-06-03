@@ -20,16 +20,19 @@ def test_status_endpoint():
     print("Testing status endpoint...")
     try:
         response = requests.get(f"{BASE_URL}/status", timeout=TIMEOUT)
-        response.raise_for_status()
-        status = response.json()
-        
-        print(f"Status: {status['status']}")
-        print(f"Models: {status['models']}")
-        print(f"CUDA Available: {status['cuda_available']}")
-        return status
     except requests.exceptions.RequestException as e:
-        print(f"Status endpoint failed: {e}")
-        return None
+        raise AssertionError(f"Status endpoint request failed: {e}")
+
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+    status = response.json()
+
+    for key in ("status", "models", "cuda_available"):
+        assert key in status, f"Missing '{key}' in status response"
+
+    print(f"Status: {status['status']}")
+    print(f"Models: {status['models']}")
+    print(f"CUDA Available: {status['cuda_available']}")
+    return status
 
 def test_image_generation():
     """Test image generation endpoint with various prompts."""
@@ -60,24 +63,24 @@ def test_image_generation():
                 json=test_data,
                 timeout=TIMEOUT
             )
-            response.raise_for_status()
-            result = response.json()
-            
-            if result['success']:
-                print(f"Image generated successfully!")
-                print(f"Message: {result.get('message', 'No message')}")
-                
-                # Optionally save the image
-                if 'image_base64' in result:
-                    image_data = base64.b64decode(result['image_base64'])
-                    with open(f"test_output_{i}.png", "wb") as f:
-                        f.write(image_data)
-                    print(f"Saved as test_output_{i}.png")
-            else:
-                print(f"Generation failed: {result.get('message', 'Unknown error')}")
-                
         except requests.exceptions.RequestException as e:
-            print(f"Request failed: {e}")
+            raise AssertionError(f"Image generation request failed: {e}")
+
+        assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+        result = response.json()
+
+        assert 'success' in result, "Missing 'success' key in image generation response"
+        assert result['success'], f"Generation failed: {result.get('message', 'Unknown error')}"
+
+        print("Image generated successfully!")
+        print(f"Message: {result.get('message', 'No message')}")
+
+        # Optionally save the image
+        if 'image_base64' in result:
+            image_data = base64.b64decode(result['image_base64'])
+            with open(f"test_output_{i}.png", "wb") as f:
+                f.write(image_data)
+            print(f"Saved as test_output_{i}.png")
 
 def test_chat_endpoint():
     """Test chat endpoint with various messages."""
@@ -108,14 +111,17 @@ def test_chat_endpoint():
                 json=test_data,
                 timeout=TIMEOUT
             )
-            response.raise_for_status()
-            result = response.json()
-            
-            print(f"Response: {result['response'][:100]}...")
-            print(f"Session: {result['session_id']}")
-            
         except requests.exceptions.RequestException as e:
-            print(f"Chat request failed: {e}")
+            raise AssertionError(f"Chat request failed: {e}")
+
+        assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+        result = response.json()
+
+        for key in ("response", "session_id"):
+            assert key in result, f"Missing '{key}' in chat response"
+
+        print(f"Response: {result['response'][:100]}...")
+        print(f"Session: {result['session_id']}")
 
 def test_image_analysis():
     """Test image analysis endpoint."""
@@ -138,13 +144,14 @@ def test_image_analysis():
             json=test_data,
             timeout=TIMEOUT
         )
-        response.raise_for_status()
-        result = response.json()
-        
-        print(f"Analysis: {result['analysis']}")
-        
     except requests.exceptions.RequestException as e:
-        print(f"Image analysis failed: {e}")
+        raise AssertionError(f"Image analysis request failed: {e}")
+
+    assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
+    result = response.json()
+
+    assert 'analysis' in result, "Missing 'analysis' key in image analysis response"
+    print(f"Analysis: {result['analysis']}")
 
 def main():
     """Run all API tests."""
@@ -153,9 +160,6 @@ def main():
     
     # Test server status first
     status = test_status_endpoint()
-    if not status:
-        print("Server is not responding. Make sure the application is running on port 8000.")
-        return
     
     # Check if models are loaded
     if not status['models'].get('sdxl', False):
