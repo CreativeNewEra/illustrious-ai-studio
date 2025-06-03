@@ -1,4 +1,3 @@
-"""Alternate entry point for Illustrious AI Studio."""
 import logging
 import threading
 
@@ -10,9 +9,13 @@ from core.ollama import init_ollama
 logger = logging.getLogger(__name__)
 
 
-if __name__ == "__main__":
+def initialize_models():
     init_sdxl()
     init_ollama()
+
+
+if __name__ == "__main__":
+    initialize_models()
     mcp_thread = threading.Thread(target=run_mcp_server, daemon=True)
     mcp_thread.start()
     logger.info("MCP Server started on http://localhost:8000")
