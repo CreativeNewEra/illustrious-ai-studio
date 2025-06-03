@@ -127,3 +127,15 @@ def generate_image(
 def get_latest_image(state: AppState) -> Optional[Image.Image]:
     """Return the last generated image."""
     return state.latest_generated_image
+
+
+def switch_sdxl_model(state: AppState, path: str) -> bool:
+    """Switch to a different SDXL checkpoint."""
+    if not os.path.exists(path):
+        logger.error("SDXL model not found: %s", path)
+        return False
+    state.sdxl_pipe = None
+    clear_cuda_memory()
+    CONFIG.sd_model = path
+    logger.info("Switching SDXL model to %s", path)
+    return init_sdxl(state) is not None

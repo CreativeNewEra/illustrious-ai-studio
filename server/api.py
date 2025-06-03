@@ -34,6 +34,11 @@ class AnalyzeImageRequest(BaseModel):
     question: str = "Describe this image in detail"
 
 
+class SwitchModelsRequest(BaseModel):
+    sd_model: str | None = None
+    ollama_model: str | None = None
+
+
 def create_api_app(state: AppState) -> FastAPI:
     app = FastAPI(title="Illustrious AI MCP Server", version="1.0.0")
     app.state.app_state = state
@@ -95,6 +100,15 @@ def create_api_app(state: AppState) -> FastAPI:
             raise HTTPException(status_code=400, detail=f"Invalid image data: {e}")
         analysis = analyze_image(state, image, request.question)
         return {"analysis": analysis}
+
+    @app.post("/switch-models")
+    async def mcp_switch_models(request: SwitchModelsRequest, state: AppState = Depends(get_state)):
+        result = {}
+        if request.sd_model:
+            result["sdxl"] = sdxl.switch_sdxl_model(state, request.sd_model)
+        if request.ollama_model:
+            result["ollama"] = ollama.switch_ollama_model(state, request.ollama_model)
+        return {"models": state.model_status, **result}
 
     return app
 

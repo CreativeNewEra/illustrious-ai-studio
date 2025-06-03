@@ -8,6 +8,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **SDXL Image Generation**: High-quality 1024x1024 image generation using Stable Diffusion XL
 - **Ollama LLM Chat**: Interactive chat with local language models
 - **Cross-Tab Integration**: Generate images directly from chat using `#generate` commands
+- **Dynamic Model Switching**: Swap SDXL or Ollama models without restarting
 
 ### 🚀 **Advanced Memory Management**
 - **Automatic CUDA Memory Management**: Smart memory clearing and retry logic
@@ -134,6 +135,13 @@ curl -X POST http://localhost:8000/chat \
 curl http://localhost:8000/status
 ```
 
+#### Switch Models
+```bash
+curl -X POST http://localhost:8000/switch-models \
+  -H "Content-Type: application/json" \
+  -d '{"sd_model": "/path/to/model.safetensors", "ollama_model": "qwen:7b"}'
+```
+
 ## 🧪 Testing
 
 ### Automated Testing
@@ -210,6 +218,7 @@ Project/
 | `/generate-image` | POST | Generate images with SDXL |
 | `/chat` | POST | Chat with Ollama LLM |
 | `/analyze-image` | POST | Analyze images (if vision model available) |
+| `/switch-models` | POST | Switch SDXL and/or Ollama models |
 
 ### Response Codes
 - `200`: Success
