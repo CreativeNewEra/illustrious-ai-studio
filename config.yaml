@@ -1,3 +1,3 @@
-sd_model: "/home/ant/AI/Project/SDXL Models/waiNSFWIllustrious_v140.safetensors"
+sd_model: "/path/to/sdxl-model.safetensors"
 ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
 ollama_base_url: "http://localhost:11434"
