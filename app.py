@@ -27,7 +27,7 @@ import uvicorn
 import requests
 
 # Configure logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Set PyTorch memory allocation configuration to reduce fragmentation
@@ -324,7 +324,7 @@ User request:"""
 
 # Handle chat with session management
 def handle_chat(message, session_id="default", chat_history=None):
-    print(f"DEBUG: handle_chat called with message: '{message}'")
+    logger.debug(f"handle_chat called with message: '{message}'")
     
     if not message.strip():
         return chat_history or [], ""
@@ -362,7 +362,7 @@ def handle_chat(message, session_id="default", chat_history=None):
                 response += f"\n\n{status}"
     else:
         # Normal chat
-        print(f"DEBUG: Starting normal chat for message: '{message}'")
+        logger.debug(f"Starting normal chat for message: '{message}'")
         system_prompt = "You are a helpful AI assistant specializing in creative tasks and image generation. Be friendly and informative."
         messages = [{"role": "system", "content": system_prompt}]
         
@@ -375,9 +375,9 @@ def handle_chat(message, session_id="default", chat_history=None):
             ])
         
         messages.append({"role": "user", "content": message})
-        print(f"DEBUG: About to call chat_completion")
+        logger.debug("About to call chat_completion")
         response = chat_completion(messages)
-        print(f"DEBUG: Got response: {response[:100]}...")
+        logger.debug(f"Got response: {response[:100]}...")
         
         # Clean up the response - remove thinking tags for display
         if "<think>" in response and "</think>" in response:
@@ -698,7 +698,7 @@ def create_gradio_app():
         def chat_wrapper(message, history):
             if not message.strip():
                 return history or [], ""
-            print(f"DEBUG: Chat wrapper called with message: {message}")
+            logger.debug(f"Chat wrapper called with message: {message}")
             
             # Call the chat function - it returns list of [user, assistant] pairs
             result_history, empty_msg = handle_chat(message, session_id="default", chat_history=history)
