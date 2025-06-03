@@ -56,12 +56,13 @@ def dummy_analyze_image(image, question=""):
 @pytest.fixture(autouse=True)
 def setup_app(monkeypatch):
     app = load_app()
-    monkeypatch.setattr(app, 'sdxl_pipe', DummyPipe())
-    monkeypatch.setattr(app, 'ollama_model', 'dummy')
+    monkeypatch.setattr(app.sdxl, 'sdxl_pipe', DummyPipe())
+    monkeypatch.setattr(app.ollama, 'ollama_model', 'dummy')
     app.model_status.update({'sdxl': True, 'ollama': True, 'multimodal': True})
-    monkeypatch.setattr(app, 'generate_image', lambda *a, **k: (Image.new('RGB',(64,64),'blue'), 'done'))
-    monkeypatch.setattr(app, 'chat_completion', dummy_chat_completion)
-    monkeypatch.setattr(app, 'analyze_image', dummy_analyze_image)
+    import server.api as api
+    monkeypatch.setattr(api, 'generate_image', lambda *a, **k: (Image.new('RGB',(64,64),'blue'), 'done'))
+    monkeypatch.setattr(api, 'chat_completion', dummy_chat_completion)
+    monkeypatch.setattr(api, 'analyze_image', dummy_analyze_image)
     monkeypatch.setattr(app, 'clear_cuda_memory', lambda: None)
     monkeypatch.setattr(sys.modules['__main__'], 'app', app, raising=False)
     yield
