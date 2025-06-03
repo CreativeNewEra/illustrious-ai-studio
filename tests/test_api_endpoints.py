@@ -143,3 +143,15 @@ def test_analyze_image_invalid_input():
     app.app_state.model_status['multimodal'] = True
     resp = client.post('/analyze-image', json={"image_base64": "notbase64"})
     assert resp.status_code == 400
+
+
+def test_switch_models_endpoint(monkeypatch):
+    client = get_client()
+    calls = {}
+    import server.api as api
+    monkeypatch.setattr(api.sdxl, 'switch_sdxl_model', lambda state, p: calls.setdefault('sdxl', p) or True)
+    monkeypatch.setattr(api.ollama, 'switch_ollama_model', lambda state, n: calls.setdefault('ollama', n) or True)
+    resp = client.post('/switch-models', json={"sd_model": "a", "ollama_model": "b"})
+    assert resp.status_code == 200
+    assert calls['sdxl'] == 'a'
+    assert calls['ollama'] == 'b'

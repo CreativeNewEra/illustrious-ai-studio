@@ -63,6 +63,10 @@ def create_gradio_app(state: AppState):
         with gr.Tab("📊 System Info"):
             gr.Markdown("### Model Configuration")
             config_display = gr.Code(value=json.dumps(CONFIG.as_dict(), indent=2), language="json", label="Configuration")
+            with gr.Row():
+                sd_model_input = gr.Textbox(value=CONFIG.sd_model, label="SDXL Model Path")
+                ollama_model_input = gr.Textbox(value=CONFIG.ollama_model, label="Ollama Model")
+            switch_btn = gr.Button("🔄 Switch Models", variant="primary")
             refresh_btn = gr.Button("🔄 Refresh Status", variant="secondary")
             gr.Markdown("### CUDA Memory Management")
             gr.Markdown(
@@ -119,5 +123,12 @@ def create_gradio_app(state: AppState):
         clear_btn.click(lambda: ([], ""), outputs=[chatbot, msg])
         if state.model_status["multimodal"]:
             analyze_btn.click(fn=lambda img, q: analyze_image(state, img, q), inputs=[input_image, analysis_question], outputs=analysis_output)
+        def do_switch(sd_path, ollama_name):
+            if sd_path:
+                sdxl.switch_sdxl_model(state, sd_path)
+            if ollama_name:
+                ollama.switch_ollama_model(state, ollama_name)
+            return get_model_status(state), json.dumps(CONFIG.as_dict(), indent=2)
+        switch_btn.click(fn=do_switch, inputs=[sd_model_input, ollama_model_input], outputs=[status_display, config_display])
         refresh_btn.click(fn=lambda: get_model_status(state), outputs=status_display)
     return demo

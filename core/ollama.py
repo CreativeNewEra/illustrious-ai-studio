@@ -55,6 +55,17 @@ def _get_model_path() -> str:
     return CONFIG.ollama_model
 
 
+def switch_ollama_model(state: AppState, name: str) -> bool:
+    """Switch the active Ollama model."""
+    state.ollama_model = None
+    state.model_status["ollama"] = False
+    state.model_status["multimodal"] = False
+    state.chat_history_store.clear()
+    CONFIG.ollama_model = name
+    logger.info("Switching Ollama model to %s", name)
+    return init_ollama(state) is not None
+
+
 def chat_completion(state: AppState, messages: List[dict], temperature: float = 0.7, max_tokens: int = 256) -> str:
     if not state.ollama_model:
         return "❌ Ollama model not loaded. Please check your Ollama setup."
