@@ -389,11 +389,11 @@ def handle_chat(message, session_id="default", chat_history=None):
     # Update chat history
     chat_history_store[session_id].append((message, response))
     
-    # Return as list of tuples for compatibility
+    # Return chat history as a list of two-element lists
     if chat_history is None:
         chat_history = []
     
-    chat_history.append([message, response])  # Use list format instead of tuple
+    chat_history.append([message, response])  # Function returns [[msg, resp], ...]
     return chat_history, ""
 
 # Analyze image with Ollama vision models
