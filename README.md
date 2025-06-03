@@ -17,7 +17,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 
 ### 🌐 **Dual Interface**
 - **Gradio Web UI** (Port 7860): Interactive web interface with tabs for image generation, chat, and analysis
-- **FastAPI MCP Server** (Port 7860): RESTful API for programmatic access and integration
+ - **FastAPI MCP Server** (Port 8000): RESTful API for programmatic access and integration
 
 ### 📸 **Gallery & Session Management**
 - **Automatic Gallery**: All generated images saved with metadata to `/tmp/illustrious_ai/gallery/`

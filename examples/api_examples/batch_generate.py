@@ -76,7 +76,7 @@ def generate_single_image(prompt_data, counter, output_dir):
 
 def batch_generate_character_series():
     """Generate a series of character portraits with consistent style."""
-    print("=e Generating character portrait series...")
+    print("Generating character portrait series...")
     
     base_style = "portrait, detailed face, studio lighting, masterpiece, best quality"
     negative = "blurry, low quality, bad anatomy, deformed face"

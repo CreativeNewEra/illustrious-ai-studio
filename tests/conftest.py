@@ -44,3 +44,17 @@ def stub_dependencies():
         sys.modules['diffusers'] = diff
     if 'uvicorn' not in sys.modules:
         sys.modules['uvicorn'] = types.ModuleType('uvicorn')
+    if 'requests' not in sys.modules:
+        requests = types.ModuleType('requests')
+        class DummyResponse:
+            status_code = 200
+            text = ''
+            def json(self):
+                return {'models': []}
+        def dummy_get(*args, **kwargs):
+            return DummyResponse()
+        def dummy_post(*args, **kwargs):
+            return DummyResponse()
+        requests.get = dummy_get
+        requests.post = dummy_post
+        sys.modules['requests'] = requests
