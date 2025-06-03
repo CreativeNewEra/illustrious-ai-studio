@@ -119,3 +119,27 @@ def test_concurrent_requests():
         futures = [ex.submit(send, i) for i in range(10)]
         results = [f.result() for f in as_completed(futures)]
     assert all(r == 200 for r in results)
+
+def test_generate_image_endpoint_no_model():
+    app = load_app()
+    app.app_state.sdxl_pipe = None
+    client = TestClient(app.app)
+    resp = client.post('/generate-image', json={"prompt": "x"})
+    assert resp.status_code == 503
+
+
+def test_chat_endpoint_no_model():
+    app = load_app()
+    app.app_state.ollama_model = None
+    client = TestClient(app.app)
+    resp = client.post('/chat', json={"message": "hi"})
+    assert resp.status_code == 503
+
+
+def test_analyze_image_invalid_input():
+    app = load_app()
+    client = TestClient(app.app)
+    app.app_state.ollama_model = 'dummy'
+    app.app_state.model_status['multimodal'] = True
+    resp = client.post('/analyze-image', json={"image_base64": "notbase64"})
+    assert resp.status_code == 400
