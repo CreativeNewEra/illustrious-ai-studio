@@ -144,6 +144,12 @@ curl -X POST http://localhost:8000/switch-models \
 
 ## 🧪 Testing
 
+Before running the test suite, install the dependencies:
+```bash
+pip install -r requirements.txt httpx
+```
+Skipping these installations will result in import errors when running `pytest`.
+
 ### Automated Testing
 ```bash
 cd examples/api_examples
