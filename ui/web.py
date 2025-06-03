@@ -4,7 +4,8 @@ import uuid
 
 import gradio as gr
 
-from core.sdxl import generate_image, MODEL_PATHS, TEMP_DIR, get_latest_image
+from core.sdxl import generate_image, TEMP_DIR, get_latest_image
+from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image
 from core.memory import model_status, get_model_status
 
@@ -60,7 +61,7 @@ def create_gradio_app():
                 gr.Markdown("Please ensure you have a multimodal LLM and mmproj model configured.")
         with gr.Tab("📊 System Info"):
             gr.Markdown("### Model Configuration")
-            config_display = gr.Code(value=json.dumps(MODEL_PATHS, indent=2), language="json", label="Model Paths")
+            config_display = gr.Code(value=json.dumps(CONFIG.as_dict(), indent=2), language="json", label="Configuration")
             refresh_btn = gr.Button("🔄 Refresh Status", variant="secondary")
             gr.Markdown("### CUDA Memory Management")
             gr.Markdown(
