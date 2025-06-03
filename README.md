@@ -54,7 +54,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
    ```
 
 4. **Configure models**
-   Edit `config.yaml` or set environment variables:
+   Copy `config.yaml` to your workspace and edit it or set environment variables:
    ```yaml
    sd_model: "/path/to/your/sdxl-model.safetensors"
    ollama_model: "qwen2.5:7b"  # Your Ollama model
@@ -151,7 +151,7 @@ python examples/api_examples/batch_generate.py
 ## ⚙️ Configuration
 
 ### Model Paths
-Edit `config.yaml` to set your model locations or use environment variables:
+Copy `config.yaml` and adjust the paths to your environment, or use environment variables:
 - `sd_model` (`SD_MODEL`): Path to SDXL .safetensors file
 - `ollama_model` (`OLLAMA_MODEL`): Ollama model name
 - `ollama_base_url` (`OLLAMA_BASE_URL`): Ollama server URL
