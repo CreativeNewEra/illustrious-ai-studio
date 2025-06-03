@@ -1,0 +1,120 @@
+import base64
+import io
+from PIL import Image
+from fastapi.testclient import TestClient
+import types
+import importlib
+import sys
+import pytest
+
+def load_app():
+    import os
+    if os.getcwd() not in sys.path:
+        sys.path.insert(0, os.getcwd())
+    if 'gradio' not in sys.modules:
+        sys.modules['gradio'] = types.ModuleType('gradio')
+    if 'diffusers' not in sys.modules:
+        diff = types.ModuleType('diffusers')
+        diff.StableDiffusionXLPipeline = object
+        sys.modules['diffusers'] = diff
+    if 'torch' not in sys.modules:
+        torch = types.ModuleType('torch')
+        class DummyCuda:
+            @staticmethod
+            def is_available():
+                return False
+            @staticmethod
+            def empty_cache():
+                pass
+            @staticmethod
+            def synchronize():
+                pass
+        torch.cuda = DummyCuda()
+        class DummyGenerator:
+            def __init__(self, device=None):
+                pass
+            def manual_seed(self, seed):
+                pass
+            def initial_seed(self):
+                return 0
+        torch.Generator = DummyGenerator
+        torch.float16 = 'float16'
+        sys.modules['torch'] = torch
+    return importlib.import_module('app')
+
+# Dummy implementations
+class DummyPipe:
+    def __call__(self, *args, **kwargs):
+        return types.SimpleNamespace(images=[Image.new('RGB', (64, 64), 'blue')])
+
+def dummy_chat_completion(messages, temperature=0.7, max_tokens=256):
+    return "ok"
+
+def dummy_analyze_image(image, question=""): 
+    return "blue"
+
+@pytest.fixture(autouse=True)
+def setup_app(monkeypatch):
+    app = load_app()
+    monkeypatch.setattr(app, 'sdxl_pipe', DummyPipe())
+    monkeypatch.setattr(app, 'ollama_model', 'dummy')
+    app.model_status.update({'sdxl': True, 'ollama': True, 'multimodal': True})
+    monkeypatch.setattr(app, 'generate_image', lambda *a, **k: (Image.new('RGB',(64,64),'blue'), 'done'))
+    monkeypatch.setattr(app, 'chat_completion', dummy_chat_completion)
+    monkeypatch.setattr(app, 'analyze_image', dummy_analyze_image)
+    monkeypatch.setattr(app, 'clear_cuda_memory', lambda: None)
+    monkeypatch.setattr(sys.modules['__main__'], 'app', app, raising=False)
+    yield
+
+def get_client():
+    return TestClient(load_app().app)
+
+
+def test_status_endpoint():
+    client = get_client()
+    response = client.get('/status')
+    assert response.status_code == 200
+    assert response.json()['status'] == 'running'
+
+
+def test_generate_image_endpoint():
+    client = get_client()
+    data = {"prompt": "hi"}
+    resp = client.post('/generate-image', json=data)
+    assert resp.status_code == 200
+    result = resp.json()
+    assert result['success'] is True
+    assert 'image_base64' in result
+
+
+def test_chat_endpoint():
+    client = get_client()
+    data = {"message": "hello"}
+    resp = client.post('/chat', json=data)
+    assert resp.status_code == 200
+    assert resp.json()['response'] == 'ok'
+
+
+def test_analyze_image_endpoint():
+    client = get_client()
+    # create dummy image
+    img = Image.new('RGB', (10,10), 'blue')
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    encoded = base64.b64encode(buf.getvalue()).decode()
+    data = {"image_base64": encoded, "question": "what"}
+    resp = client.post('/analyze-image', json=data)
+    assert resp.status_code == 200
+    assert resp.json()['analysis'] == 'blue'
+
+
+def test_concurrent_requests():
+    client = get_client()
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    def send(i):
+        resp = client.post('/chat', json={"message": f"hi {i}"})
+        return resp.status_code
+    with ThreadPoolExecutor(max_workers=5) as ex:
+        futures = [ex.submit(send, i) for i in range(10)]
+        results = [f.result() for f in as_completed(futures)]
+    assert all(r == 200 for r in results)
