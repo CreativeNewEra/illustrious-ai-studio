@@ -2,11 +2,10 @@ import gc
 import logging
 import torch
 
+from .state import AppState
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
-
-model_status = {"sdxl": False, "ollama": False, "multimodal": False}
-latest_generated_image = None
 
 
 def clear_cuda_memory():
@@ -18,11 +17,11 @@ def clear_cuda_memory():
     logger.info("CUDA memory cleared and garbage collection performed")
 
 
-def get_model_status():
+def get_model_status(state: AppState) -> str:
     """Return formatted Markdown describing current model availability."""
     status_text = "🤖 **Model Status:**\n"
-    status_text += f"• SDXL: {'✅ Loaded' if model_status['sdxl'] else '❌ Not loaded'}\n"
-    status_text += f"• Ollama: {'✅ Connected' if model_status['ollama'] else '❌ Not connected'}\n"
-    status_text += f"• Vision: {'✅ Available' if model_status['multimodal'] else '❌ Not available'}\n"
+    status_text += f"• SDXL: {'✅ Loaded' if state.model_status['sdxl'] else '❌ Not loaded'}\n"
+    status_text += f"• Ollama: {'✅ Connected' if state.model_status['ollama'] else '❌ Not connected'}\n"
+    status_text += f"• Vision: {'✅ Available' if state.model_status['multimodal'] else '❌ Not available'}\n"
     status_text += f"• CUDA: {'✅ Available' if torch.cuda.is_available() else '❌ Not available'}"
     return status_text
