@@ -523,13 +523,22 @@ def get_latest_image():
     global latest_generated_image
     return latest_generated_image
 
-# Initialize models
-logger.info("Initializing models...")
-sdxl_pipe = init_sdxl()
-ollama_model = init_ollama()
+# Model initialization helper
+def initialize_models():
+    """Load SDXL and Ollama models at runtime."""
+    global sdxl_pipe, ollama_model
+    logger.info("Initializing models...")
+    sdxl_pipe = init_sdxl()
+    ollama_model = init_ollama()
 
 # MCP Server Implementation
 app = FastAPI(title="Illustrious AI MCP Server", version="1.0.0")
+
+@app.on_event("startup")
+async def startup_event():
+    """Load heavy models when the FastAPI app starts."""
+    if sdxl_pipe is None or ollama_model is None:
+        initialize_models()
 
 @app.get("/status")
 async def server_status():
@@ -822,6 +831,9 @@ def run_mcp_server():
 
 # Main execution
 if __name__ == "__main__":
+    # Initialize models before launching interfaces
+    initialize_models()
+
     # Start MCP server in background thread
     mcp_thread = threading.Thread(target=run_mcp_server, daemon=True)
     mcp_thread.start()
