@@ -29,7 +29,7 @@ class ProgressCounter:
     def increment(self):
         with self.lock:
             self.completed += 1
-            print(f"=Ê Progress: {self.completed}/{self.total} images completed")
+            print(f"= Progress: {self.completed}/{self.total} images completed")
 
 def generate_single_image(prompt_data, counter, output_dir):
     """Generate a single image with error handling."""
@@ -120,7 +120,7 @@ def batch_generate_character_series():
 
 def batch_generate_landscapes():
     """Generate a series of landscape images."""
-    print("< Generating landscape series...")
+    print("< Generating landscape series...")
     
     base_style = "landscape, detailed, atmospheric, masterpiece, best quality"
     negative = "blurry, low quality, people, buildings"
@@ -164,7 +164,7 @@ def batch_generate_landscapes():
 
 def batch_generate_style_variations():
     """Generate the same subject in different artistic styles."""
-    print("<¨ Generating style variation series...")
+    print("< Generating style variation series...")
     
     base_prompt = "beautiful woman with long hair"
     negative = "blurry, low quality, bad anatomy"
@@ -208,8 +208,8 @@ def batch_generate_style_variations():
 
 def run_batch_generation(prompts, series_name):
     """Run batch generation with concurrent processing."""
-    print(f"\n=€ Starting {series_name} batch generation...")
-    print(f"=Ë Total prompts: {len(prompts)}")
+    print(f"\n= Starting {series_name} batch generation...")
+    print(f"= Total prompts: {len(prompts)}")
     
     # Create output directory
     series_dir = os.path.join(OUTPUT_DIR, series_name)
@@ -239,11 +239,11 @@ def run_batch_generation(prompts, series_name):
     successful = sum(1 for r in results if r['success'])
     failed = len(results) - successful
     
-    print(f"\n=Ê {series_name} Batch Complete!")
-    print(f" Successful: {successful}")
+    print(f"\n= {series_name} Batch Complete!")
+    print(f" Successful: {successful}")
     print(f"L Failed: {failed}")
-    print(f"ñ  Total time: {end_time - start_time:.1f} seconds")
-    print(f"=Á Output saved to: {series_dir}")
+    print(f"  Total time: {end_time - start_time:.1f} seconds")
+    print(f"= Output saved to: {series_dir}")
     
     # Show any errors
     if failed > 0:
@@ -256,7 +256,7 @@ def run_batch_generation(prompts, series_name):
 
 def main():
     """Run batch generation examples."""
-    print("<¨ Illustrious AI Studio - Batch Generation Examples")
+    print("< Illustrious AI Studio - Batch Generation Examples")
     print("=" * 55)
     
     # Check server status
@@ -269,8 +269,8 @@ def main():
             print("L SDXL model not loaded. Cannot generate images.")
             return
             
-        print(f" Server status: {status['status']}")
-        print(f"<® CUDA available: {status['cuda_available']}")
+        print(f" Server status: {status['status']}")
+        print(f"< CUDA available: {status['cuda_available']}")
         
     except Exception as e:
         print(f"L Cannot connect to server: {e}")
@@ -288,11 +288,11 @@ def main():
         "4": ("All Examples", None)
     }
     
-    print("\n=Ë Available batch generation examples:")
+    print("\n= Available batch generation examples:")
     for key, (name, _) in batch_examples.items():
         print(f"  {key}. {name}")
     
-    choice = input("\n=" Choose an example (1-4): ").strip()
+    choice = input("\nChoose an example (1-4): ").strip()
     
     if choice == "4":
         # Run all examples
@@ -308,7 +308,7 @@ def main():
         print("L Invalid choice. Exiting.")
         return
     
-    print("\n Batch generation complete!")
+    print("\n Batch generation complete!")
 
 if __name__ == "__main__":
     main()
