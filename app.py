@@ -343,7 +343,10 @@ def handle_chat(message, session_id="default", chat_history=None):
             response = f"🎨 I'll create an image with this enhanced prompt:\n\n'{enhanced_prompt}'\n\nGenerating now..."
             
             # Trigger image generation
-            image, status = generate_image(enhanced_prompt)
+            # Generate the image without saving so we can capture the path once
+            # here. generate_image already stores the latest image in the global
+            # state.
+            image, status = generate_image(enhanced_prompt, save_to_gallery_flag=False)
             if image:
                 # Save the image and get the path
                 saved_path = save_to_gallery(image, enhanced_prompt, {
