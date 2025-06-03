@@ -83,19 +83,16 @@ ollama pull llava:latest
 ```
 
 ### **4. Download SDXL Model**
-Download your preferred Stable Diffusion XL model (.safetensors format):
-- Place in `/path/to/your/models/` directory
-- Update `MODEL_PATHS` in `app.py`
+Download your preferred Stable Diffusion XL model (.safetensors format) and update `config.yaml` with its path.
 
 ### **5. Configure Application**
-Edit the `MODEL_PATHS` configuration in `app.py`:
-```python
-MODEL_PATHS = {
-    "sd_model": "/path/to/your/sdxl/model.safetensors",
-    "ollama_model": "your-ollama-model-name", 
-    "ollama_base_url": "http://localhost:11434"
-}
+Edit `config.yaml` or set environment variables:
+```yaml
+sd_model: "/path/to/your/sdxl/model.safetensors"
+ollama_model: "your-ollama-model-name"
+ollama_base_url: "http://localhost:11434"
 ```
+Environment variables `SD_MODEL`, `OLLAMA_MODEL` and `OLLAMA_BASE_URL` override these values.
 
 ## 🎯 Usage
 
@@ -105,7 +102,7 @@ MODEL_PATHS = {
 conda activate ai-studio
 
 # Run the application
-python app.py
+python main.py
 ```
 
 **Access Points:**
@@ -202,13 +199,12 @@ illustrious-ai-studio/
 ## 🔧 Configuration Options
 
 ### **Model Configuration**
-```python
-MODEL_PATHS = {
-    "sd_model": "/path/to/model.safetensors",    # SDXL model path
-    "ollama_model": "qwen2.5:7b",               # Ollama model name  
-    "ollama_base_url": "http://localhost:11434"  # Ollama server URL
-}
+```yaml
+sd_model: "/path/to/model.safetensors"    # SDXL model path
+ollama_model: "qwen2.5:7b"               # Ollama model name
+ollama_base_url: "http://localhost:11434"  # Ollama server URL
 ```
+The variables `SD_MODEL`, `OLLAMA_MODEL` and `OLLAMA_BASE_URL` can override these values.
 
 ### **Generation Defaults**
 - **Steps:** 30 (quality vs speed trade-off)
@@ -231,7 +227,7 @@ conda activate ai-studio
 
 # Set memory allocation strategy
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
-python app.py
+python main.py
 ```
 
 #### **Ollama Connection Failed**
@@ -279,8 +275,8 @@ ollama run your-model-name
 - **`create_gradio_app()`** - Web interface setup
 
 ### **Adding New Features**
-1. **New Ollama Models:** Update `MODEL_PATHS["ollama_model"]`
-2. **Custom SDXL Models:** Update `MODEL_PATHS["sd_model"]`
+1. **New Ollama Models:** Update `ollama_model` in `config.yaml` or set `OLLAMA_MODEL`
+2. **Custom SDXL Models:** Update `sd_model` in `config.yaml` or set `SD_MODEL`
 3. **Additional Endpoints:** Add to MCP server section
 4. **UI Modifications:** Edit `create_gradio_app()` function
 

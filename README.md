@@ -54,14 +54,13 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
    ```
 
 4. **Configure models**
-   Edit `MODEL_PATHS` in `app.py`:
-   ```python
-   MODEL_PATHS = {
-       "sd_model": "/path/to/your/sdxl-model.safetensors",
-       "ollama_model": "qwen2.5:7b",  # Your Ollama model
-       "ollama_base_url": "http://localhost:11434"
-   }
+   Edit `config.yaml` or set environment variables:
+   ```yaml
+   sd_model: "/path/to/your/sdxl-model.safetensors"
+   ollama_model: "qwen2.5:7b"  # Your Ollama model
+   ollama_base_url: "http://localhost:11434"
    ```
+   Environment overrides are `SD_MODEL`, `OLLAMA_MODEL`, and `OLLAMA_BASE_URL`.
 
 5. **Start Ollama** (in separate terminal)
    ```bash
@@ -74,7 +73,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 ### Starting the Application
 ```bash
 conda activate ai-studio
-python app.py
+python main.py
 ```
 
 **Access Points:**
@@ -152,10 +151,10 @@ python examples/api_examples/batch_generate.py
 ## ⚙️ Configuration
 
 ### Model Paths
-Update `MODEL_PATHS` in `app.py` with your specific model locations:
-- `sd_model`: Path to SDXL .safetensors file
-- `ollama_model`: Ollama model name
-- `ollama_base_url`: Ollama server URL
+Edit `config.yaml` to set your model locations or use environment variables:
+- `sd_model` (`SD_MODEL`): Path to SDXL .safetensors file
+- `ollama_model` (`OLLAMA_MODEL`): Ollama model name
+- `ollama_base_url` (`OLLAMA_BASE_URL`): Ollama server URL
 
 ### Memory Optimization
 The application includes automatic CUDA memory management, but you can optimize further:

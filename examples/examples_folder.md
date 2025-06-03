@@ -117,7 +117,7 @@ docker run --rm --gpus all nvidia/cuda:11.8-base nvidia-smi
 **Out of memory:**
 ```bash
 # Reduce model precision or use CPU offloading
-# Edit MODEL_PATHS in app.py before building
+# Update config.yaml before building
 ```
 
 **Ollama models not downloading:**
@@ -572,15 +572,15 @@ import os
 model_path = "/path/to/your/model.safetensors"
 print(f"File exists: {os.path.exists(model_path)}")
 
-# 2. Update MODEL_PATHS in app.py
-MODEL_PATHS = {
+# 2. Update config.yaml
+CONFIG = {
     "sd_model": "/correct/path/to/model.safetensors",  # Update this
     "ollama_model": "josiefied",
     "ollama_base_url": "http://localhost:11434"
 }
 
 # 3. Use absolute paths
-MODEL_PATHS["sd_model"] = os.path.abspath("./models/your_model.safetensors")
+CONFIG["sd_model"] = os.path.abspath("./models/your_model.safetensors")
 ```
 
 ### Model Loading Timeout
@@ -817,7 +817,7 @@ docker ps -a
 
 ### Log Files
 Check these locations for detailed logs:
-- Terminal output where you ran `python app.py`
+- Terminal output where you ran `python main.py`
 - Docker logs: `docker-compose logs`
 - System logs: `/var/log/syslog` or `journalctl`
 
@@ -2437,8 +2437,8 @@ echo "✅ Setup Complete!"
 echo ""
 echo "Next steps:"
 echo "1. Download a Stable Diffusion XL model (.safetensors format)"
-echo "2. Update MODEL_PATHS in app.py with your model path"
-echo "3. Run: python app.py"
+echo "2. Edit config.yaml with your model path"
+echo "3. Run: python main.py"
 echo ""
 echo "Recommended SDXL models:"
 echo "• https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"
@@ -2661,16 +2661,16 @@ def switch_config(config_key):
     print(f"🎨 SDXL Model: {Path(config['sd_model']).name}")
     print(f"🤖 LLM Model: {config['ollama_model']}")
     print()
-    print("🔄 Please restart app.py to apply changes")
-    
-    # Generate updated MODEL_PATHS for app.py
+    print("🔄 Please restart main.py to apply changes")
+
+    # Generate updated config block
     model_paths = {
         "sd_model": config["sd_model"],
         "ollama_model": config["ollama_model"],
         "ollama_base_url": "http://localhost:11434"
     }
-    
-    print("\n📋 Update your app.py MODEL_PATHS with:")
+
+    print("\n📋 Update your config.yaml with:")
     print(json.dumps(model_paths, indent=2))
     
     return True

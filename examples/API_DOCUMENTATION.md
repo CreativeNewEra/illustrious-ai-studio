@@ -502,7 +502,7 @@ class IllustriousAIClient {
 
 1. **Start the server:**
    ```bash
-   python app.py
+   python main.py
    ```
 
 2. **Test the connection:**

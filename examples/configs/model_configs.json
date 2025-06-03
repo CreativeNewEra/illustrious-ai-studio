@@ -178,7 +178,7 @@
   
   "application_configuration": {
     "model_paths": {
-      "description": "Update these paths in app.py MODEL_PATHS dict",
+      "description": "Update these paths in config.yaml or via environment variables",
       "sd_model": "/path/to/your/sdxl_model.safetensors",
       "ollama_model": "qwen2.5:7b",
       "ollama_base_url": "http://localhost:11434"
