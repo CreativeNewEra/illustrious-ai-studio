@@ -299,9 +299,15 @@ Use Claude Code to:
 - Optimize performance and memory usage
 - Add new UI components or workflows
 
+## ⚠️ Usage and Risks
+
+This repository is intended for personal and research purposes. Content created
+with the bundled AI models may be unpredictable or offensive. Use responsibly
+and abide by local laws. See the [MIT License](LICENSE) for details.
+
 ## 📄 License
 
-[Add your license here]
+This project is licensed under the [MIT License](LICENSE).
 
 ## 🙏 Acknowledgments
 
