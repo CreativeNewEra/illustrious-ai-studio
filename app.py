@@ -73,6 +73,11 @@ class AnalyzeImageRequest(BaseModel):
 
 # Initialize Stable Diffusion XL with error handling
 def init_sdxl():
+    """Load the Stable Diffusion XL model specified in ``MODEL_PATHS``.
+
+    Returns the loaded pipeline instance or ``None`` if initialization fails.
+    Updates ``model_status['sdxl']`` accordingly.
+    """
     global sdxl_pipe, model_status
     try:
         if not os.path.exists(MODEL_PATHS["sd_model"]):
@@ -104,6 +109,12 @@ def init_sdxl():
 
 # Initialize Ollama connection
 def init_ollama():
+    """Verify Ollama is accessible and return the selected model name.
+
+    Performs a test chat request to confirm the model is available and
+    updates ``model_status`` flags.  Returns the model identifier on
+    success or ``None`` on failure.
+    """
     global ollama_model, model_status
     try:
         # Test Ollama connection
@@ -154,6 +165,10 @@ def init_ollama():
 
 # Save image to gallery
 def save_to_gallery(image: Image.Image, prompt: str, metadata: dict = None) -> str:
+    """Save ``image`` to the gallery directory and write metadata.
+
+    Returns the path to the saved file as a string.
+    """
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{uuid.uuid4().hex[:8]}.png"
     filepath = GALLERY_DIR / filename
@@ -186,6 +201,29 @@ def clear_cuda_memory():
 
 # Generate image from prompt with automatic memory management
 def generate_image(prompt, negative_prompt="", steps=30, guidance=7.5, seed=-1, save_to_gallery_flag=True):
+    """Generate an image using SDXL and optionally save it to the gallery.
+
+    Parameters
+    ----------
+    prompt : str
+        Text description for the image.
+    negative_prompt : str, optional
+        Elements to avoid in the generation.
+    steps : int, optional
+        Number of inference steps.
+    guidance : float, optional
+        Guidance scale for the pipeline.
+    seed : int, optional
+        RNG seed; ``-1`` uses a random seed.
+    save_to_gallery_flag : bool, optional
+        When ``True`` the resulting image is written to ``GALLERY_DIR``.
+
+    Returns
+    -------
+    (PIL.Image.Image or None, str)
+        Tuple containing the generated image (or ``None`` on failure) and a
+        status message.
+    """
     global sdxl_pipe, latest_generated_image
     
     if not sdxl_pipe:
@@ -264,6 +302,23 @@ def generate_image(prompt, negative_prompt="", steps=30, guidance=7.5, seed=-1, 
 
 # Generate LLM response using Ollama
 def chat_completion(messages, temperature=0.7, max_tokens=256):
+    """Send a chat completion request to Ollama.
+
+    Parameters
+    ----------
+    messages : list[dict]
+        Conversation history in OpenAI format.
+    temperature : float, optional
+        Sampling temperature for the model.
+    max_tokens : int, optional
+        Maximum tokens to generate.
+
+    Returns
+    -------
+    str
+        The assistant's response text or an error message prefixed with
+        ``❌``.
+    """
     global ollama_model
     
     if not ollama_model:
@@ -300,6 +355,10 @@ def chat_completion(messages, temperature=0.7, max_tokens=256):
 
 # Generate image prompt using LLM
 def generate_prompt(user_input):
+    """Return an enhanced image prompt produced by the LLM.
+
+    If the LLM call fails, the original ``user_input`` is returned.
+    """
     if not user_input.strip():
         return "Please enter a description first."
     
@@ -324,6 +383,11 @@ User request:"""
 
 # Handle chat with session management
 def handle_chat(message, session_id="default", chat_history=None):
+    """Process a chat ``message`` and update ``chat_history``.
+
+    Supports ``#generate`` commands that trigger image creation via
+    :func:`generate_prompt` and :func:`generate_image`.
+    """
     logger.debug(f"handle_chat called with message: '{message}'")
     
     if not message.strip():
@@ -398,6 +462,7 @@ def handle_chat(message, session_id="default", chat_history=None):
 
 # Analyze image with Ollama vision models
 def analyze_image(image, question="Describe this image in detail"):
+    """Use the vision-capable LLM to answer a question about ``image``."""
     global ollama_model
     
     if not image:
@@ -444,6 +509,7 @@ def analyze_image(image, question="Describe this image in detail"):
 
 # Get model status
 def get_model_status():
+    """Return formatted Markdown describing current model availability."""
     status_text = "🤖 **Model Status:**\n"
     status_text += f"• SDXL: {'✅ Loaded' if model_status['sdxl'] else '❌ Not loaded'}\n"
     status_text += f"• Ollama: {'✅ Connected' if model_status['ollama'] else '❌ Not connected'}\n"
@@ -453,6 +519,7 @@ def get_model_status():
 
 # Get latest generated image
 def get_latest_image():
+    """Return the last image produced by :func:`generate_image`."""
     global latest_generated_image
     return latest_generated_image
 
@@ -539,6 +606,7 @@ async def mcp_analyze_image(request: AnalyzeImageRequest):
 
 # Enhanced Gradio Interface
 def create_gradio_app():
+    """Build and return the Gradio UI for the application."""
     with gr.Blocks(title="Illustrious AI Studio", theme="soft") as demo:
         gr.Markdown("# 🎨 Illustrious AI Studio")
         gr.Markdown("Generate amazing art with AI! Powered by Stable Diffusion XL and local LLMs.")
@@ -749,6 +817,7 @@ def create_gradio_app():
 
 # Run MCP server in background
 def run_mcp_server():
+    """Start the FastAPI MCP server on port 8000."""
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
 
 # Main execution
