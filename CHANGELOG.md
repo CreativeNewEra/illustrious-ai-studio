@@ -57,7 +57,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Development Infrastructure**
   - Project documentation in CLAUDE.md
   - Requirements.txt with all necessary dependencies
-  - Model configuration system via MODEL_PATHS
+  - Model configuration via `config.yaml` and environment variables
   - Comprehensive error handling and logging
   - Gallery and file management with UUID-based naming
 
@@ -71,8 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Any Ollama-compatible model for chat/text processing
   - Vision models for image analysis (optional)
 
-### Configuration
-- Centralized model configuration in `MODEL_PATHS` dictionary
+- Centralized model configuration in `config.yaml`
 - Conda environment support (`ai-studio`)
 - Flexible Ollama server URL configuration
 - Customizable generation parameters (steps, guidance, seed)

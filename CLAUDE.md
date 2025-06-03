@@ -34,7 +34,7 @@ This is an **Illustrious AI Studio** - a local AI application that combines Stab
 conda activate ai-studio
 
 # Run the application
-python app.py
+python main.py
 ```
 This starts both the Gradio web interface (port 7860) and FastAPI MCP server (port 8000) in background threads.
 
@@ -50,10 +50,10 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 ```
 
 ### Model Configuration
-Update `MODEL_PATHS` in app.py:72:37:
-- `sd_model`: Path to SDXL .safetensors model
-- `ollama_model`: Ollama model name (e.g., "qwen2.5:7b")
-- `ollama_base_url`: Ollama server URL (default: http://localhost:11434)
+Edit `config.yaml` or use environment variables:
+- `sd_model` (`SD_MODEL`): Path to SDXL .safetensors model
+- `ollama_model` (`OLLAMA_MODEL`): Ollama model name (e.g., "qwen2.5:7b")
+- `ollama_base_url` (`OLLAMA_BASE_URL`): Ollama server URL
 
 ### Testing Endpoints
 
@@ -153,7 +153,7 @@ Key packages: torch, diffusers, transformers, gradio, fastapi, uvicorn, PIL, req
 ## Configuration Patterns
 
 ### Model Path Configuration
-All model paths are centralized in `MODEL_PATHS` dict at app.py:33. Update these paths before running.
+Model locations are defined in `config.yaml`. They can also be provided via the environment variables `SD_MODEL`, `OLLAMA_MODEL`, and `OLLAMA_BASE_URL`.
 
 ### Performance Optimization
 - **Automatic CUDA Memory Management**: PyTorch memory fragmentation prevention via `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
@@ -209,7 +209,7 @@ All model paths are centralized in `MODEL_PATHS` dict at app.py:33. Update these
 **Symptoms:** Status shows models as not loaded.
 
 **Solutions:**
-1. **Check paths:** Verify `MODEL_PATHS` in app.py point to existing files
+1. **Check paths:** Verify the paths in `config.yaml` (or environment variables) point to existing files
 2. **Memory issues:** Ensure sufficient system/GPU memory
 3. **Dependencies:** Verify all required packages are installed
 4. **Permissions:** Check file permissions for model files
