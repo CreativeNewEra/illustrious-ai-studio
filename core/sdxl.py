@@ -13,14 +13,10 @@ import torch
 from diffusers import StableDiffusionXLPipeline
 
 from .memory import clear_cuda_memory, model_status, latest_generated_image
+from .config import CONFIG
 
 logger = logging.getLogger(__name__)
 
-MODEL_PATHS = {
-    "sd_model": "/home/ant/AI/Project/SDXL Models/waiNSFWIllustrious_v140.safetensors",
-    "ollama_model": "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k",
-    "ollama_base_url": "http://localhost:11434",
-}
 
 TEMP_DIR = Path(tempfile.gettempdir()) / "illustrious_ai"
 TEMP_DIR.mkdir(exist_ok=True)
@@ -34,12 +30,12 @@ def init_sdxl() -> Optional[StableDiffusionXLPipeline]:
     """Load the Stable Diffusion XL model."""
     global sdxl_pipe
     try:
-        if not os.path.exists(MODEL_PATHS["sd_model"]):
-            logger.error("SDXL model not found: %s", MODEL_PATHS["sd_model"])
+        if not os.path.exists(CONFIG.sd_model):
+            logger.error("SDXL model not found: %s", CONFIG.sd_model)
             return None
         logger.info("Loading Stable Diffusion XL model...")
         pipe = StableDiffusionXLPipeline.from_single_file(
-            MODEL_PATHS["sd_model"],
+            CONFIG.sd_model,
             torch_dtype=torch.float16,
             variant="fp16",
             use_safetensors=True,

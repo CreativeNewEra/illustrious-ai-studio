@@ -8,6 +8,7 @@ import requests
 
 from .memory import model_status, latest_generated_image
 from .sdxl import generate_image, save_to_gallery
+from .config import CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ def init_ollama() -> Optional[str]:
     """Verify Ollama is accessible and return the selected model name."""
     global ollama_model
     try:
-        response = requests.get("http://localhost:11434/api/tags", timeout=5)
+        response = requests.get(f"{CONFIG.ollama_base_url}/api/tags", timeout=5)
         if response.status_code != 200:
             logger.error("Ollama server not responding")
             return None
@@ -36,7 +37,7 @@ def init_ollama() -> Optional[str]:
             "stream": False,
         }
         test_response = requests.post(
-            "http://localhost:11434/api/chat",
+            f"{CONFIG.ollama_base_url}/api/chat",
             json=test_data,
             timeout=30,
         )
@@ -54,8 +55,7 @@ def init_ollama() -> Optional[str]:
 
 
 def _get_model_path() -> str:
-    from .sdxl import MODEL_PATHS
-    return MODEL_PATHS["ollama_model"]
+    return CONFIG.ollama_model
 
 
 def chat_completion(messages: List[dict], temperature: float = 0.7, max_tokens: int = 256) -> str:
@@ -68,7 +68,7 @@ def chat_completion(messages: List[dict], temperature: float = 0.7, max_tokens: 
             "stream": False,
             "options": {"temperature": temperature, "num_predict": max_tokens},
         }
-        response = requests.post("http://localhost:11434/api/chat", json=data, timeout=60)
+        response = requests.post(f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60)
         if response.status_code == 200:
             result = response.json()
             return result.get("message", {}).get("content", "No response generated")
@@ -156,7 +156,7 @@ def analyze_image(image: Image.Image, question: str = "Describe this image in de
             "messages": [{"role": "user", "content": question, "images": [img_base64]}],
             "stream": False,
         }
-        response = requests.post("http://localhost:11434/api/chat", json=data, timeout=60)
+        response = requests.post(f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60)
         if response.status_code == 200:
             result = response.json()
             return result.get("message", {}).get("content", "No analysis generated")

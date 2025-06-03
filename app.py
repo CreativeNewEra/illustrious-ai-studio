@@ -9,7 +9,6 @@ from core.sdxl import (
     save_to_gallery,
     get_latest_image,
     sdxl_pipe,
-    MODEL_PATHS,
     TEMP_DIR,
     GALLERY_DIR,
 )
