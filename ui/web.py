@@ -7,17 +7,18 @@ import gradio as gr
 from core.sdxl import generate_image, TEMP_DIR, get_latest_image
 from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image
-from core.memory import model_status, get_model_status
+from core.memory import get_model_status
+from core.state import AppState
 
 logger = logging.getLogger(__name__)
 
 
-def create_gradio_app():
+def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     with gr.Blocks(title="Illustrious AI Studio", theme="soft") as demo:
         gr.Markdown("# 🎨 Illustrious AI Studio")
         gr.Markdown("Generate amazing art with AI! Powered by Stable Diffusion XL and local LLMs.")
-        status_display = gr.Markdown(get_model_status())
+        status_display = gr.Markdown(get_model_status(state))
         with gr.Tab("🎨 Text-to-Image"):
             with gr.Row():
                 with gr.Column():
@@ -48,7 +49,7 @@ def create_gradio_app():
                         clear_btn = gr.Button("🗑️ Clear Chat", variant="secondary")
                         session_info = gr.Textbox(value="Session: default", label="Session ID", interactive=False, scale=2)
         with gr.Tab("🔍 Image Analysis"):
-            if model_status["multimodal"]:
+            if state.model_status["multimodal"]:
                 with gr.Row():
                     with gr.Column():
                         input_image = gr.Image(label="Upload Image", type="pil")
@@ -85,9 +86,9 @@ def create_gradio_app():
                 - `POST /analyze-image` - Analyze images (if multimodal available)
                 """
             )
-        enhance_btn.click(fn=generate_prompt, inputs=prompt, outputs=prompt)
+        enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         generate_btn.click(
-            fn=generate_image,
+            fn=lambda p, n, st, g, se, save_flag: generate_image(state, p, n, st, g, se, save_flag),
             inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery],
             outputs=[output_image, generation_status],
         )
@@ -104,19 +105,19 @@ def create_gradio_app():
         def chat_wrapper(message, history):
             if not message.strip():
                 return history or [], ""
-            result_history, empty_msg = handle_chat(message, session_id="default", chat_history=history)
+            result_history, empty_msg = handle_chat(state, message, session_id="default", chat_history=history)
             return result_history, ""
 
         def chat_wrapper_with_image_update(message, history):
             result_history, empty_msg = chat_wrapper(message, history)
             if message.lower().startswith("#generate") or "generate image" in message.lower():
-                return result_history, empty_msg, get_latest_image()
+                return result_history, empty_msg, get_latest_image(state)
             return result_history, empty_msg, gr.update()
 
         send_btn.click(fn=chat_wrapper_with_image_update, inputs=[msg, chatbot], outputs=[chatbot, msg, output_image])
         msg.submit(fn=chat_wrapper_with_image_update, inputs=[msg, chatbot], outputs=[chatbot, msg, output_image])
         clear_btn.click(lambda: ([], ""), outputs=[chatbot, msg])
-        if model_status["multimodal"]:
-            analyze_btn.click(fn=analyze_image, inputs=[input_image, analysis_question], outputs=analysis_output)
-        refresh_btn.click(fn=get_model_status, outputs=status_display)
+        if state.model_status["multimodal"]:
+            analyze_btn.click(fn=lambda img, q: analyze_image(state, img, q), inputs=[input_image, analysis_question], outputs=analysis_output)
+        refresh_btn.click(fn=lambda: get_model_status(state), outputs=status_display)
     return demo

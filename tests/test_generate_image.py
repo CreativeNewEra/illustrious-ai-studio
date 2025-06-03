@@ -52,15 +52,15 @@ def patch_clear_cuda(monkeypatch):
 
 def test_generate_image_no_model(monkeypatch):
     app = load_app()
-    monkeypatch.setattr(app.sdxl, 'sdxl_pipe', None)
-    image, status = app.generate_image('test')
+    app.app_state.sdxl_pipe = None
+    image, status = app.generate_image(app.app_state, 'test')
     assert image is None
     assert 'model not loaded' in status.lower()
 
 
 def test_generate_image_success(monkeypatch):
     app = load_app()
-    monkeypatch.setattr(app.sdxl, 'sdxl_pipe', DummyPipe())
-    img, status = app.generate_image('test prompt', save_to_gallery_flag=False)
+    app.app_state.sdxl_pipe = DummyPipe()
+    img, status = app.generate_image(app.app_state, 'test prompt', save_to_gallery_flag=False)
     assert isinstance(img, Image.Image)
     assert 'successfully' in status.lower()

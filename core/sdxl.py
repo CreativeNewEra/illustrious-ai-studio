@@ -1,4 +1,3 @@
-import base64
 import json
 import logging
 import os
@@ -12,7 +11,8 @@ from PIL import Image
 import torch
 from diffusers import StableDiffusionXLPipeline
 
-from .memory import clear_cuda_memory, model_status, latest_generated_image
+from .memory import clear_cuda_memory
+from .state import AppState
 from .config import CONFIG
 
 logger = logging.getLogger(__name__)
@@ -23,12 +23,10 @@ TEMP_DIR.mkdir(exist_ok=True)
 GALLERY_DIR = TEMP_DIR / "gallery"
 GALLERY_DIR.mkdir(exist_ok=True)
 
-sdxl_pipe: Optional[StableDiffusionXLPipeline] = None
 
 
-def init_sdxl() -> Optional[StableDiffusionXLPipeline]:
+def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
     """Load the Stable Diffusion XL model."""
-    global sdxl_pipe
     try:
         if not os.path.exists(CONFIG.sd_model):
             logger.error("SDXL model not found: %s", CONFIG.sd_model)
@@ -45,12 +43,12 @@ def init_sdxl() -> Optional[StableDiffusionXLPipeline]:
             logger.info("SDXL loaded on GPU")
         else:
             logger.warning("CUDA not available, using CPU")
-        sdxl_pipe = pipe
-        model_status["sdxl"] = True
+        state.sdxl_pipe = pipe
+        state.model_status["sdxl"] = True
         return pipe
     except Exception as e:
         logger.error("Failed to initialize SDXL: %s", e)
-        model_status["sdxl"] = False
+        state.model_status["sdxl"] = False
         return None
 
 
@@ -72,6 +70,7 @@ def save_to_gallery(image: Image.Image, prompt: str, metadata: dict | None = Non
 
 
 def generate_image(
+    state: AppState,
     prompt: str,
     negative_prompt: str = "",
     steps: int = 30,
@@ -80,8 +79,7 @@ def generate_image(
     save_to_gallery_flag: bool = True,
 ) -> Tuple[Optional[Image.Image], str]:
     """Generate an image using SDXL."""
-    global sdxl_pipe, latest_generated_image
-    if not sdxl_pipe:
+    if not state.sdxl_pipe:
         return None, "❌ SDXL model not loaded. Please check your model path."
     clear_cuda_memory()
     max_retries = 2
@@ -92,7 +90,7 @@ def generate_image(
                 generator.manual_seed(seed)
             else:
                 seed = generator.initial_seed()
-            image = sdxl_pipe(
+            image = state.sdxl_pipe(
                 prompt,
                 negative_prompt=negative_prompt,
                 num_inference_steps=steps,
@@ -101,7 +99,7 @@ def generate_image(
                 width=1024,
                 height=1024,
             ).images[0]
-            latest_generated_image = image
+            state.latest_generated_image = image
             if save_to_gallery_flag:
                 save_to_gallery(
                     image,
@@ -126,6 +124,6 @@ def generate_image(
             return None, f"❌ Generation failed: {e}"
     return None, "❌ Generation failed after retries"
 
-def get_latest_image():
+def get_latest_image(state: AppState) -> Optional[Image.Image]:
     """Return the last generated image."""
-    return latest_generated_image
+    return state.latest_generated_image

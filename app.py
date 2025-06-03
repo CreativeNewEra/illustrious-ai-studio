@@ -1,14 +1,12 @@
-"""Compatibility wrapper importing the main application components."""
-from server.api import app, GenerateImageRequest, ChatRequest, AnalyzeImageRequest, run_mcp_server
+"""Compatibility wrapper that provides a ready-to-use FastAPI app and helpers."""
+from server.api import create_api_app, GenerateImageRequest, ChatRequest, AnalyzeImageRequest, run_mcp_server
 from ui.web import create_gradio_app
-import core.sdxl as sdxl
-import core.ollama as ollama
+from core.state import AppState
 from core.sdxl import (
     generate_image,
     init_sdxl,
     save_to_gallery,
     get_latest_image,
-    sdxl_pipe,
     TEMP_DIR,
     GALLERY_DIR,
 )
@@ -18,12 +16,14 @@ from core.ollama import (
     generate_prompt,
     analyze_image,
     init_ollama,
-    ollama_model,
-    chat_history_store,
 )
-from core.memory import clear_cuda_memory, get_model_status, model_status, latest_generated_image
+from core.memory import clear_cuda_memory, get_model_status
+
+# Single application state used when this module is imported
+app_state = AppState()
+app = create_api_app(app_state)
 
 
 def initialize_models():
-    init_sdxl()
-    init_ollama()
+    init_sdxl(app_state)
+    init_ollama(app_state)
