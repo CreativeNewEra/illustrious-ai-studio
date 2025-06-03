@@ -37,7 +37,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd Project
+   cd illustrious-ai-studio
    ```
 
 2. **Create and activate conda environment**
