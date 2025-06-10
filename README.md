@@ -18,7 +18,8 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 
 ### 🌐 **Dual Interface**
 - **Gradio Web UI** (Port 7860): Interactive web interface with tabs for image generation, chat, and analysis
- - **FastAPI MCP Server** (Port 8000): RESTful API for programmatic access and integration
+- **FastAPI MCP Server** (Port 8000): RESTful API for programmatic access and integration
+- **Additional MCP Servers** (Ports 8001-8004): Specialized servers for filesystem, web, git, and image operations
 
 ### 📸 **Gallery & Session Management**
 - **Automatic Gallery**: All generated images saved with metadata to `/tmp/illustrious_ai/gallery/`
@@ -79,8 +80,9 @@ python main.py
 
 **Access Points:**
 - **Web Interface**: http://localhost:7860
-- **API Server**: http://localhost:8000
+- **Main API Server**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
+- **MCP Servers**: Ports 8001-8004 (filesystem, web, git, image analysis)
 
 ### Web Interface
 
@@ -109,7 +111,9 @@ python main.py
 
 ### API Usage
 
-#### Image Generation
+#### Main API Server (Port 8000)
+
+**Image Generation:**
 ```bash
 curl -X POST http://localhost:8000/generate-image \
   -H "Content-Type: application/json" \
@@ -120,7 +124,7 @@ curl -X POST http://localhost:8000/generate-image \
   }'
 ```
 
-#### Chat
+**Chat:**
 ```bash
 curl -X POST http://localhost:8000/chat \
   -H "Content-Type: application/json" \
@@ -130,16 +134,51 @@ curl -X POST http://localhost:8000/chat \
   }'
 ```
 
-#### Server Status
+**Server Status:**
 ```bash
 curl http://localhost:8000/status
 ```
 
-#### Switch Models
+**Switch Models:**
 ```bash
 curl -X POST http://localhost:8000/switch-models \
   -H "Content-Type: application/json" \
   -d '{"sd_model": "/path/to/model.safetensors", "ollama_model": "qwen:7b"}'
+```
+
+#### MCP Servers
+
+**Start All MCP Servers:**
+```bash
+cd mcp_servers && python start_all.py
+```
+
+**Filesystem Operations (Port 8001):**
+```bash
+curl -X POST http://localhost:8001/tools/read_file \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"path": "/home/ant/AI/Project/README.md"}}'
+```
+
+**Web Content Fetching (Port 8002):**
+```bash
+curl -X POST http://localhost:8002/tools/fetch_url \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"url": "https://example.com"}}'
+```
+
+**Git Operations (Port 8003):**
+```bash
+curl -X POST http://localhost:8003/tools/git_status \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"repo_path": "/home/ant/AI/Project"}}'
+```
+
+**Image Analysis (Port 8004):**
+```bash
+curl -X POST http://localhost:8004/tools/analyze_image_properties \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"image_path": "/path/to/image.jpg"}}'
 ```
 
 ## 🧪 Testing
@@ -207,6 +246,15 @@ Project/
 ├── app.py                 # Main application file
 ├── CLAUDE.md             # Detailed development documentation
 ├── requirements.txt      # Python dependencies
+├── mcp_servers/          # Model Context Protocol servers
+│   ├── filesystem_server.py    # Filesystem operations
+│   ├── web_fetch_server.py     # Web content fetching
+│   ├── git_server.py           # Git repository operations
+│   ├── image_analysis_server.py # Image analysis tools
+│   ├── manager.py              # Server management
+│   ├── start_all.py            # Quick start script
+│   ├── config.json             # Server configuration
+│   └── README.md               # MCP server documentation
 ├── examples/             # API examples and testing
 │   ├── api_examples/     # API usage examples
 │   ├── configs/          # Configuration presets
@@ -225,6 +273,15 @@ Project/
 | `/chat` | POST | Chat with Ollama LLM |
 | `/analyze-image` | POST | Analyze images (if vision model available) |
 | `/switch-models` | POST | Switch SDXL and/or Ollama models |
+
+### MCP Server Endpoints
+
+| Server | Port | Description |
+|--------|------|-------------|
+| Filesystem | 8001 | File operations (read, write, list, etc.) |
+| Web Fetch | 8002 | Web content fetching and analysis |
+| Git | 8003 | Git repository operations |
+| Image Analysis | 8004 | Advanced image processing and analysis |
 
 ### Response Codes
 - `200`: Success

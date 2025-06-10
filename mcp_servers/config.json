@@ -1,0 +1,43 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "/home/ant/miniconda3/bin/python",
+      "args": ["/home/ant/AI/Project/mcp_servers/filesystem_server.py"],
+      "description": "Secure filesystem operations with configurable access controls",
+      "port": 8001,
+      "enabled": true
+    },
+    "web-fetch": {
+      "command": "/home/ant/miniconda3/bin/python",
+      "args": ["/home/ant/AI/Project/mcp_servers/web_fetch_server.py"],
+      "description": "Web content fetching and conversion for efficient LLM usage",
+      "port": 8002,
+      "enabled": true
+    },
+    "git": {
+      "command": "/home/ant/miniconda3/bin/python",
+      "args": ["/home/ant/AI/Project/mcp_servers/git_server.py"],
+      "description": "Git repository operations and information",
+      "port": 8003,
+      "enabled": true
+    },
+    "image-analysis": {
+      "command": "/home/ant/miniconda3/bin/python",
+      "args": ["/home/ant/AI/Project/mcp_servers/image_analysis_server.py"],
+      "description": "Image analysis capabilities for the AI Studio",
+      "port": 8004,
+      "enabled": true
+    }
+  },
+  "settings": {
+    "timeout": 30,
+    "auto_restart": true,
+    "log_level": "INFO",
+    "allowed_directories": [
+      "/home/ant/AI/Project",
+      "/tmp/illustrious_ai",
+      "/home/ant/AI/Project/gallery",
+      "/home/ant/AI/Project/examples"
+    ]
+  }
+}

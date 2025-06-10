@@ -55,9 +55,24 @@ Edit `config.yaml` or use environment variables:
 - `ollama_model` (`OLLAMA_MODEL`): Ollama model name (e.g., "qwen2.5:7b")
 - `ollama_base_url` (`OLLAMA_BASE_URL`): Ollama server URL
 
-### Testing Endpoints
+### Testing
 
-#### Automated Testing Suite
+#### Unit Testing with Pytest
+```bash
+# Run all tests
+pytest
+
+# Run specific test file
+pytest tests/test_api_endpoints.py
+
+# Run tests with verbose output
+pytest -v
+
+# Run single test
+pytest tests/test_api_endpoints.py::test_status_endpoint
+```
+
+#### API Integration Testing
 ```bash
 # Run comprehensive API tests
 cd examples/api_examples
@@ -90,7 +105,7 @@ python batch_generate.py
 ```
 
 ### MCP Server Status
-The MCP server provides the following status information:
+The main MCP server (port 8000) provides the following status information:
 - **SDXL Model**: Image generation capability
 - **Ollama Model**: Chat/text processing capability  
 - **CUDA**: GPU acceleration availability
@@ -107,6 +122,65 @@ Expected response format:
   },
   "cuda_available": true
 }
+```
+
+### Additional MCP Servers
+The project includes specialized MCP servers for extended functionality:
+
+#### Filesystem Server (Port 8001)
+```bash
+# Start filesystem server
+cd mcp_servers && python filesystem_server.py
+
+# Test filesystem operations
+curl -X POST http://localhost:8001/tools/read_file \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"path": "/home/ant/AI/Project/README.md"}}'
+```
+
+#### Web Fetch Server (Port 8002)
+```bash
+# Start web fetch server
+cd mcp_servers && python web_fetch_server.py
+
+# Test web content fetching
+curl -X POST http://localhost:8002/tools/fetch_url \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"url": "https://example.com"}}'
+```
+
+#### Git Server (Port 8003)
+```bash
+# Start git server
+cd mcp_servers && python git_server.py
+
+# Test git operations
+curl -X POST http://localhost:8003/tools/git_status \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"repo_path": "/home/ant/AI/Project"}}'
+```
+
+#### Image Analysis Server (Port 8004)
+```bash
+# Start image analysis server
+cd mcp_servers && python image_analysis_server.py
+
+# Test image analysis
+curl -X POST http://localhost:8004/tools/analyze_image_properties \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"image_path": "/path/to/image.jpg"}}'
+```
+
+#### Start All MCP Servers
+```bash
+# Start all MCP servers with monitoring
+cd mcp_servers && python start_all.py
+
+# Or use the manager
+cd mcp_servers && python manager.py
+
+# Check MCP server status
+cd mcp_servers && python manager.py --status
 ```
 
 ## Important Implementation Details
@@ -154,6 +228,13 @@ Key packages: torch, diffusers, transformers, gradio, fastapi, uvicorn, PIL, req
 
 ### Model Path Configuration
 Model locations are defined in `config.yaml`. They can also be provided via the environment variables `SD_MODEL`, `OLLAMA_MODEL`, and `OLLAMA_BASE_URL`.
+
+Example configuration:
+```yaml
+sd_model: "/path/to/your/model.safetensors"
+ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
+ollama_base_url: "http://localhost:11434"
+```
 
 ### Performance Optimization
 - **Automatic CUDA Memory Management**: PyTorch memory fragmentation prevention via `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
