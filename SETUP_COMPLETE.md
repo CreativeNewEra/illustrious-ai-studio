@@ -6,7 +6,7 @@ Your AI Studio is now fully configured and tested with all features working corr
 
 ### 1. **Image Generation (SDXL)**
 - Model: Illustrious.safetensors (6.5GB)
-- Location: `/home/ant/AI/illustrious-ai-studio/models/`
+- Location: `models/`
 - Status: ✅ Working perfectly
 
 ### 2. **LLM Text Generation**

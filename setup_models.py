@@ -114,7 +114,7 @@ def update_config(config_path: Path) -> bool:
             config = {}
         
         # Update model paths
-        model_path = str((MODELS_DIR / RECOMMENDED_MODELS["sdxl"]["filename"]).absolute())
+        model_path = str(MODELS_DIR / RECOMMENDED_MODELS["sdxl"]["filename"])
         config['sd_model'] = model_path
         config['ollama_model'] = OLLAMA_MODELS["llm"]
         config['ollama_vision_model'] = OLLAMA_MODELS["vision"]

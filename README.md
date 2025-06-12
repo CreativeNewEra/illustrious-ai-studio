@@ -235,7 +235,7 @@ curl -X POST http://localhost:8000/analyze-image \
 
 ### config.yaml
 ```yaml
-sd_model: "/home/ant/AI/illustrious-ai-studio/models/Illustrious.safetensors"
+sd_model: "models/Illustrious.safetensors"
 ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
 ollama_vision_model: "qwen2.5vl:7b"
 ollama_base_url: "http://localhost:11434"
@@ -254,6 +254,7 @@ generation_defaults:
   width: 1024
   height: 1024
 ```
+Model paths can also be set via environment variables, e.g. `SD_MODEL` for the SDXL model or `MCP_CONFIG` for MCP servers.
 
 ## 🎯 Performance Tips
 

@@ -80,8 +80,8 @@ MCP servers are configured in `config.json`:
 {
   "mcpServers": {
     "filesystem": {
-      "command": "/home/ant/miniconda3/bin/python",
-      "args": ["/home/ant/AI/Project/mcp_servers/filesystem_server.py"],
+      "command": "python",
+      "args": ["${MCP_DIR}/filesystem_server.py"],
       "description": "Secure filesystem operations",
       "port": 8001,
       "enabled": true
@@ -98,10 +98,10 @@ The servers include security controls:
 {
   "settings": {
     "allowed_directories": [
-      "/home/ant/AI/Project",
+      "${WORKSPACE_DIR}",
       "/tmp/illustrious_ai",
-      "/home/ant/AI/Project/gallery",
-      "/home/ant/AI/Project/examples"
+      "${WORKSPACE_DIR}/gallery",
+      "${WORKSPACE_DIR}/examples"
     ]
   }
 }
@@ -112,7 +112,7 @@ The servers include security controls:
 ### Option 1: Start All Servers (Recommended)
 
 ```bash
-cd /home/ant/AI/Project/mcp_servers
+cd mcp_servers
 python start_all.py
 ```
 
@@ -121,7 +121,7 @@ This starts all enabled servers and monitors them.
 ### Option 2: Use the Manager
 
 ```bash
-cd /home/ant/AI/Project/mcp_servers
+cd mcp_servers
 
 # Start all servers
 python manager.py
@@ -142,7 +142,7 @@ python manager.py --restart filesystem
 ### Option 3: Start Individual Servers
 
 ```bash
-cd /home/ant/AI/Project/mcp_servers
+cd mcp_servers
 
 # Start filesystem server
 python filesystem_server.py
@@ -171,8 +171,8 @@ Once the MCP servers are running, they can be accessed:
 import httpx
 
 # Using filesystem server
-response = httpx.post("http://localhost:8001/tools/read_file", 
-                     json={"arguments": {"path": "/home/ant/AI/Project/README.md"}})
+response = httpx.post("http://localhost:8001/tools/read_file",
+                     json={"arguments": {"path": "${WORKSPACE_DIR}/README.md"}})
 
 # Using web fetch server
 response = httpx.post("http://localhost:8002/tools/fetch_url",
@@ -180,7 +180,7 @@ response = httpx.post("http://localhost:8002/tools/fetch_url",
 
 # Using git server
 response = httpx.post("http://localhost:8003/tools/git_status",
-                     json={"arguments": {"repo_path": "/home/ant/AI/Project"}})
+                     json={"arguments": {"repo_path": "${WORKSPACE_DIR}"}})
 ```
 
 ### Using MCP Tools from Chat
