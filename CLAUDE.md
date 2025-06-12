@@ -167,7 +167,7 @@ Environment variables override config:
 1. Run `python model_manager.py --image-mode` before generation
 2. Set `export OLLAMA_KEEP_ALIVE=0`
 3. Reduce image size or steps
-4. Monitor with `nvidia-smi` (or `rocm-smi`)
+4. Monitor with `nvidia-smi` (CUDA) or `rocm-smi`/`rocminfo` (ROCm)
 
 ### Ollama Connection Failed
 1. Verify Ollama is running: `ollama serve`

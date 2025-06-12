@@ -110,8 +110,9 @@ curl http://localhost:11434/api/version  # Ollama
 
 **GPU not detected:**
 ```bash
-# Check nvidia-docker installation
+# Check GPU container access (NVIDIA example)
 docker run --rm --gpus all nvidia/cuda:11.8-base nvidia-smi
+# For AMD images use rocm-smi or rocminfo
 ```
 
 **Out of memory:**
@@ -617,7 +618,7 @@ image, status = generate_image(prompt)
 print(f"Status: {status}")
 
 # 3. Check VRAM usage
-nvidia-smi  # Monitor GPU memory
+nvidia-smi  # Monitor GPU memory (use rocm-smi for AMD)
 
 # 4. Try different settings
 generate_image(prompt, steps=10, guidance=5.0)  # Minimal settings
@@ -765,6 +766,7 @@ docker run -it --rm illustrious-ai-studio /bin/bash
 
 # 3. Check GPU access
 docker run --rm --gpus all nvidia/cuda:11.8-base nvidia-smi
+# For AMD containers, verify with rocm-smi or rocminfo
 
 # 4. Verify mounts
 docker run --rm -v ./models:/app/models illustrious-ai-studio ls /app/models
@@ -795,7 +797,7 @@ When reporting issues, include:
 
 ```bash
 # System info
-nvidia-smi
+nvidia-smi  # or rocm-smi
 python --version
 pip list | grep -E "(torch|diffusers|gradio|transformers)"
 
