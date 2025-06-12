@@ -97,17 +97,27 @@ recommend at least **16GB** of VRAM for smooth 1024x1024 generation. Lower VRAM
 ## 🚀 Usage
 
 ### Starting the Application
+Run with defaults:
 ```bash
 python main.py
 ```
-Add `--lazy-load` to defer model initialization until first use:
+
+Advanced options:
 ```bash
-python main.py --lazy-load
+# Lazy load models and use custom ports
+python main.py --lazy-load --web-port 8080 --api-port 8081
+
+# Require authentication and open a browser window
+python main.py --auth user:pass --open-browser
+
+# Enable memory optimizations
+python main.py --optimize-memory
 ```
-Then open: http://localhost:7860
+
+Open the UI at `http://localhost:<web-port>` (7860 by default).
 
 Use the **Model Loader** section on the System Info tab to load SDXL or Ollama
-models on demand if you started with `--lazy-load`.
+models on demand when starting with `--lazy-load`.
 
 ### Memory Management
 ```bash
@@ -261,7 +271,9 @@ Model paths can also be set via environment variables, e.g. `SD_MODEL` for the S
 - Use `model_manager.py` to switch modes when needed
 - Default 1024x1024 works well, use 768x768 for faster generation
 - 20-30 steps for quality, 10-15 for speed
-- Set `export OLLAMA_KEEP_ALIVE=0` to free memory faster
+- Launch with `--optimize-memory` to automatically set
+  `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` and
+  `OLLAMA_KEEP_ALIVE=0`
 - Monitor usage with `nvidia-smi` or `rocm-smi`
 
 ### Troubleshooting GPU OOM
