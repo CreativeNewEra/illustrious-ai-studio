@@ -9,10 +9,30 @@ from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl
 from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core.memory import get_model_status
+import core.sdxl as sdxl
+import core.ollama as ollama
 from core.state import AppState
 from core.prompt_templates import template_manager
 
 logger = logging.getLogger(__name__)
+
+
+def load_sdxl_model_fn(state: AppState):
+    """Load the SDXL model and return status markdown."""
+    sdxl.init_sdxl(state)
+    return get_model_status(state)
+
+
+def load_ollama_text_model_fn(state: AppState):
+    """Load the Ollama text model and return status markdown."""
+    ollama.init_ollama(state)
+    return get_model_status(state)
+
+
+def load_ollama_vision_model_fn(state: AppState):
+    """Load the Ollama vision model and return status markdown."""
+    ollama.init_ollama(state)
+    return get_model_status(state)
 
 
 def create_gradio_app(state: AppState):
@@ -319,16 +339,22 @@ def create_gradio_app(state: AppState):
                 variant="secondary",
                 elem_classes=["secondary-button"]
             )
-            load_sdxl_btn = gr.Button(
-                "⚡ Load SDXL",
-                variant="secondary",
-                elem_classes=["secondary-button"]
-            )
-            load_ollama_btn = gr.Button(
-                "⚡ Load Ollama",
-                variant="secondary",
-                elem_classes=["secondary-button"]
-            )
+            with gr.Accordion("⚡ Model Loader", open=False):
+                load_sdxl_btn = gr.Button(
+                    "Load SDXL",
+                    variant="secondary",
+                    elem_classes=["secondary-button"]
+                )
+                load_ollama_text_btn = gr.Button(
+                    "Load Ollama Text",
+                    variant="secondary",
+                    elem_classes=["secondary-button"]
+                )
+                load_ollama_vision_btn = gr.Button(
+                    "Load Vision Model",
+                    variant="secondary",
+                    elem_classes=["secondary-button"]
+                )
             gr.Markdown("### CUDA Memory Management")
             gr.Markdown(
                 """
@@ -567,8 +593,18 @@ def create_gradio_app(state: AppState):
             if ollama_name:
                 ollama.switch_ollama_model(state, ollama_name)
             return get_model_status(state), json.dumps(CONFIG.as_dict(), indent=2)
+
+        def load_sdxl_model():
+            return load_sdxl_model_fn(state)
+
+        def load_ollama_text_model():
+            return load_ollama_text_model_fn(state)
+
+        def load_ollama_vision_model():
+            return load_ollama_vision_model_fn(state)
         switch_btn.click(fn=do_switch, inputs=[sd_model_input, ollama_model_input], outputs=[status_display, config_display])
         refresh_btn.click(fn=lambda: get_model_status(state), outputs=status_display)
-        load_sdxl_btn.click(fn=lambda: (sdxl.init_sdxl(state), get_model_status(state))[1], outputs=status_display)
-        load_ollama_btn.click(fn=lambda: (ollama.init_ollama(state), get_model_status(state))[1], outputs=status_display)
+        load_sdxl_btn.click(fn=load_sdxl_model, outputs=status_display)
+        load_ollama_text_btn.click(fn=load_ollama_text_model, outputs=status_display)
+        load_ollama_vision_btn.click(fn=load_ollama_vision_model, outputs=status_display)
     return demo
