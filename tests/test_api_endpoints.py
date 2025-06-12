@@ -63,7 +63,7 @@ def setup_app(monkeypatch):
     monkeypatch.setattr(api, 'generate_image', lambda state, *a, **k: (Image.new('RGB',(64,64),'blue'), 'done'))
     monkeypatch.setattr(api, 'chat_completion', lambda state, *a, **k: dummy_chat_completion(*a, **k))
     monkeypatch.setattr(api, 'analyze_image', lambda state, img, q='': dummy_analyze_image(img, q))
-    monkeypatch.setattr(app, 'clear_cuda_memory', lambda: None)
+    monkeypatch.setattr(app, 'clear_gpu_memory', lambda: None)
     monkeypatch.setattr(sys.modules['__main__'], 'app', app, raising=False)
     yield
 

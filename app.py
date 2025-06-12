@@ -17,7 +17,7 @@ from core.ollama import (
     analyze_image,
     init_ollama,
 )
-from core.memory import clear_cuda_memory, get_model_status
+from core.memory import clear_gpu_memory, get_model_status
 
 # Single application state used when this module is imported
 app_state = AppState()

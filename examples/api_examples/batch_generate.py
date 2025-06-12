@@ -270,7 +270,7 @@ def main():
             return
             
         print(f" Server status: {status['status']}")
-        print(f"< CUDA available: {status['cuda_available']}")
+        print(f"< GPU available: {status['gpu_available']} ({status['gpu_backend']})")
         
     except Exception as e:
         print(f"L Cannot connect to server: {e}")

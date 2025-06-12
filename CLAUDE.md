@@ -38,8 +38,8 @@ This file provides guidance to Claude (or other AI assistants) when working with
   - `analyze_image()` - Vision model image analysis
   - `generate_prompt()` - AI prompt enhancement
 
-- **`memory.py`**: CUDA memory management
-  - `clear_cuda_memory()` - Cache clearing and garbage collection
+ - **`memory.py`**: GPU memory management
+  - `clear_gpu_memory()` - Cache clearing and garbage collection
   - `get_model_status()` - System status reporting
 
 - **`config.py`**: Configuration management
@@ -113,6 +113,7 @@ sd_model: "/path/to/model.safetensors"
 ollama_model: "model-name"
 ollama_vision_model: "vision-model-name"
 ollama_base_url: "http://localhost:11434"
+gpu_backend: "cuda"  # "cuda", "rocm", or "cpu"
 
 cuda_settings:
   device: "cuda:0"
@@ -166,7 +167,7 @@ Environment variables override config:
 1. Run `python model_manager.py --image-mode` before generation
 2. Set `export OLLAMA_KEEP_ALIVE=0`
 3. Reduce image size or steps
-4. Monitor with `nvidia-smi`
+4. Monitor with `nvidia-smi` (or `rocm-smi`)
 
 ### Ollama Connection Failed
 1. Verify Ollama is running: `ollama serve`
@@ -224,7 +225,7 @@ curl -X POST http://localhost:8000/analyze-image \
 
 ## Hardware Requirements
 
-- **GPU**: NVIDIA with CUDA support (16GB+ VRAM recommended)
+ - **GPU**: NVIDIA (CUDA) or AMD (ROCm) with 16GB+ VRAM
 - **CPU**: Modern multi-core processor
 - **RAM**: 16GB+ system memory
 - **Storage**: 20GB+ for models and outputs
@@ -232,7 +233,7 @@ curl -X POST http://localhost:8000/analyze-image \
 ## Dependencies
 
 Core packages:
-- PyTorch with CUDA
+- PyTorch with CUDA or ROCm
 - Diffusers, Transformers, Accelerate
 - Gradio, FastAPI, Uvicorn
 - Pillow, Requests, PyYAML

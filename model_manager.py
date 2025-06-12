@@ -10,6 +10,9 @@ import torch
 from colorama import init, Fore, Style
 from pathlib import Path
 
+from core.memory import clear_gpu_memory
+from core.config import CONFIG
+
 init(autoreset=True)
 
 class ModelManager:
@@ -32,7 +35,7 @@ class ModelManager:
         
     def get_gpu_memory_info(self):
         """Get current GPU memory usage"""
-        if torch.cuda.is_available():
+        if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available():
             total = torch.cuda.get_device_properties(0).total_memory / 1024**3
             allocated = torch.cuda.memory_allocated() / 1024**3
             reserved = torch.cuda.memory_reserved() / 1024**3
@@ -50,10 +53,16 @@ class ModelManager:
         """Display current GPU memory status"""
         self.print_header("GPU Memory Status")
         
-        # Run nvidia-smi
-        result = subprocess.run(['nvidia-smi'], capture_output=True, text=True)
-        if result.returncode == 0:
-            print(result.stdout)
+        if CONFIG.gpu_backend == "cuda":
+            result = subprocess.run(["nvidia-smi"], capture_output=True, text=True)
+            if result.returncode == 0:
+                print(result.stdout)
+        elif CONFIG.gpu_backend == "rocm":
+            for cmd in (["rocm-smi"], ["rocminfo"]):
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                if result.returncode == 0:
+                    print(result.stdout)
+                    break
         
         # Also show PyTorch memory
         mem_info = self.get_gpu_memory_info()
@@ -106,11 +115,9 @@ class ModelManager:
         # Unload Ollama models
         self.unload_ollama_models()
         
-        # Clear CUDA cache
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            self.print_success("CUDA cache cleared")
+        clear_gpu_memory()
+        if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available():
+            self.print_success("GPU cache cleared")
         
         self.current_mode = "image"
         self.show_gpu_status()
@@ -119,11 +126,9 @@ class ModelManager:
         """Optimize for LLM usage"""
         self.print_header("Switching to LLM Mode")
         
-        # Clear CUDA cache first
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
-            self.print_success("CUDA cache cleared")
+        clear_gpu_memory()
+        if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available():
+            self.print_success("GPU cache cleared")
         
         self.current_mode = "llm"
         self.show_gpu_status()
@@ -135,10 +140,7 @@ class ModelManager:
         # Set memory limits
         self.set_ollama_memory_limit()
         
-        # Clear cache
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
-            torch.cuda.synchronize()
+        clear_gpu_memory()
             
         self.current_mode = "balanced"
         self.show_gpu_status()
@@ -152,7 +154,7 @@ class ModelManager:
             print("3. Switch to LLM Mode")
             print("4. Balanced Mode (limits Ollama memory)")
             print("5. Unload Ollama Models")
-            print("6. Clear CUDA Cache")
+            print("6. Clear GPU Cache")
             print("0. Exit")
             
             choice = input("\nSelect option: ").strip()
@@ -168,9 +170,9 @@ class ModelManager:
             elif choice == "5":
                 self.unload_ollama_models()
             elif choice == "6":
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
-                    self.print_success("CUDA cache cleared")
+                clear_gpu_memory()
+                if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available():
+                    self.print_success("GPU cache cleared")
                 self.show_gpu_status()
             elif choice == "0":
                 break

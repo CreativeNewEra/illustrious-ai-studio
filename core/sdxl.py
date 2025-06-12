@@ -11,7 +11,7 @@ from PIL import Image
 import torch
 from diffusers import StableDiffusionXLPipeline
 
-from .memory import clear_cuda_memory
+from .memory import clear_gpu_memory
 from .state import AppState
 from .config import CONFIG
 
@@ -38,11 +38,11 @@ def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
             variant="fp16",
             use_safetensors=True,
         )
-        if torch.cuda.is_available():
+        if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available():
             pipe.to("cuda")
             logger.info("SDXL loaded on GPU")
         else:
-            logger.warning("CUDA not available, using CPU")
+            logger.warning("GPU not available, using CPU")
         state.sdxl_pipe = pipe
         state.model_status["sdxl"] = True
         return pipe
@@ -81,11 +81,12 @@ def generate_image(
     """Generate an image using SDXL."""
     if not state.sdxl_pipe:
         return None, "❌ SDXL model not loaded. Please check your model path."
-    clear_cuda_memory()
+    clear_gpu_memory()
     max_retries = 2
     for attempt in range(max_retries):
         try:
-            generator = torch.Generator(device="cuda" if torch.cuda.is_available() else "cpu")
+            device = "cuda" if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available() else "cpu"
+            generator = torch.Generator(device=device)
             if seed != -1:
                 generator.manual_seed(seed)
             else:
@@ -111,12 +112,12 @@ def generate_image(
                         "seed": seed,
                     },
                 )
-            clear_cuda_memory()
+            clear_gpu_memory()
             return image, f"✅ Image generated successfully! Seed: {seed}"
         except RuntimeError as e:
             if "out of memory" in str(e).lower() and attempt < max_retries - 1:
                 logger.warning("CUDA OOM on attempt %s: %s", attempt + 1, e)
-                clear_cuda_memory()
+                clear_gpu_memory()
                 continue
             return None, f"❌ Generation failed: {e}"
         except Exception as e:
@@ -135,7 +136,7 @@ def switch_sdxl_model(state: AppState, path: str) -> bool:
         logger.error("SDXL model not found: %s", path)
         return False
     state.sdxl_pipe = None
-    clear_cuda_memory()
+    clear_gpu_memory()
     CONFIG.sd_model = path
     logger.info("Switching SDXL model to %s", path)
     return init_sdxl(state) is not None
