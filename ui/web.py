@@ -5,9 +5,9 @@ from pathlib import Path
 
 import gradio as gr
 
-from core.sdxl import generate_image, TEMP_DIR, get_latest_image
+from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl
 from core.config import CONFIG
-from core.ollama import generate_prompt, handle_chat, analyze_image
+from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core.memory import get_model_status
 from core.state import AppState
 from core.prompt_templates import template_manager
@@ -319,6 +319,16 @@ def create_gradio_app(state: AppState):
                 variant="secondary",
                 elem_classes=["secondary-button"]
             )
+            load_sdxl_btn = gr.Button(
+                "⚡ Load SDXL",
+                variant="secondary",
+                elem_classes=["secondary-button"]
+            )
+            load_ollama_btn = gr.Button(
+                "⚡ Load Ollama",
+                variant="secondary",
+                elem_classes=["secondary-button"]
+            )
             gr.Markdown("### CUDA Memory Management")
             gr.Markdown(
                 """
@@ -559,4 +569,6 @@ def create_gradio_app(state: AppState):
             return get_model_status(state), json.dumps(CONFIG.as_dict(), indent=2)
         switch_btn.click(fn=do_switch, inputs=[sd_model_input, ollama_model_input], outputs=[status_display, config_display])
         refresh_btn.click(fn=lambda: get_model_status(state), outputs=status_display)
+        load_sdxl_btn.click(fn=lambda: (sdxl.init_sdxl(state), get_model_status(state))[1], outputs=status_display)
+        load_ollama_btn.click(fn=lambda: (ollama.init_ollama(state), get_model_status(state))[1], outputs=status_display)
     return demo

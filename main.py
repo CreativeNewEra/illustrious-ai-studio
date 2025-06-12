@@ -83,12 +83,12 @@ def initialize_models() -> None:
         logger.error(f"Traceback: {traceback.format_exc()}")
         raise
 
-def start_mcp_server() -> threading.Thread:
+def start_mcp_server(lazy_load: bool = False) -> threading.Thread:
     """Start the MCP server in a separate thread."""
     def run_server():
         try:
             logger.info("Starting MCP Server...")
-            run_mcp_server(app_state)
+            run_mcp_server(app_state, auto_load=not lazy_load)
         except Exception as e:
             logger.error(f"MCP Server error: {e}")
             logger.error(f"Traceback: {traceback.format_exc()}")
@@ -119,16 +119,21 @@ def start_web_interface():
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Illustrious AI Studio")
+    parser.add_argument("--lazy-load", action="store_true", help="Defer model initialization until requested")
+    args = parser.parse_args()
+
     try:
         logger.info("=" * 50)
         logger.info("🎨 Starting Illustrious AI Studio")
         logger.info("=" * 50)
-        
-        # Initialize models
-        initialize_models()
-        
-        # Start MCP server
-        mcp_thread = start_mcp_server()
+
+        if not args.lazy_load:
+            initialize_models()
+
+        mcp_thread = start_mcp_server(lazy_load=args.lazy_load)
         
         # Start web interface
         logger.info("🌐 Starting web interface on http://localhost:7860")

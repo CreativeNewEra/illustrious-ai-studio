@@ -106,6 +106,10 @@ recommend at least **16GB** of VRAM for smooth 1024x1024 generation. Lower VRAM
 ```bash
 python main.py
 ```
+Add `--lazy-load` to defer model initialization until first use:
+```bash
+python main.py --lazy-load
+```
 Then open: http://localhost:7860
 
 ### Memory Management
@@ -172,6 +176,7 @@ pytest
 - Model configuration and status
 - Switch models on the fly
 - View API documentation
+- **Load Models On Demand** buttons for SDXL and Ollama
 
 ## 🔧 API Usage
 
@@ -228,6 +233,7 @@ ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
 ollama_vision_model: "qwen2.5vl:7b"
 ollama_base_url: "http://localhost:11434"
 gpu_backend: "cuda"  # "cuda", "rocm", or "cpu"
+load_models_on_startup: true  # Set false for on-demand loading
 
 cuda_settings:
   device: "cuda:0"
