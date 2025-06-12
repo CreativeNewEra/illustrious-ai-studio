@@ -4,8 +4,8 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 
 ## 🆕 Latest Improvements
 
-### 🚀 **Automated Setup & Model Management**
-- **One-Command Setup**: `python setup_models.py` handles everything
+-### 🚀 **Automated Setup & Model Management**
+- **One-Command Setup**: `python setup_env.py` handles everything
 - **Automatic Downloads**: Recommended models downloaded and configured
 - **Smart Configuration**: Auto-updating config.yaml with optimal settings
 
@@ -75,21 +75,16 @@ For best results, we recommend the **Illustrious-XL** model:
    cd illustrious-ai-studio
    ```
 
-2. **Install dependencies**
+2. **Run the environment setup script** ✨ **NEW**
    ```bash
-   pip install -r requirements.txt
+   python setup_env.py
    ```
+   Select your GPU type (CUDA, ROCm, or CPU) and wait while the script:
+   - Creates `./venv` and installs all requirements
+   - Downloads the recommended models
+   - Updates your `config.yaml` automatically
 
-3. **Download and setup models (automated)** ✨ **NEW**
-   ```bash
-   python setup_models.py
-   ```
-   This will:
-   - Download the recommended Illustrious-XL SDXL model
-   - Pull required Ollama models (LLM and Vision)
-   - Update your `config.yaml` automatically
-
-4. **Verify setup**
+3. **Verify setup**
    ```bash
    python verify_setup.py
    ```
@@ -265,6 +260,7 @@ illustrious-ai-studio/
 ├── main.py               # Main application entry
 ├── config.yaml          # Configuration file
 ├── requirements.txt     # Python dependencies
+├── setup_env.py         # Automated environment setup
 ├── verify_setup.py      # Setup verification tool
 ├── test_simple.py       # Simple test suite
 ├── model_manager.py     # GPU memory management
