@@ -20,8 +20,9 @@ logger = logging.getLogger("git-server")
 mcp = FastMCP("Git Server")
 
 # Configuration
+BASE_DIR = Path(os.getenv("WORKSPACE_DIR", Path(__file__).resolve().parents[1]))
 ALLOWED_REPOSITORIES = [
-    "/home/ant/AI/Project",
+    str(BASE_DIR),
 ]
 
 def is_repo_allowed(repo_path: Path) -> bool:
@@ -71,7 +72,7 @@ def run_git_command(repo_path: str, command: List[str]) -> Dict[str, Any]:
         raise Exception(f"Error running git command: {str(e)}")
 
 @mcp.tool()
-def git_status(repo_path: str = "/home/ant/AI/Project") -> Dict[str, Any]:
+def git_status(repo_path: str = str(BASE_DIR)) -> Dict[str, Any]:
     """
     Get the status of a Git repository.
     
@@ -120,7 +121,7 @@ def git_status(repo_path: str = "/home/ant/AI/Project") -> Dict[str, Any]:
     }
 
 @mcp.tool()
-def git_log(repo_path: str = "/home/ant/AI/Project", max_count: int = 10) -> List[Dict[str, Any]]:
+def git_log(repo_path: str = str(BASE_DIR), max_count: int = 10) -> List[Dict[str, Any]]:
     """
     Get the commit history of a Git repository.
     
@@ -157,7 +158,7 @@ def git_log(repo_path: str = "/home/ant/AI/Project", max_count: int = 10) -> Lis
     return commits
 
 @mcp.tool()
-def git_diff(repo_path: str = "/home/ant/AI/Project", filename: Optional[str] = None, staged: bool = False) -> str:
+def git_diff(repo_path: str = str(BASE_DIR), filename: Optional[str] = None, staged: bool = False) -> str:
     """
     Get the diff of changes in a Git repository.
     
@@ -183,7 +184,7 @@ def git_diff(repo_path: str = "/home/ant/AI/Project", filename: Optional[str] = 
     return result["stdout"]
 
 @mcp.tool()
-def git_branch_list(repo_path: str = "/home/ant/AI/Project") -> List[Dict[str, Any]]:
+def git_branch_list(repo_path: str = str(BASE_DIR)) -> List[Dict[str, Any]]:
     """
     List all branches in a Git repository.
     
@@ -218,7 +219,7 @@ def git_branch_list(repo_path: str = "/home/ant/AI/Project") -> List[Dict[str, A
     return branches
 
 @mcp.tool()
-def git_show_commit(repo_path: str = "/home/ant/AI/Project", commit_hash: str = "HEAD") -> Dict[str, Any]:
+def git_show_commit(repo_path: str = str(BASE_DIR), commit_hash: str = "HEAD") -> Dict[str, Any]:
     """
     Show detailed information about a specific commit.
     
@@ -269,7 +270,7 @@ def git_show_commit(repo_path: str = "/home/ant/AI/Project", commit_hash: str = 
     return commit_info
 
 @mcp.tool()
-def git_remote_info(repo_path: str = "/home/ant/AI/Project") -> List[Dict[str, str]]:
+def git_remote_info(repo_path: str = str(BASE_DIR)) -> List[Dict[str, str]]:
     """
     Get information about remote repositories.
     
@@ -298,7 +299,7 @@ def git_remote_info(repo_path: str = "/home/ant/AI/Project") -> List[Dict[str, s
     return remotes
 
 @mcp.tool()
-def git_file_history(repo_path: str = "/home/ant/AI/Project", filename: str, max_count: int = 10) -> List[Dict[str, Any]]:
+def git_file_history(repo_path: str = str(BASE_DIR), filename: str, max_count: int = 10) -> List[Dict[str, Any]]:
     """
     Get the commit history for a specific file.
     

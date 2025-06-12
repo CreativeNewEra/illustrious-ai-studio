@@ -23,10 +23,11 @@ logger = logging.getLogger("image-analysis-server")
 mcp = FastMCP("Image Analysis Server")
 
 # Configuration
+BASE_DIR = Path(os.getenv("WORKSPACE_DIR", Path(__file__).resolve().parents[1]))
 ALLOWED_DIRECTORIES = [
-    "/home/ant/AI/Project/gallery",
+    str(BASE_DIR / "gallery"),
     "/tmp/illustrious_ai/gallery",
-    "/home/ant/AI/Project/examples",
+    str(BASE_DIR / "examples"),
 ]
 
 def is_path_allowed(path: Path) -> bool:

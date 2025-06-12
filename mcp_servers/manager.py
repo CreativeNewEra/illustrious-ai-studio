@@ -7,6 +7,7 @@ Manages multiple MCP servers for the Illustrious AI Studio.
 import asyncio
 import json
 import logging
+import os
 import subprocess
 import signal
 import sys
@@ -21,9 +22,10 @@ logger = logging.getLogger("mcp-manager")
 
 class MCPServerManager:
     """Manages multiple MCP servers."""
-    
-    def __init__(self, config_path: str = "/home/ant/AI/Project/mcp_servers/config.json"):
-        self.config_path = Path(config_path)
+
+    def __init__(self, config_path: str | None = None):
+        default_path = os.getenv("MCP_CONFIG", "mcp_servers/config.json")
+        self.config_path = Path(config_path or default_path)
         self.servers: Dict[str, subprocess.Popen] = {}
         self.config = self.load_config()
         self.running = False
@@ -32,9 +34,20 @@ class MCPServerManager:
         """Load the MCP server configuration."""
         if not self.config_path.exists():
             raise FileNotFoundError(f"Config file not found: {self.config_path}")
-        
+
         with open(self.config_path, 'r') as f:
-            return json.load(f)
+            data = json.load(f)
+
+        def expand_env(obj: Any) -> Any:
+            if isinstance(obj, str):
+                return os.path.expandvars(obj)
+            if isinstance(obj, list):
+                return [expand_env(v) for v in obj]
+            if isinstance(obj, dict):
+                return {k: expand_env(v) for k, v in obj.items()}
+            return obj
+
+        return expand_env(data)
     
     def start_server(self, name: str, config: Dict[str, Any]) -> bool:
         """Start a single MCP server."""
@@ -240,7 +253,7 @@ def main():
     import argparse
     
     parser = argparse.ArgumentParser(description="MCP Server Manager")
-    parser.add_argument('--config', '-c', default='/home/ant/AI/Project/mcp_servers/config.json',
+    parser.add_argument('--config', '-c', default=os.getenv('MCP_CONFIG', 'mcp_servers/config.json'),
                        help='Path to configuration file')
     parser.add_argument('--status', '-s', action='store_true',
                        help='Show server status and exit')

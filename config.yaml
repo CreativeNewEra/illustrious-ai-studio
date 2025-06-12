@@ -1,6 +1,6 @@
 # Illustrious AI Studio Configuration
 # Model Paths - Update these paths to match your model locations
-sd_model: "/home/ant/AI/illustrious-ai-studio/models/Illustrious.safetensors"  # Path to SDXL .safetensors model file
+sd_model: "models/Illustrious.safetensors"  # Path to SDXL .safetensors model file
 ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"  # Ollama model name for text generation
 ollama_vision_model: "qwen2.5vl:7b"  # Vision-language model for image analysis and Q&A
 ollama_base_url: "http://localhost:11434"  # Ollama API endpoint (default local installation)

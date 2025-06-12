@@ -19,11 +19,12 @@ logger = logging.getLogger("filesystem-server")
 mcp = FastMCP("Filesystem Server")
 
 # Configuration
+BASE_DIR = Path(os.getenv("WORKSPACE_DIR", Path(__file__).resolve().parents[1]))
 ALLOWED_DIRECTORIES = [
-    "/home/ant/AI/Project",
+    str(BASE_DIR),
     "/tmp/illustrious_ai",
-    "/home/ant/AI/Project/gallery",
-    "/home/ant/AI/Project/examples",
+    str(BASE_DIR / "gallery"),
+    str(BASE_DIR / "examples"),
 ]
 
 def is_path_allowed(path: Path) -> bool:

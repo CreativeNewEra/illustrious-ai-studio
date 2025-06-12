@@ -3,10 +3,12 @@ import os
 from pathlib import Path
 import yaml
 
+MODEL_DIR = Path(os.getenv("MODELS_DIR", "models"))
+
 
 @dataclass
 class AppConfig:
-    sd_model: str = "/home/ant/AI/Project/SDXL Models/waiNSFWIllustrious_v140.safetensors"
+    sd_model: str = str(MODEL_DIR / "Illustrious.safetensors")
     ollama_model: str = "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
     ollama_vision_model: str = "qwen2.5vl:7b"
     ollama_base_url: str = "http://localhost:11434"

@@ -7,8 +7,9 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+import os
 
-def start_server(script_path: str, port: int) -> subprocess.Popen:
+def start_server(script_path: Path | str, port: int) -> subprocess.Popen:
     """Start a single MCP server."""
     env = {
         'MCP_SERVER_PORT': str(port),
@@ -16,7 +17,7 @@ def start_server(script_path: str, port: int) -> subprocess.Popen:
     }
     
     return subprocess.Popen(
-        [sys.executable, script_path],
+        [sys.executable, str(script_path)],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         env=env
@@ -24,11 +25,12 @@ def start_server(script_path: str, port: int) -> subprocess.Popen:
 
 def main():
     """Start all MCP servers."""
+    base = Path(os.getenv('MCP_DIR', Path(__file__).parent))
     servers = {
-        'filesystem': ('/home/ant/AI/Project/mcp_servers/filesystem_server.py', 8001),
-        'web-fetch': ('/home/ant/AI/Project/mcp_servers/web_fetch_server.py', 8002),
-        'git': ('/home/ant/AI/Project/mcp_servers/git_server.py', 8003),
-        'image-analysis': ('/home/ant/AI/Project/mcp_servers/image_analysis_server.py', 8004),
+        'filesystem': (base / 'filesystem_server.py', 8001),
+        'web-fetch': (base / 'web_fetch_server.py', 8002),
+        'git': (base / 'git_server.py', 8003),
+        'image-analysis': (base / 'image_analysis_server.py', 8004),
     }
     
     processes = {}
