@@ -9,6 +9,7 @@ import requests
 from .state import AppState
 from .sdxl import generate_image, save_to_gallery
 from .config import CONFIG
+from .mcp_tools import call_tool
 
 logger = logging.getLogger(__name__)
 
@@ -115,12 +116,31 @@ def generate_prompt(state: AppState, user_input: str) -> str:
     return enhanced if not enhanced.startswith("❌") else user_input
 
 
+def _execute_tool_command(command: str) -> str:
+    """Parse and execute a /tool command."""
+    parts = command.strip().split()
+    if not parts:
+        return "Usage: /tool <server>.<method> key=value"
+    server_method = parts[0]
+    if "." not in server_method:
+        return "Invalid tool format. Use /tool <server>.<method> key=value"
+    server, method = server_method.split(".", 1)
+    args = {}
+    for part in parts[1:]:
+        if "=" in part:
+            k, v = part.split("=", 1)
+            args[k] = v
+    return call_tool(server, method, **args)
+
+
 def handle_chat(state: AppState, message: str, session_id: str = "default", chat_history: Optional[list] = None) -> Tuple[list, str]:
     if not message.strip():
         return chat_history or [], ""
     if session_id not in state.chat_history_store:
         state.chat_history_store[session_id] = []
-    if message.lower().startswith("#generate") or "generate image" in message.lower():
+    if message.startswith("/tool"):
+        response = _execute_tool_command(message[len("/tool"):])
+    elif message.lower().startswith("#generate") or "generate image" in message.lower():
         clean_prompt = message.replace("#generate", "").replace("generate image", "").strip()
         if not clean_prompt:
             response = "Please provide a description for the image you want to generate."
