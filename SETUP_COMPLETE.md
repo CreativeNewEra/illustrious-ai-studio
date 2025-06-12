@@ -20,8 +20,8 @@ Your AI Studio is now fully configured and tested with all features working corr
 - Status: ✅ Working perfectly
 
 ### 4. **Hardware**
-- GPU: NVIDIA RTX 4090 Laptop GPU (16GB VRAM)
-- CUDA: 12.6
+- GPU: NVIDIA or AMD with 16GB+ VRAM
+- Backend: CUDA or ROCm
 - Status: ✅ Optimized for your hardware
 
 ## 🚀 Quick Start Commands
@@ -62,7 +62,7 @@ python model_manager.py --status        # Check GPU status
 
 1. **Memory Management**
    - Use `model_manager.py` to switch between image and LLM modes
-   - The system automatically handles CUDA memory, but switching modes helps with 16GB VRAM
+   - The system automatically manages GPU memory, but switching modes helps with 16GB VRAM
 
 2. **Image Generation**
    - Default: 1024x1024 resolution
@@ -80,7 +80,7 @@ python model_manager.py --status        # Check GPU status
 
 ## 🔧 Configuration
 
-Your setup uses optimal settings for RTX 4090M:
+Your setup uses optimal settings for high-end GPUs (e.g., RTX 4090M):
 - FP16 precision for speed
 - TF32 enabled for accuracy
 - 95% VRAM utilization
@@ -99,7 +99,7 @@ Your setup uses optimal settings for RTX 4090M:
 
 ## 🛠️ Troubleshooting
 
-### If you encounter CUDA OOM errors:
+### If you encounter GPU OOM errors (CUDA/ROCm):
 1. Run `python model_manager.py --image-mode` before generating images
 2. Set environment variable: `export OLLAMA_KEEP_ALIVE=0`
 3. Reduce image resolution or batch size
@@ -111,7 +111,7 @@ Your setup uses optimal settings for RTX 4090M:
 
 ## 📊 Performance Benchmarks
 
-With your RTX 4090M:
+Example performance with RTX 4090M:
 - Image Generation: ~7-10 seconds per image (1024x1024, 30 steps)
 - LLM Response: ~1-3 seconds for typical prompts
 - Vision Analysis: ~2-5 seconds per image

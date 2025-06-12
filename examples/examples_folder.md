@@ -46,8 +46,8 @@ def create_deployment_guide():
 ## Detailed Setup
 
 ### Prerequisites
-- Docker with GPU support (nvidia-docker2)
-- CUDA-compatible GPU with 12GB+ VRAM
+- Docker with GPU support (nvidia-docker2 or ROCm)
+- CUDA or ROCm compatible GPU with 12GB+ VRAM
 - 20GB+ disk space
 
 ### Build Options
@@ -506,7 +506,7 @@ Common issues and solutions for AI Studio setup and usage.
 
 ## Installation Issues
 
-### CUDA Out of Memory
+### GPU Out of Memory (CUDA/ROCm)
 **Problem:** GPU runs out of memory during model loading or generation.
 
 **Solutions:**

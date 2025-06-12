@@ -31,13 +31,16 @@ PyYAML>=6.0,<7.0
 # Utilities
 numpy>=1.21.0,<2.0.0
 
-# CUDA Installation Note:
-# For CUDA support, install PyTorch with CUDA manually:
-# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# GPU Installation Note:
+# For CUDA or ROCm support, install the appropriate PyTorch build manually:
+# CUDA:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# ROCm:
+#   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.7
 
 # Manual Installation Commands:
 # 1. Create conda environment: conda create -n ai-studio python=3.10
 # 2. Activate environment: conda activate ai-studio  
-# 3. Install CUDA PyTorch: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+# 3. Install PyTorch with CUDA or ROCm as needed
 # 4. Install other requirements: pip install -r requirements.txt
 # 5. Ensure Ollama is running: ollama serve (in separate terminal)

@@ -27,6 +27,11 @@ examples/
 
 ## 🚀 Quick Start
 
+Before running the examples, make sure the main project is installed using:
+```bash
+python ../setup_env.py
+```
+
 ### 1. Test the API
 ```bash
 cd api_examples
@@ -186,7 +191,7 @@ curl -X POST http://localhost:8000/chat \
    ```
 
 3. **Image Generation Fails:**
-   - Check CUDA availability
+   - Check GPU availability (`nvidia-smi` or `rocm-smi`)
    - Verify SDXL model is loaded
    - Restart application to reload models
 

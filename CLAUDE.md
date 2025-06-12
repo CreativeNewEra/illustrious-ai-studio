@@ -19,7 +19,7 @@ This file provides guidance to Claude (or other AI assistants) when working with
 ### Architecture
 
 - **Triple AI System**: SDXL (images), Ollama LLM (text), Vision models (analysis)
-- **Memory Management**: Automatic CUDA handling with retry logic, plus manual model manager
+- **Memory Management**: Automatic GPU memory handling (CUDA/ROCm) with retry logic, plus manual model manager
 - **Cross-Feature Integration**: Generate images from chat, analyze generated images
 - **Session Management**: Persistent chat history with context preservation
 
@@ -69,7 +69,7 @@ This file provides guidance to Claude (or other AI assistants) when working with
   - Interactive and CLI modes
 
 - **`verify_setup.py`**: System verification
-  - Checks Python, CUDA, dependencies
+  - Checks Python, CUDA/ROCm, dependencies
   - Verifies Ollama and model files
   - Generates setup report
 
@@ -95,6 +95,9 @@ python model_manager.py --balanced    # For mixed usage
 ```bash
 # Verify setup
 python verify_setup.py
+
+# Install test dependencies
+pip install -r requirements-test.txt
 
 # Test functionality
 python test_simple.py              # Recommended
@@ -138,7 +141,7 @@ Environment variables override config:
 ### Memory Management
 
 1. **Automatic handling**:
-   - Pre/post generation CUDA clearing
+   - Pre/post generation GPU cache clearing
    - Retry on OOM (up to 2 attempts)
    - Garbage collection integration
 
@@ -149,7 +152,7 @@ Environment variables override config:
 
 ### Error Handling
 
-- **CUDA OOM**: Automatic retry with memory clearing
+- **GPU OOM**: Automatic retry with memory clearing
 - **Model loading**: Comprehensive error messages
 - **API errors**: Proper HTTP status codes (500, 503, 507)
 - **Ollama connection**: Timeout and validation
@@ -163,7 +166,7 @@ Environment variables override config:
 
 ## Common Issues and Solutions
 
-### CUDA Out of Memory
+### GPU Out of Memory (CUDA/ROCm)
 1. Run `python model_manager.py --image-mode` before generation
 2. Set `export OLLAMA_KEEP_ALIVE=0`
 3. Reduce image size or steps
