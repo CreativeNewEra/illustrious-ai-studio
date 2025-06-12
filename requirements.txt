@@ -30,6 +30,8 @@ PyYAML>=6.0,<7.0
 
 # Utilities
 numpy>=1.21.0,<2.0.0
+psutil>=5.8.0,<6.0.0
+colorama>=0.4.0,<1.0.0
 
 # GPU Installation Note:
 # For CUDA or ROCm support, install the appropriate PyTorch build manually:

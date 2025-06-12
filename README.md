@@ -37,9 +37,11 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **Cross-Feature Integration**: Generate images from chat, analyze generated images
 
 ### 🚀 **Advanced Memory Management**
-- **Automatic GPU Memory Management**: Smart memory clearing and retry logic
+- **Memory Guardian System**: Real-time GPU memory monitoring and automatic OOM prevention
+- **Intelligent Intervention**: Automatic memory cleanup when pressure thresholds are reached
+- **Adaptive Generation**: Dynamic resolution and step adjustment based on available memory
+- **Progressive Degradation**: Graceful fallback strategies instead of crashes
 - **Model Manager Tool**: Switch between image/LLM modes to optimize 16GB VRAM usage
-- **Out-of-Memory Protection**: Automatic retries with memory clearing
 - **Performance Optimization**: FP16 precision, TF32 enabled for RTX 4090M
 
 ### 🌐 **Dual Interface**
@@ -52,7 +54,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **Session Management**: Persistent chat history
 - **Model Switching**: Change models without restarting
 
-## 🛠️ Installation
+## �️ Installation
 
 ### Prerequisites
 - **Conda/Miniconda/Anaconda** ([Installation Guide](https://docs.conda.io/en/latest/miniconda.html))
@@ -290,11 +292,54 @@ Model paths can also be set via environment variables, e.g. `SD_MODEL` for the S
   `OLLAMA_KEEP_ALIVE=0`
 - Monitor usage with `nvidia-smi` or `rocm-smi`
 
+### Memory Guardian System ✨ **NEW**
+
+The **Memory Guardian** provides automatic OOM prevention with real-time monitoring:
+
+```bash
+# Monitor memory status
+python memory_manager.py --status
+
+# Interactive memory monitoring
+python memory_manager.py --monitor
+
+# Generate comprehensive memory report
+python memory_manager.py --report
+
+# Test memory pressure handling
+python memory_manager.py --test-pressure critical
+
+# Clear GPU memory manually
+python memory_manager.py --clear
+```
+
+**Key Features:**
+- **Real-time Monitoring**: Continuous GPU memory tracking
+- **Automatic Intervention**: Proactive memory cleanup at configurable thresholds
+- **Adaptive Generation**: Dynamic resolution/step adjustment when memory is low
+- **Progressive Degradation**: Graceful fallback instead of crashes
+- **Configurable Thresholds**: Customize intervention points (70%, 85%, 95%, 98%)
+
+**Memory Thresholds:**
+- **Low (70%)**: Start close monitoring
+- **Medium (85%)**: Begin preventive actions (cache clearing, garbage collection)
+- **High (95%)**: Aggressive management (model unloading)
+- **Critical (98%)**: Emergency intervention (force unload all models)
+
+**Testing the System:**
+```bash
+# Test the Memory Guardian functionality
+python test_memory_guardian.py
+```
+
 ### Troubleshooting GPU OOM
-1. Run `python model_manager.py --image-mode` before generating
-2. Reduce image size or steps
-3. Check GPU usage with `nvidia-smi` (CUDA) or `rocm-smi`/`rocminfo` (ROCm)
-4. Restart if memory fragmentation occurs
+With Memory Guardian active, OOM issues should be automatically prevented. If you still encounter problems:
+
+1. Check Memory Guardian status: `python memory_manager.py --status`
+2. Run `python model_manager.py --image-mode` before generating
+3. Reduce image size or steps
+4. Check GPU usage with `nvidia-smi` (CUDA) or `rocm-smi`/`rocminfo` (ROCm)
+5. Enable memory optimizations: `python main.py --optimize-memory`
 
 ### Logging and Debugging ✨ **NEW**
 - **Log Files**: Automatic logging to `logs/illustrious_ai_studio.log`
@@ -316,26 +361,31 @@ grep -i error logs/illustrious_ai_studio.log
 
 ```
 illustrious-ai-studio/
-├── main.py               # Main application entry
-├── config.yaml          # Configuration file
-├── requirements.txt     # Python dependencies
-├── setup.py             # Unified environment and model setup
-├── verify_setup.py      # Setup verification tool (used by setup.py)
-├── test_simple.py       # Simple test suite
-├── model_manager.py     # GPU memory management
-├── core/               # Core modules
-│   ├── sdxl.py         # Image generation
-│   ├── ollama.py       # LLM integration
-│   ├── state.py        # Application state
-│   ├── config.py       # Configuration handler
-│   └── memory.py       # Memory management
-├── ui/                 # User interface
-│   └── web.py          # Gradio interface
-├── server/             # API server
-│   └── api.py          # FastAPI endpoints
-├── models/             # Model storage
+├── main.py                   # Main application entry
+├── config.yaml              # Configuration file
+├── requirements.txt         # Python dependencies
+├── setup.py                 # Unified environment and model setup
+├── verify_setup.py          # Setup verification tool (used by setup.py)
+├── test_simple.py           # Simple test suite
+├── model_manager.py         # Legacy GPU memory management
+├── memory_manager.py        # NEW: Memory Guardian CLI tool
+├── test_memory_guardian.py  # NEW: Memory Guardian test suite
+├── core/                   # Core modules
+│   ├── sdxl.py             # Image generation with OOM prevention
+│   ├── ollama.py           # LLM integration
+│   ├── state.py            # Application state
+│   ├── config.py           # Configuration handler
+│   ├── memory.py           # Basic memory utilities
+│   └── memory_guardian.py  # NEW: Automatic OOM prevention system
+├── ui/                     # User interface
+│   └── web.py              # Gradio interface
+├── server/                 # API server
+│   └── api.py              # FastAPI endpoints
+├── models/                 # Model storage
 │   └── Illustrious.safetensors
-└── test_outputs/       # Test results
+├── logs/                   # NEW: Automatic logging
+│   └── illustrious_ai_studio.log
+└── test_outputs/           # Test results
 ```
 
 ## 🤝 Contributing
@@ -345,11 +395,11 @@ illustrious-ai-studio/
 3. Test with `python test_simple.py`
 4. Submit a pull request
 
-## 📄 License
+## � License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
 
-## 🙏 Acknowledgments
+## � Acknowledgments
 
 - **Stable Diffusion XL** by Stability AI
 - **Ollama** for local LLM deployment

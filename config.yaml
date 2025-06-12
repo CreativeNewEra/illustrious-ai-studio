@@ -10,9 +10,37 @@ cuda_settings:
   enable_tf32: true
   memory_fraction: 0.95
 generation_defaults:
-  steps: 30
+  steps: 15
   guidance_scale: 7.5
-  width: 1024
-  height: 1024
+  width: 512
+  height: 512
   batch_size: 1
 conda_env: illustrious
+
+# Memory Guardian Configuration
+memory_guardian:
+  enabled: true
+  profile: balanced  # conservative, balanced, aggressive
+  auto_model_switching: true
+  auto_resolution_scaling: true
+  auto_batch_adjustment: true
+  enable_cpu_fallback: true
+  log_memory_stats: true
+  intervention_cooldown: 5.0  # seconds between interventions
+  
+  # Memory thresholds (as percentages)
+  thresholds:
+    low: 70      # Start monitoring closely
+    medium: 85   # Begin preventive actions
+    high: 95     # Aggressive memory management
+    critical: 98 # Emergency intervention
+  
+  # Safety margins (in GB)
+  safety_margins:
+    generation_reserve: 2.0  # Reserve for image generation
+    llm_reserve: 1.5         # Reserve for LLM operations
+  
+  # Monitoring intervals (in seconds)
+  monitoring:
+    normal_interval: 2.0      # Normal monitoring frequency
+    aggressive_interval: 0.5  # When under memory pressure

@@ -14,10 +14,13 @@ class AppConfig:
     ollama_base_url: str = "http://localhost:11434"
     
     # Performance settings
-    cuda_settings: dict = None
-    generation_defaults: dict = None
+    cuda_settings: dict | None = None
+    generation_defaults: dict | None = None
     gpu_backend: str = "cuda"
     load_models_on_startup: bool = True
+    
+    # Memory Guardian settings
+    memory_guardian: dict | None = None
 
     def __post_init__(self):
         if self.cuda_settings is None:

@@ -5,7 +5,7 @@ from pathlib import Path
 
 import gradio as gr
 
-from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl
+from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl, get_available_models, get_current_model_info, test_model_generation, switch_sdxl_model
 from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core import sdxl, ollama
@@ -15,13 +15,12 @@ from core.prompt_templates import template_manager
 
 logger = logging.getLogger(__name__)
 
-
 def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     css_file = (Path(__file__).parent / "custom.css").read_text()
     with gr.Blocks(
         title="Illustrious AI Studio",
-        theme=gr.themes.Base(),
+        theme="default",
         css=css_file
     ) as demo:
         with gr.Row(elem_classes=["main-container"]):
@@ -37,6 +36,35 @@ def create_gradio_app(state: AppState):
                 with gr.Column():
                     prompt = gr.Textbox(label="Prompt", placeholder="Describe what you want to create...", lines=3)
                     with gr.Accordion("🎯 Creative Controls", open=False):
+                        # Model Selection Section
+                        with gr.Group():
+                            gr.Markdown("### 🎭 Model Selection")
+                            with gr.Row():
+                                model_selector = gr.Dropdown(
+                                    label="Art Style Model",
+                                    elem_classes=["dropdown"],
+                                    interactive=True
+                                )
+                                test_model_btn = gr.Button(
+                                    "🧪 Test Model",
+                                    variant="secondary",
+                                    size="sm",
+                                    elem_classes=["secondary-button"]
+                                )
+                            model_info = gr.Textbox(
+                                label="Model Information",
+                                interactive=False,
+                                lines=1,
+                                elem_classes=["info-box"]
+                            )
+                            model_switch_status = gr.Textbox(
+                                label="Model Status",
+                                interactive=False,
+                                lines=1,
+                                elem_classes=["status-box"],
+                                visible=False
+                            )
+                        
                         negative_prompt = gr.Textbox(
                             label="Elements to Avoid",
                             value="blurry, low quality, text, watermark, deformed",
@@ -353,6 +381,129 @@ def create_gradio_app(state: AppState):
                 - `POST /analyze-image` - Analyze images (if multimodal available)
                 """
             )
+        
+        # Model Selection Functions
+        def refresh_model_list():
+            """Refresh the available models list."""
+            try:
+                models = get_available_models()
+                choices = []
+                current_model_path = CONFIG.sd_model
+                
+                for model in models:
+                    # Add status indicators
+                    if model["is_current"]:
+                        display_text = f"✅ {model['display_name']} ({model['size_mb']}MB) - Current"
+                    else:
+                        display_text = f"🎭 {model['display_name']} ({model['size_mb']}MB)"
+                    
+                    choices.append((display_text, model["path"]))
+                
+                # Find current selection
+                current_selection = current_model_path if any(m["path"] == current_model_path for m in models) else None
+                
+                return gr.update(choices=choices, value=current_selection)
+            except Exception as e:
+                logger.error("Failed to refresh model list: %s", e)
+                return gr.update(choices=[("❌ Error loading models", "")], value="")
+        
+        def update_model_info(selected_path):
+            """Update model information display."""
+            if not selected_path:
+                return "No model selected"
+            
+            try:
+                models = get_available_models()
+                selected_model = next((m for m in models if m["path"] == selected_path), None)
+                if not selected_model:
+                    return "Model information not available"
+                
+                info_parts = [
+                    f"📁 {selected_model['filename']}",
+                    f"💾 {selected_model['size_mb']}MB",
+                ]
+                
+                if selected_model["is_current"]:
+                    info_parts.append("✅ Currently Active")
+                else:
+                    info_parts.append("⏳ Ready to Load")
+                
+                return " | ".join(info_parts)
+                
+            except Exception as e:
+                return f"❌ Error: {str(e)}"
+        
+        def switch_model(selected_path):
+            """Switch to the selected model."""
+            if not selected_path:
+                return (
+                    gr.update(visible=True, value="❌ No model selected"),
+                    gr.update(),  # model_info
+                    gr.update()   # status_display
+                )
+            
+            try:
+                # Check if it's already the current model
+                if selected_path == CONFIG.sd_model:
+                    return (
+                        gr.update(visible=True, value="ℹ️ Model already loaded"),
+                        update_model_info(selected_path),
+                        get_model_status(state)
+                    )
+                
+                # Attempt to switch model
+                success = switch_sdxl_model(state, selected_path)
+                
+                if success:
+                    status_msg = f"✅ Successfully switched to {Path(selected_path).stem}"
+                else:
+                    status_msg = "❌ Failed to switch model - check logs for details"
+                
+                return (
+                    gr.update(visible=True, value=status_msg),
+                    update_model_info(selected_path),
+                    get_model_status(state)
+                )
+                
+            except Exception as e:
+                logger.error("Model switch failed: %s", e)
+                return (
+                    gr.update(visible=True, value=f"❌ Switch failed: {str(e)}"),
+                    update_model_info(selected_path),
+                    get_model_status(state)
+                )
+        
+        def test_selected_model(selected_path):
+            """Test the selected model with image generation."""
+            if not selected_path:
+                return (
+                    gr.update(visible=True, value="❌ No model selected for testing"),
+                    gr.update()
+                )
+            
+            try:
+                # Run the test
+                success, message, test_image = test_model_generation(state, selected_path)
+                
+                if success:
+                    return (
+                        gr.update(visible=True, value=f"✅ {message}"),
+                        test_image
+                    )
+                else:
+                    return (
+                        gr.update(visible=True, value=f"❌ Test failed: {message}"),
+                        gr.update()
+                    )
+                    
+            except Exception as e:
+                logger.error("Model test failed: %s", e)
+                return (
+                    gr.update(visible=True, value=f"❌ Test error: {str(e)}"),
+                    gr.update()
+                )
+        
+        # Event Handlers
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         generate_btn.click(
             fn=lambda p, n, st, g, se, save_flag: generate_image(state, p, n, st, g, se, save_flag),
@@ -379,13 +530,30 @@ def create_gradio_app(state: AppState):
             result_history, empty_msg = chat_wrapper(message, history)
             if message.lower().startswith("#generate") or "generate image" in message.lower():
                 return result_history, empty_msg, get_latest_image(state)
-            return result_history, empty_msg, gr.update()
+            return result_history, empty_msg, gr.update(value=None)
 
         send_btn.click(fn=chat_wrapper_with_image_update, inputs=[msg, chatbot], outputs=[chatbot, msg, output_image])
         msg.submit(fn=chat_wrapper_with_image_update, inputs=[msg, chatbot], outputs=[chatbot, msg, output_image])
         clear_btn.click(lambda: ([], ""), outputs=[chatbot, msg])
         if state.model_status["multimodal"]:
             analyze_btn.click(fn=lambda img, q: analyze_image(state, img, q), inputs=[input_image, analysis_question], outputs=analysis_output)
+        
+        # Model Selection Event Handlers
+        model_selector.change(
+            fn=update_model_info,
+            inputs=model_selector,
+            outputs=model_info
+        ).then(
+            fn=switch_model,
+            inputs=model_selector,
+            outputs=[model_switch_status, model_info, status_display]
+        )
+        
+        test_model_btn.click(
+            fn=test_selected_model,
+            inputs=model_selector,
+            outputs=[model_switch_status, output_image]
+        )
         
         # Prompt Template Management Functions
         def refresh_template_list(category_filter_value="All", search_query=""):
@@ -557,12 +725,6 @@ def create_gradio_app(state: AppState):
             outputs=template_list
         )
         
-        # Initialize template list and stats on load
-        demo.load(
-            fn=lambda: (refresh_template_list(), *get_template_statistics()),
-            outputs=[template_list, template_stats, popular_templates]
-        )
-        
         def do_switch(sd_path, ollama_name):
             if sd_path:
                 sdxl.switch_sdxl_model(state, sd_path)
@@ -584,4 +746,36 @@ def create_gradio_app(state: AppState):
             inputs=[sdxl_checkbox, ollama_checkbox, vision_checkbox],
             outputs=status_display,
         )
+        
+        # Initialize model selector and templates on load
+        # Skip model initialization if in quick-start mode
+        def initialize_ui():
+            """Initialize UI components, respecting startup flags."""
+            import sys
+            
+            # Check if --quick-start was used
+            quick_start_mode = "--quick-start" in sys.argv
+            
+            if quick_start_mode:
+                # In quick-start mode, don't auto-load models
+                return (
+                    gr.update(choices=[("⚡ Quick Start Mode - Models Not Loaded", "")], value=""),
+                    "⚡ Quick Start Mode: Models can be loaded manually from the System Info tab",
+                    refresh_template_list(),
+                    *get_template_statistics()
+                )
+            else:
+                # Normal mode - refresh model list
+                return (
+                    refresh_model_list(),
+                    update_model_info(CONFIG.sd_model),
+                    refresh_template_list(),
+                    *get_template_statistics()
+                )
+        
+        demo.load(
+            fn=initialize_ui,
+            outputs=[model_selector, model_info, template_list, template_stats, popular_templates]
+        )
+        
     return demo
