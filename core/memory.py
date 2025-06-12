@@ -5,7 +5,6 @@ import torch
 from .state import AppState
 from .config import CONFIG
 
-logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
