@@ -16,6 +16,22 @@ from core.memory import clear_gpu_memory
 import uvicorn
 
 
+def create_parser() -> argparse.ArgumentParser:
+    """Return argument parser for the CLI."""
+    parser = argparse.ArgumentParser(description="Illustrious AI Studio")
+    parser.add_argument("--lazy-load", action="store_true", help="Defer model initialization")
+    parser.add_argument("--no-sdxl", action="store_true", help="Skip SDXL initialization")
+    parser.add_argument("--no-ollama", action="store_true", help="Skip Ollama initialization")
+    parser.add_argument("--web-port", type=int, default=7860, help="Gradio port")
+    parser.add_argument("--api-port", type=int, default=8000, help="API server port")
+    parser.add_argument("--no-api", action="store_true", help="Do not start API server")
+    parser.add_argument("--auth", help="Gradio auth in user:pass or u1:p1,u2:p2 format")
+    parser.add_argument("--open-browser", action="store_true", help="Open browser on launch")
+    parser.add_argument("--optimize-memory", action="store_true", help="Enable memory optimizations")
+    parser.add_argument("--log-level", default="INFO", help="Logging level")
+    return parser
+
+
 class IllustriousAIStudio:
     """Application runner with CLI support."""
 
@@ -32,18 +48,7 @@ class IllustriousAIStudio:
     # ------------------------------------------------------------------
     @staticmethod
     def parse_args() -> argparse.Namespace:
-        parser = argparse.ArgumentParser(description="Illustrious AI Studio")
-        parser.add_argument("--lazy-load", action="store_true", help="Defer model initialization")
-        parser.add_argument("--no-sdxl", action="store_true", help="Skip SDXL initialization")
-        parser.add_argument("--no-ollama", action="store_true", help="Skip Ollama initialization")
-        parser.add_argument("--web-port", type=int, default=7860, help="Gradio port")
-        parser.add_argument("--api-port", type=int, default=8000, help="API server port")
-        parser.add_argument("--no-api", action="store_true", help="Do not start API server")
-        parser.add_argument("--auth", help="Gradio auth in user:pass or u1:p1,u2:p2 format")
-        parser.add_argument("--open-browser", action="store_true", help="Open browser on launch")
-        parser.add_argument("--optimize-memory", action="store_true", help="Enable memory optimizations")
-        parser.add_argument("--log-level", default="INFO", help="Logging level")
-        return parser.parse_args()
+        return create_parser().parse_args()
 
     # ------------------------------------------------------------------
     def _configure_environment(self) -> None:
