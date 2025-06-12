@@ -1,31 +1,19 @@
 {
-  "system": {
-    "python": "3.12.1",
-    "cuda": false
-  },
-  "dependencies": {
-    "torch": true,
-    "torchvision": true,
-    "diffusers": true,
-    "transformers": true,
-    "accelerate": true,
-    "safetensors": true,
-    "gradio": true,
-    "fastapi": true,
-    "uvicorn": true,
-    "PIL": true,
-    "requests": true,
-    "yaml": true,
-    "numpy": true,
-    "colorama": true
-  },
-  "models": {
-    "sdxl": false
-  },
-  "features": {
-    "imports": true,
-    "state": true,
-    "prompt_templates": true,
-    "logging": true
+  "timestamp": "2025-06-12 11:39:08",
+  "python_version": "3.13.3",
+  "conda_env": "illustrious",
+  "conda_exe": "/usr/bin/conda",
+  "platform": "Linux-6.14.8-200.nobara.fc42.x86_64-x86_64-with-glibc2.41",
+  "errors": [
+    "SDXL model download failed"
+  ],
+  "warnings": [],
+  "args": {
+    "gpu_backend": null,
+    "cpu_only": false,
+    "skip_models": false,
+    "skip_verify": false,
+    "force": false,
+    "verbose": true
   }
 }

@@ -55,11 +55,10 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 ## 🛠️ Installation
 
 ### Prerequisites
-- **Python 3.10+**
+- **Conda/Miniconda/Anaconda** ([Installation Guide](https://docs.conda.io/en/latest/miniconda.html))
 - **GPU** with CUDA or ROCm support (NVIDIA or AMD, 16GB+ VRAM recommended)
   - Install the appropriate drivers for your hardware
-- **Ollama** installed and running ([Installation Guide](https://ollama.ai/download))
-- **SDXL Model** (.safetensors format) - we recommend [Illustrious-XL](https://huggingface.co/OnomaAI/Illustrious-xl) for anime-style generation
+- **Ollama** installed and running ([Installation Guide](https://ollama.ai/download)) - Optional for LLM features
 
 #### Recommended SDXL Model
 For best results, we recommend the **Illustrious-XL** model:
@@ -73,26 +72,41 @@ recommend at least **16GB** of VRAM for smooth 1024x1024 generation. Lower VRAM
 (8-12GB) can work with reduced image sizes and steps. Verify your GPU with
 `nvidia-smi` on NVIDIA hardware or `rocm-smi`/`rocminfo` on AMD.
 
-### Quick Setup
+### 🚀 One-Click Setup
 
 1. **Clone the repository**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/CreativeNewEra/illustrious-ai-studio.git
    cd illustrious-ai-studio
    ```
 
-2. **Run the unified setup script** ✨ **NEW**
+2. **Run the one-click setup** ✨
    ```bash
    python setup.py
    ```
-   The script automatically detects your GPU backend, installs dependencies,
-   downloads the recommended models, updates `config.yaml`, and verifies the
-   installation.
+   
+   The setup will automatically:
+   - ✓ Detect and use conda (Miniconda/Anaconda)
+   - ✓ Create 'illustrious' conda environment with Python 3.12
+   - ✓ Install PyTorch with CUDA/ROCm/CPU support
+   - ✓ Install all dependencies
+   - ✓ Download Illustrious SDXL model (6.6GB)
+   - ✓ Configure Ollama models (if installed)
+   - ✓ Create launch scripts (run.sh/run.bat)
+   - ✓ Verify the installation
 
-3. **Configure models** (already configured for your setup)
-   - SDXL: `models/Illustrious.safetensors`
-   - LLM: `goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k`
-   - Vision: `qwen2.5vl:7b`
+3. **Start the application**
+   ```bash
+   # Easy launch (Linux/Mac)
+   ./run.sh
+   
+   # Easy launch (Windows)
+   run.bat
+   
+   # Or manually:
+   conda activate illustrious
+   python main.py
+   ```
 
 ## 🚀 Usage
 

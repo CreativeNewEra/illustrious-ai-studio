@@ -96,12 +96,13 @@ class IllustriousAIStudio:
             creds = [tuple(pair.split(":", 1)) for pair in self.args.auth.split(",")]
             auth = creds[0] if len(creds) == 1 else creds
         gradio_app.launch(
-            server_name="0.0.0.0",
+            server_name="127.0.0.1",
             server_port=self.args.web_port,
             share=False,
             auth=auth,
             show_error=True,
             inbrowser=self.args.open_browser,
+            allowed_paths=["."],
         )
 
     # ------------------------------------------------------------------
