@@ -40,7 +40,7 @@ class SwitchModelsRequest(BaseModel):
     ollama_model: str | None = None
 
 
-def create_api_app(state: AppState) -> FastAPI:
+def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
     app = FastAPI(title="Illustrious AI MCP Server", version="1.0.0")
     app.state.app_state = state
 
@@ -49,10 +49,11 @@ def create_api_app(state: AppState) -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event():
-        if state.sdxl_pipe is None:
-            sdxl.init_sdxl(state)
-        if state.ollama_model is None:
-            ollama.init_ollama(state)
+        if auto_load and CONFIG.load_models_on_startup:
+            if state.sdxl_pipe is None:
+                sdxl.init_sdxl(state)
+            if state.ollama_model is None:
+                ollama.init_ollama(state)
 
     @app.get("/status")
     async def server_status(state: AppState = Depends(get_state)):
@@ -115,8 +116,8 @@ def create_api_app(state: AppState) -> FastAPI:
     return app
 
 
-def run_mcp_server(state: AppState) -> None:
+def run_mcp_server(state: AppState, auto_load: bool = True) -> None:
     import uvicorn
 
-    app = create_api_app(state)
+    app = create_api_app(state, auto_load=auto_load)
     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
