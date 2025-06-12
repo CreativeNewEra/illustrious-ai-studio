@@ -26,12 +26,13 @@ def test_status_endpoint():
     assert response.status_code == 200, f"Unexpected status code: {response.status_code}"
     status = response.json()
 
-    for key in ("status", "models", "cuda_available"):
+    for key in ("status", "models", "gpu_available", "gpu_backend"):
         assert key in status, f"Missing '{key}' in status response"
 
     print(f"Status: {status['status']}")
     print(f"Models: {status['models']}")
-    print(f"CUDA Available: {status['cuda_available']}")
+    print(f"GPU Available: {status['gpu_available']}")
+    print(f"Backend: {status['gpu_backend']}")
     return status
 
 def test_image_generation():

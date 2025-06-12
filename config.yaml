@@ -4,6 +4,7 @@ sd_model: "/home/ant/AI/illustrious-ai-studio/models/Illustrious.safetensors"  #
 ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"  # Ollama model name for text generation
 ollama_vision_model: "qwen2.5vl:7b"  # Vision-language model for image analysis and Q&A
 ollama_base_url: "http://localhost:11434"  # Ollama API endpoint (default local installation)
+gpu_backend: "cuda"  # "cuda", "rocm", or "cpu"
 
 # Performance settings optimized for RTX 4090M (16GB VRAM)
 # Adjust these based on your GPU memory and performance requirements

@@ -270,7 +270,8 @@ Currently no authentication required for local deployment.
     "ollama": true,
     "multimodal": false
   },
-  "cuda_available": true
+  "gpu_available": true,
+  "gpu_backend": "cuda"
 }
 ```
 

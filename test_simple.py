@@ -23,7 +23,7 @@ init(autoreset=True)
 from core.state import AppState
 from core.sdxl import init_sdxl, generate_image
 from core.ollama import init_ollama, generate_prompt, analyze_image
-from core.memory import clear_cuda_memory
+from core.memory import clear_gpu_memory
 
 
 def print_header(text):
@@ -95,7 +95,7 @@ def test_image_generation_only():
     unload_ollama_gpu()
     
     # Clear CUDA cache
-    clear_cuda_memory()
+    clear_gpu_memory()
     
     state = AppState()
     
@@ -141,7 +141,7 @@ def test_vision_analysis(image_path):
     print_header("Testing Vision Analysis")
     
     # First unload SDXL by clearing the state
-    clear_cuda_memory()
+    clear_gpu_memory()
     
     state = AppState()
     

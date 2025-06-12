@@ -57,14 +57,16 @@ class SetupVerifier:
         else:
             self.print_error(f"Python {version.major}.{version.minor} (requires 3.10+)")
 
-    def check_cuda(self):
-        """Check CUDA availability and GPU info"""
-        self.print_header("CUDA & GPU Information")
+    def check_gpu(self):
+        """Check CUDA or ROCm availability and GPU info"""
+        self.print_header("CUDA/ROCm & GPU Information")
         
         try:
             if torch.cuda.is_available():
-                self.print_success(f"CUDA Available: {torch.version.cuda}")
-                self.results["system"]["cuda"] = torch.version.cuda
+                backend = "ROCm" if torch.version.hip else "CUDA"
+                version = torch.version.hip or torch.version.cuda
+                self.print_success(f"{backend} Available: {version}")
+                self.results["system"]["cuda"] = version
                 
                 # GPU information
                 gpu_count = torch.cuda.device_count()
@@ -86,13 +88,13 @@ class SetupVerifier:
                 # Memory info
                 allocated = torch.cuda.memory_allocated() / 1024**3
                 reserved = torch.cuda.memory_reserved() / 1024**3
-                self.print_info(f"CUDA Memory: {allocated:.1f}GB allocated, {reserved:.1f}GB reserved")
+                self.print_info(f"GPU Memory: {allocated:.1f}GB allocated, {reserved:.1f}GB reserved")
                 
             else:
-                self.print_error("CUDA not available")
+                self.print_error("No GPU backend available")
                 self.results["system"]["cuda"] = False
         except Exception as e:
-            self.print_error(f"Error checking CUDA: {e}")
+            self.print_error(f"Error checking GPU backend: {e}")
 
     def check_dependencies(self):
         """Check all required Python packages"""
@@ -283,7 +285,7 @@ class SetupVerifier:
     def run_all_checks(self):
         """Run all verification checks"""
         self.check_python_version()
-        self.check_cuda()
+        self.check_gpu()
         self.check_dependencies()
         self.check_ollama()
         self.check_models()

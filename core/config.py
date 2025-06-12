@@ -14,6 +14,7 @@ class AppConfig:
     # Performance settings
     cuda_settings: dict = None
     generation_defaults: dict = None
+    gpu_backend: str = "cuda"
 
     def __post_init__(self):
         if self.cuda_settings is None:
@@ -50,6 +51,7 @@ def load_config(path: str | None = None) -> AppConfig:
     config.sd_model = os.getenv("SD_MODEL", config.sd_model)
     config.ollama_model = os.getenv("OLLAMA_MODEL", config.ollama_model)
     config.ollama_base_url = os.getenv("OLLAMA_BASE_URL", config.ollama_base_url)
+    config.gpu_backend = os.getenv("GPU_BACKEND", config.gpu_backend)
     return config
 
 

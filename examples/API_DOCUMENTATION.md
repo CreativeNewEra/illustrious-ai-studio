@@ -44,7 +44,8 @@ Check server status and model availability.
     "ollama": true,
     "multimodal": false
   },
-  "cuda_available": true
+  "gpu_available": true,
+  "gpu_backend": "cuda"
 }
 ```
 

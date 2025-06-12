@@ -10,6 +10,7 @@ from core import sdxl, ollama
 from core.sdxl import generate_image
 from core.ollama import chat_completion, analyze_image
 from core.state import AppState
+from core.config import CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +59,8 @@ def create_api_app(state: AppState) -> FastAPI:
         return {
             "status": "running",
             "models": state.model_status,
-            "cuda_available": torch.cuda.is_available(),
+            "gpu_available": torch.cuda.is_available(),
+            "gpu_backend": CONFIG.gpu_backend,
         }
 
     @app.post("/generate-image")

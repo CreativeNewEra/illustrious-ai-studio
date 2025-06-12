@@ -43,11 +43,11 @@ class DummyPipe:
     def __call__(self, *args, **kwargs):
         return types.SimpleNamespace(images=[Image.new('RGB', (64, 64), color='white')])
 
-# Ensure clear_cuda_memory is patched to avoid torch calls
+# Ensure clear_gpu_memory is patched to avoid torch calls
 @pytest.fixture(autouse=True)
 def patch_clear_cuda(monkeypatch):
     app = load_app()
-    monkeypatch.setattr(app, 'clear_cuda_memory', lambda: None)
+    monkeypatch.setattr(app, 'clear_gpu_memory', lambda: None)
 
 
 def test_generate_image_no_model(monkeypatch):

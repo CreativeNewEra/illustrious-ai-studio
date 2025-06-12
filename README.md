@@ -37,7 +37,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **Cross-Feature Integration**: Generate images from chat, analyze generated images
 
 ### 🚀 **Advanced Memory Management**
-- **Automatic CUDA Memory Management**: Smart memory clearing and retry logic
+- **Automatic GPU Memory Management**: Smart memory clearing and retry logic
 - **Model Manager Tool**: Switch between image/LLM modes to optimize 16GB VRAM usage
 - **Out-of-Memory Protection**: Automatic retries with memory clearing
 - **Performance Optimization**: FP16 precision, TF32 enabled for RTX 4090M
@@ -56,7 +56,8 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 
 ### Prerequisites
 - **Python 3.10+**
-- **NVIDIA GPU** with CUDA support (16GB+ VRAM recommended)
+- **GPU** with CUDA or ROCm support (NVIDIA or AMD, 16GB+ VRAM recommended)
+  - Install the appropriate drivers for your hardware
 - **Ollama** installed and running ([Installation Guide](https://ollama.ai/download))
 - **SDXL Model** (.safetensors format) - we recommend [Illustrious-XL](https://huggingface.co/OnomaAI/Illustrious-xl) for anime-style generation
 
@@ -212,6 +213,7 @@ sd_model: "/home/ant/AI/illustrious-ai-studio/models/Illustrious.safetensors"
 ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
 ollama_vision_model: "qwen2.5vl:7b"
 ollama_base_url: "http://localhost:11434"
+gpu_backend: "cuda"  # "cuda", "rocm", or "cpu"
 
 cuda_settings:
   device: "cuda:0"
@@ -234,10 +236,10 @@ generation_defaults:
 - 20-30 steps for quality, 10-15 for speed
 - Set `export OLLAMA_KEEP_ALIVE=0` to free memory faster
 
-### Troubleshooting CUDA OOM
+### Troubleshooting GPU OOM
 1. Run `python model_manager.py --image-mode` before generating
 2. Reduce image size or steps
-3. Check GPU usage with `nvidia-smi`
+3. Check GPU usage with `nvidia-smi` (or `rocm-smi` for AMD)
 4. Restart if memory fragmentation occurs
 
 ### Logging and Debugging ✨ **NEW**
