@@ -67,6 +67,12 @@ For best results, we recommend the **Illustrious-XL** model:
 - **Size**: ~6.6GB
 - **Strengths**: Excellent anime/manga style generation with high detail
 
+### Supported GPUs
+Illustrious AI Studio works with both **NVIDIA CUDA** and **AMD ROCm** GPUs. We
+recommend at least **16GB** of VRAM for smooth 1024x1024 generation. Lower VRAM
+(8-12GB) can work with reduced image sizes and steps. Verify your GPU with
+`nvidia-smi` on NVIDIA hardware or `rocm-smi`/`rocminfo` on AMD.
+
 ### Quick Setup
 
 1. **Clone the repository**
@@ -225,16 +231,17 @@ generation_defaults:
 
 ## 🎯 Performance Tips
 
-### For RTX 4090M (16GB VRAM)
+### For GPUs with 16GB+ VRAM
 - Use `model_manager.py` to switch modes when needed
 - Default 1024x1024 works well, use 768x768 for faster generation
 - 20-30 steps for quality, 10-15 for speed
 - Set `export OLLAMA_KEEP_ALIVE=0` to free memory faster
+- Monitor usage with `nvidia-smi` or `rocm-smi`
 
 ### Troubleshooting GPU OOM
 1. Run `python model_manager.py --image-mode` before generating
 2. Reduce image size or steps
-3. Check GPU usage with `nvidia-smi` (or `rocm-smi` for AMD)
+3. Check GPU usage with `nvidia-smi` (CUDA) or `rocm-smi`/`rocminfo` (ROCm)
 4. Restart if memory fragmentation occurs
 
 ### Logging and Debugging ✨ **NEW**

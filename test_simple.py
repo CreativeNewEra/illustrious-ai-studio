@@ -215,7 +215,7 @@ def main():
         print_info("1. Use the model_manager.py to switch between modes")
         print_info("2. Run 'export OLLAMA_KEEP_ALIVE=0' before starting")
         print_info("3. Consider using lower resolution (768x768) for testing")
-        print_info("4. Monitor GPU memory with 'watch nvidia-smi'")
+        print_info("4. Monitor GPU memory with 'watch nvidia-smi' (or 'watch rocm-smi')")
     
     return 0 if passed == total else 1
 
