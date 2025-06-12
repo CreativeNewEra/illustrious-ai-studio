@@ -129,6 +129,19 @@ python test_simple.py
 python test_full_functionality.py
 ```
 
+#### Developer Testing
+Install the extra packages needed by the test suite (`pytest`, `Pillow`, `PyYAML`, etc.):
+
+```bash
+pip install -r requirements-test.txt
+```
+
+Then run:
+
+```bash
+pytest
+```
+
 ## 💻 Web Interface
 
 ### 🎨 Text-to-Image Tab
