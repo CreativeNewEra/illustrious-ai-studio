@@ -5,7 +5,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 ## 🆕 Latest Improvements
 
 -### 🚀 **Automated Setup & Model Management**
-- **One-Command Setup**: `python setup_env.py` handles everything
+- **One-Command Setup**: `python setup.py` handles everything
 - **Automatic Downloads**: Recommended models downloaded and configured
 - **Smart Configuration**: Auto-updating config.yaml with optimal settings
 
@@ -81,21 +81,15 @@ recommend at least **16GB** of VRAM for smooth 1024x1024 generation. Lower VRAM
    cd illustrious-ai-studio
    ```
 
-2. **Run the environment setup script** ✨ **NEW**
+2. **Run the unified setup script** ✨ **NEW**
    ```bash
-   python setup_env.py
+   python setup.py
    ```
-   Select your GPU type (CUDA, ROCm, or CPU) and wait while the script:
-   - Creates `./venv` and installs all requirements
-   - Downloads the recommended models
-   - Updates your `config.yaml` automatically
+   The script automatically detects your GPU backend, installs dependencies,
+   downloads the recommended models, updates `config.yaml`, and verifies the
+   installation.
 
-3. **Verify setup**
-   ```bash
-   python verify_setup.py
-   ```
-
-4. **Configure models** (already configured for your setup)
+3. **Configure models** (already configured for your setup)
    - SDXL: `models/Illustrious.safetensors`
    - LLM: `goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k`
    - Vision: `qwen2.5vl:7b`
@@ -299,8 +293,8 @@ illustrious-ai-studio/
 ├── main.py               # Main application entry
 ├── config.yaml          # Configuration file
 ├── requirements.txt     # Python dependencies
-├── setup_env.py         # Automated environment setup
-├── verify_setup.py      # Setup verification tool
+├── setup.py             # Unified environment and model setup
+├── verify_setup.py      # Setup verification tool (used by setup.py)
 ├── test_simple.py       # Simple test suite
 ├── model_manager.py     # GPU memory management
 ├── core/               # Core modules

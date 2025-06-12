@@ -29,7 +29,7 @@ examples/
 
 Before running the examples, make sure the main project is installed using:
 ```bash
-python ../setup_env.py
+python ../setup.py
 ```
 
 ### 1. Test the API
