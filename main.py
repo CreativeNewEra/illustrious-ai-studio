@@ -115,8 +115,9 @@ class IllustriousAIStudio:
             self._start_api_server()
 
         self._launch_gradio()
-        self._shutdown()
-
+        signal.signal(signal.SIGINT, self._shutdown)
+        signal.signal(signal.SIGTERM, self._shutdown)
+        signal.pause()  # Wait for termination signals
     # ------------------------------------------------------------------
     def _shutdown(self, *args) -> None:
         if self.api_server:
