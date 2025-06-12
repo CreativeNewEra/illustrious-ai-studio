@@ -8,6 +8,7 @@ import gradio as gr
 from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl
 from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
+from core import sdxl, ollama
 from core.memory import get_model_status
 from core.state import AppState
 from core.prompt_templates import template_manager
@@ -319,13 +320,14 @@ def create_gradio_app(state: AppState):
                 variant="secondary",
                 elem_classes=["secondary-button"]
             )
-            load_sdxl_btn = gr.Button(
-                "⚡ Load SDXL",
-                variant="secondary",
-                elem_classes=["secondary-button"]
-            )
-            load_ollama_btn = gr.Button(
-                "⚡ Load Ollama",
+
+            gr.Markdown("### Model Loader")
+            with gr.Row():
+                sdxl_checkbox = gr.Checkbox(label="SDXL")
+                ollama_checkbox = gr.Checkbox(label="Ollama Text Model")
+                vision_checkbox = gr.Checkbox(label="Vision Model")
+            load_selected_btn = gr.Button(
+                "⚡ Load Selected",
                 variant="secondary",
                 elem_classes=["secondary-button"]
             )
@@ -569,6 +571,17 @@ def create_gradio_app(state: AppState):
             return get_model_status(state), json.dumps(CONFIG.as_dict(), indent=2)
         switch_btn.click(fn=do_switch, inputs=[sd_model_input, ollama_model_input], outputs=[status_display, config_display])
         refresh_btn.click(fn=lambda: get_model_status(state), outputs=status_display)
-        load_sdxl_btn.click(fn=lambda: (sdxl.init_sdxl(state), get_model_status(state))[1], outputs=status_display)
-        load_ollama_btn.click(fn=lambda: (ollama.init_ollama(state), get_model_status(state))[1], outputs=status_display)
+
+        def load_selected_models(load_s, load_o, load_v):
+            if load_s:
+                sdxl.init_sdxl(state)
+            if load_o or load_v:
+                ollama.init_ollama(state)
+            return get_model_status(state)
+
+        load_selected_btn.click(
+            fn=load_selected_models,
+            inputs=[sdxl_checkbox, ollama_checkbox, vision_checkbox],
+            outputs=status_display,
+        )
     return demo

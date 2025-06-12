@@ -112,6 +112,9 @@ python main.py --lazy-load
 ```
 Then open: http://localhost:7860
 
+Use the **Model Loader** section on the System Info tab to load SDXL or Ollama
+models on demand if you started with `--lazy-load`.
+
 ### Memory Management
 ```bash
 # For image generation heavy workloads
@@ -177,7 +180,9 @@ pytest
 - Model configuration and status
 - Switch models on the fly
 - View API documentation
-- **Load Models On Demand** buttons for SDXL and Ollama
+ - **Load Models On Demand**: Use the *Model Loader* checkboxes to select SDXL,
+   the Ollama text model, and/or the vision model, then click **Load Selected**
+   to initialize them
 
 ## 🔧 API Usage
 
