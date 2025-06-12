@@ -24,7 +24,7 @@ def call_tool(server: str, tool: str, **kwargs: Any) -> str:
     url = f"{base_url}/tools/{tool}"
     try:
         response = requests.post(url, json={"arguments": kwargs}, timeout=30)
-    except Exception as e:
+    except requests.exceptions.RequestException as e:
         logger.error("Request to %s failed: %s", url, e)
         return f"❌ Request failed: {e}"
 
