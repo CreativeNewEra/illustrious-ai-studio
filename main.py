@@ -1,147 +1,131 @@
+import argparse
 import logging
 import logging.handlers
+import os
+import signal
 import threading
 from pathlib import Path
-import sys
-import traceback
 
 from ui.web import create_gradio_app
-from server.api import run_mcp_server
+from server.api import create_api_app
 from core.sdxl import init_sdxl
 from core.ollama import init_ollama
 from core.state import AppState
-from core.config import load_config
+from core.memory import clear_gpu_memory
 
-def setup_logging():
-    """Setup centralized logging for the application."""
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)
-    
-    # Create formatters
-    detailed_formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    simple_formatter = logging.Formatter(
-        '%(levelname)s: %(message)s'
-    )
-    
-    # Create handlers
-    # File handler with rotation
-    file_handler = logging.handlers.RotatingFileHandler(
-        log_dir / "illustrious_ai_studio.log",
-        maxBytes=10*1024*1024,  # 10MB
-        backupCount=5
-    )
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(detailed_formatter)
-    
-    # Console handler
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(simple_formatter)
-    
-    # Configure root logger
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.DEBUG)
-    root_logger.addHandler(file_handler)
-    root_logger.addHandler(console_handler)
-    
-    # Suppress verbose third-party logs
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("urllib3").setLevel(logging.WARNING)
-    logging.getLogger("gradio").setLevel(logging.INFO)
-    
-    return logging.getLogger(__name__)
-
-logger = setup_logging()
-app_state = AppState()
+import uvicorn
 
 
-def initialize_models() -> None:
-    """Initialize AI models with proper error handling."""
-    try:
-        logger.info("Initializing AI models...")
-        
-        # Load and validate configuration
-        config = load_config()
-        logger.info(f"Configuration loaded successfully")
-        
-        # Initialize SDXL
-        logger.info("Initializing SDXL model...")
-        init_sdxl(app_state)
-        logger.info("✓ SDXL model initialized")
-        
-        # Initialize Ollama
-        logger.info("Initializing Ollama models...")
-        init_ollama(app_state)
-        logger.info("✓ Ollama models initialized")
-        
-        logger.info("All models initialized successfully!")
-        
-    except Exception as e:
-        logger.error(f"Failed to initialize models: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise
+class IllustriousAIStudio:
+    """Application runner with CLI support."""
 
-def start_mcp_server(lazy_load: bool = False) -> threading.Thread:
-    """Start the MCP server in a separate thread."""
-    def run_server():
-        try:
-            logger.info("Starting MCP Server...")
-            run_mcp_server(app_state, auto_load=not lazy_load)
-        except Exception as e:
-            logger.error(f"MCP Server error: {e}")
-            logger.error(f"Traceback: {traceback.format_exc()}")
-    
-    mcp_thread = threading.Thread(target=run_server, daemon=True)
-    mcp_thread.start()
-    logger.info("✓ MCP Server started on http://localhost:8000")
-    return mcp_thread
+    def __init__(self, args: argparse.Namespace) -> None:
+        self.args = args
+        self._configure_environment()
+        self.logger = self._setup_logging(args.log_level)
+        self.app_state = AppState()
+        self.api_server: uvicorn.Server | None = None
+        self.api_thread: threading.Thread | None = None
+        signal.signal(signal.SIGINT, self._shutdown)
+        signal.signal(signal.SIGTERM, self._shutdown)
 
-def start_web_interface():
-    """Start the Gradio web interface."""
-    try:
-        logger.info("Starting Gradio web interface...")
-        gradio_app = create_gradio_app(app_state)
-        logger.info("✓ Gradio app created successfully")
-        
+    # ------------------------------------------------------------------
+    @staticmethod
+    def parse_args() -> argparse.Namespace:
+        parser = argparse.ArgumentParser(description="Illustrious AI Studio")
+        parser.add_argument("--lazy-load", action="store_true", help="Defer model initialization")
+        parser.add_argument("--no-sdxl", action="store_true", help="Skip SDXL initialization")
+        parser.add_argument("--no-ollama", action="store_true", help="Skip Ollama initialization")
+        parser.add_argument("--web-port", type=int, default=7860, help="Gradio port")
+        parser.add_argument("--api-port", type=int, default=8000, help="API server port")
+        parser.add_argument("--no-api", action="store_true", help="Do not start API server")
+        parser.add_argument("--auth", help="Gradio auth in user:pass or u1:p1,u2:p2 format")
+        parser.add_argument("--open-browser", action="store_true", help="Open browser on launch")
+        parser.add_argument("--optimize-memory", action="store_true", help="Enable memory optimizations")
+        parser.add_argument("--log-level", default="INFO", help="Logging level")
+        return parser.parse_args()
+
+    # ------------------------------------------------------------------
+    def _configure_environment(self) -> None:
+        os.environ.setdefault("GRADIO_ANALYTICS_ENABLED", "false")
+        if self.args.optimize_memory:
+            os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+            os.environ.setdefault("OLLAMA_KEEP_ALIVE", "0")
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _setup_logging(level: str) -> logging.Logger:
+        log_dir = Path("logs")
+        log_dir.mkdir(exist_ok=True)
+        file_handler = logging.handlers.RotatingFileHandler(
+            log_dir / "illustrious_ai_studio.log", maxBytes=10 * 1024 * 1024, backupCount=5
+        )
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        file_handler.setFormatter(formatter)
+        console_handler = logging.StreamHandler()
+        console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+
+        root = logging.getLogger()
+        root.setLevel(level.upper())
+        root.addHandler(file_handler)
+        root.addHandler(console_handler)
+        logging.getLogger("gradio").setLevel(logging.INFO)
+        logging.getLogger("httpx").setLevel(logging.WARNING)
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
+        return logging.getLogger(__name__)
+
+    # ------------------------------------------------------------------
+    def _start_api_server(self) -> None:
+        app = create_api_app(self.app_state, auto_load=not self.args.lazy_load)
+        config = uvicorn.Config(app, host="0.0.0.0", port=self.args.api_port, log_level="info")
+        self.api_server = uvicorn.Server(config)
+        self.api_thread = threading.Thread(target=self.api_server.run, daemon=True)
+        self.api_thread.start()
+        self.logger.info("✓ MCP Server started on http://localhost:%s", self.args.api_port)
+
+    # ------------------------------------------------------------------
+    def _launch_gradio(self) -> None:
+        gradio_app = create_gradio_app(self.app_state)
+        auth = None
+        if self.args.auth:
+            creds = [tuple(pair.split(":", 1)) for pair in self.args.auth.split(",")]
+            auth = creds[0] if len(creds) == 1 else creds
         gradio_app.launch(
             server_name="0.0.0.0",
-            server_port=7860,
+            server_port=self.args.web_port,
             share=False,
-            auth=None,
+            auth=auth,
             show_error=True,
+            inbrowser=self.args.open_browser,
         )
-    except Exception as e:
-        logger.error(f"Failed to start web interface: {e}")
-        logger.error(f"Traceback: {traceback.format_exc()}")
-        raise
+
+    # ------------------------------------------------------------------
+    def run(self) -> None:
+        self.logger.info("%s", "=" * 50)
+        self.logger.info("🎨 Starting Illustrious AI Studio")
+        self.logger.info("%s", "=" * 50)
+
+        if not self.args.lazy_load:
+            if not self.args.no_sdxl:
+                init_sdxl(self.app_state)
+            if not self.args.no_ollama:
+                init_ollama(self.app_state)
+
+        if not self.args.no_api:
+            self._start_api_server()
+
+        self._launch_gradio()
+        self._shutdown()
+
+    # ------------------------------------------------------------------
+    def _shutdown(self, *args) -> None:
+        if self.api_server:
+            self.api_server.should_exit = True
+        clear_gpu_memory()
+        if self.api_thread and self.api_thread.is_alive():
+            self.api_thread.join(timeout=5)
 
 
 if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Illustrious AI Studio")
-    parser.add_argument("--lazy-load", action="store_true", help="Defer model initialization until requested")
-    args = parser.parse_args()
-
-    try:
-        logger.info("=" * 50)
-        logger.info("🎨 Starting Illustrious AI Studio")
-        logger.info("=" * 50)
-
-        if not args.lazy_load:
-            initialize_models()
-
-        mcp_thread = start_mcp_server(lazy_load=args.lazy_load)
-        
-        # Start web interface
-        logger.info("🌐 Starting web interface on http://localhost:7860")
-        start_web_interface()
-        
-    except KeyboardInterrupt:
-        logger.info("Received shutdown signal, stopping application...")
-    except Exception as e:
-        logger.critical(f"Critical error starting application: {e}")
-        logger.critical(f"Traceback: {traceback.format_exc()}")
-        sys.exit(1)
+    studio = IllustriousAIStudio(IllustriousAIStudio.parse_args())
+    studio.run()
