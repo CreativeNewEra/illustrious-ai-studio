@@ -2,6 +2,32 @@
 
 A powerful local AI application that combines **Stable Diffusion XL (SDXL)** image generation with **Ollama LLM** capabilities, including vision models for image analysis.
 
+## 🆕 Latest Improvements
+
+### 🚀 **Automated Setup & Model Management**
+- **One-Command Setup**: `python setup_models.py` handles everything
+- **Automatic Downloads**: Recommended models downloaded and configured
+- **Smart Configuration**: Auto-updating config.yaml with optimal settings
+
+### 📝 **Prompt Template System**
+- **Save & Reuse**: Save your best prompts as reusable templates
+- **Organization**: Categories, tags, and search functionality  
+- **Import/Export**: Share templates as JSON files
+- **Usage Analytics**: Track popular templates and usage statistics
+
+### 🛡️ **Enhanced Security & Reliability**
+- **Centralized Logging**: Automatic log rotation and error tracking
+- **Rate Limiting**: Configurable request limits for web fetching
+- **User Agent Spoofing**: Multiple user agent options for better web compatibility
+- **Domain Security**: Allowed/blocked domain lists for MCP servers
+- **Robust Error Handling**: User-friendly error messages throughout
+
+### 📊 **Better User Experience**
+- **Detailed Documentation**: Enhanced README with direct links and examples
+- **Configuration Comments**: Inline explanations for all config options
+- **Status Monitoring**: Real-time feedback and progress indicators
+- **Performance Insights**: Detailed logging of model operations
+
 ## 🌟 Features
 
 ### 🎨 **Triple AI System**
@@ -31,8 +57,14 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 ### Prerequisites
 - **Python 3.10+**
 - **NVIDIA GPU** with CUDA support (16GB+ VRAM recommended)
-- **Ollama** installed and running
-- **SDXL Model** (.safetensors format)
+- **Ollama** installed and running ([Installation Guide](https://ollama.ai/download))
+- **SDXL Model** (.safetensors format) - we recommend [Illustrious-XL](https://huggingface.co/OnomaAI/Illustrious-xl) for anime-style generation
+
+#### Recommended SDXL Model
+For best results, we recommend the **Illustrious-XL** model:
+- **Download**: [Hugging Face - Illustrious-XL](https://huggingface.co/OnomaAI/Illustrious-xl/blob/main/Illustrious-xl-v0.1.safetensors)
+- **Size**: ~6.6GB
+- **Strengths**: Excellent anime/manga style generation with high detail
 
 ### Quick Setup
 
@@ -47,7 +79,16 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
    pip install -r requirements.txt
    ```
 
-3. **Verify setup**
+3. **Download and setup models (automated)** ✨ **NEW**
+   ```bash
+   python setup_models.py
+   ```
+   This will:
+   - Download the recommended Illustrious-XL SDXL model
+   - Pull required Ollama models (LLM and Vision)
+   - Update your `config.yaml` automatically
+
+4. **Verify setup**
    ```bash
    python verify_setup.py
    ```
@@ -92,6 +133,7 @@ python test_full_functionality.py
 - Enter prompts or use "Enhance Prompt" for AI improvement
 - Adjust parameters: steps, guidance scale, seed
 - Images auto-saved to gallery
+- **New**: Use saved prompt templates for consistent results
 
 ### 💬 AI Chat Tab
 - Chat with the LLM
@@ -103,12 +145,33 @@ python test_full_functionality.py
 - Ask specific questions about images
 - Works with generated images too
 
+### 📝 Prompt Templates Tab ✨ **NEW**
+- **Save Templates**: Save your best prompts for reuse
+- **Organize**: Categorize templates and add tags
+- **Search**: Find templates by name, content, or tags
+- **Export/Import**: Share templates with others (JSON format)
+- **Statistics**: Track usage and find popular templates
+- **Quick Apply**: One-click template application
+
 ### 📊 System Info Tab
 - Model configuration and status
 - Switch models on the fly
 - View API documentation
 
 ## 🔧 API Usage
+
+### Enhanced MCP Servers ✨ **NEW**
+
+#### Web Fetch Server
+- **Rate Limiting**: Configurable requests per minute/hour
+- **User Agent Spoofing**: Multiple user agent options (default, browser, mobile)
+- **Domain Security**: Allowed/blocked domain lists
+- **Content Filtering**: Automatic content cleaning and size limits
+
+#### Filesystem Server
+- **Secure Access**: Configurable allowed directories
+- **Path Validation**: Prevents directory traversal attacks
+- **Detailed Logging**: All file operations logged
 
 ### Image Generation
 ```bash
@@ -176,6 +239,22 @@ generation_defaults:
 2. Reduce image size or steps
 3. Check GPU usage with `nvidia-smi`
 4. Restart if memory fragmentation occurs
+
+### Logging and Debugging ✨ **NEW**
+- **Log Files**: Automatic logging to `logs/illustrious_ai_studio.log`
+- **Log Rotation**: Automatic rotation (10MB max, 5 backups)
+- **Console Output**: Real-time status updates
+- **Error Tracking**: Detailed error messages and stack traces
+- **Performance Monitoring**: Model loading and generation timing
+
+**View Logs:**
+```bash
+# View recent logs
+tail -f logs/illustrious_ai_studio.log
+
+# Search for errors
+grep -i error logs/illustrious_ai_studio.log
+```
 
 ## 📁 Project Structure
 

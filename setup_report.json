@@ -1,11 +1,7 @@
 {
   "system": {
-    "python": "3.10.18",
-    "cuda": "12.1",
-    "gpu_0": {
-      "name": "NVIDIA GeForce RTX 4090 Laptop GPU",
-      "memory_gb": 15.5806884765625
-    }
+    "python": "3.12.1",
+    "cuda": false
   },
   "dependencies": {
     "torch": true,
@@ -24,20 +20,12 @@
     "colorama": true
   },
   "models": {
-    "ollama_models": {
-      "vision": [
-        "qwen2.5vl:7b"
-      ],
-      "text": [
-        "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k",
-        "deepseek-r1:8b",
-        "qwen3:30b"
-      ]
-    },
-    "sdxl": true
+    "sdxl": false
   },
   "features": {
     "imports": true,
-    "state": true
+    "state": true,
+    "prompt_templates": true,
+    "logging": true
   }
 }

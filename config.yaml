@@ -1,20 +1,23 @@
 # Illustrious AI Studio Configuration
-sd_model: "/home/ant/AI/illustrious-ai-studio/models/Illustrious.safetensors"
-ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
-ollama_vision_model: "qwen2.5vl:7b"  # Vision-language model for image analysis
-ollama_base_url: "http://localhost:11434"
+# Model Paths - Update these paths to match your model locations
+sd_model: "/home/ant/AI/illustrious-ai-studio/models/Illustrious.safetensors"  # Path to SDXL .safetensors model file
+ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"  # Ollama model name for text generation
+ollama_vision_model: "qwen2.5vl:7b"  # Vision-language model for image analysis and Q&A
+ollama_base_url: "http://localhost:11434"  # Ollama API endpoint (default local installation)
 
-# Performance settings for RTX 4090M (16GB VRAM)
+# Performance settings optimized for RTX 4090M (16GB VRAM)
+# Adjust these based on your GPU memory and performance requirements
 cuda_settings:
-  device: "cuda:0"
-  dtype: "float16"
-  enable_tf32: true
-  memory_fraction: 0.95  # Use up to 95% of VRAM
+  device: "cuda:0"  # CUDA device to use (cuda:0 for first GPU)
+  dtype: "float16"  # Use FP16 precision to save VRAM (vs float32)
+  enable_tf32: true  # Enable TensorFloat-32 for faster operations on RTX GPUs
+  memory_fraction: 0.95  # Use up to 95% of VRAM (0.8-0.95 recommended, lower if OOM errors)
 
-# Generation defaults
+# Default generation parameters for image creation
+# These can be overridden in the UI or API calls
 generation_defaults:
-  steps: 30
-  guidance_scale: 7.5
-  width: 1024
-  height: 1024
-  batch_size: 1
+  steps: 30  # Number of denoising steps (20-50 typical, higher = quality, lower = speed)
+  guidance_scale: 7.5  # How closely to follow the prompt (1-20, 7-8 typical for SDXL)
+  width: 1024  # Image width in pixels (1024 is SDXL's native resolution)
+  height: 1024  # Image height in pixels (1024 is SDXL's native resolution)
+  batch_size: 1  # Number of images to generate simultaneously (keep at 1 to avoid OOM)

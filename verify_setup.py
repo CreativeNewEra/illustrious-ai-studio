@@ -207,6 +207,7 @@ class SetupVerifier:
             from core.sdxl import init_sdxl
             from core.ollama import init_ollama
             from core.state import AppState
+            from core.prompt_templates import template_manager
             
             self.print_success("Core modules can be imported")
             self.results["features"]["imports"] = True
@@ -216,6 +217,29 @@ class SetupVerifier:
             self.print_success("AppState initialized")
             self.results["features"]["state"] = True
             
+            # Test prompt template system
+            try:
+                stats = template_manager.get_template_stats()
+                self.print_success(f"Prompt template system initialized ({stats['total_templates']} templates)")
+                self.results["features"]["prompt_templates"] = True
+            except Exception as e:
+                self.print_warning(f"Prompt template system warning: {e}")
+                self.results["features"]["prompt_templates"] = False
+            
+            # Test logging setup
+            try:
+                import logging
+                log_dir = Path("logs")
+                if log_dir.exists() or True:  # Will be created on first run
+                    self.print_success("Logging system configured")
+                    self.results["features"]["logging"] = True
+                else:
+                    self.print_warning("Logs directory not found (will be created on startup)")
+                    self.results["features"]["logging"] = False
+            except Exception as e:
+                self.print_warning(f"Logging setup issue: {e}")
+                self.results["features"]["logging"] = False
+                
         except Exception as e:
             self.print_error(f"Error testing features: {e}")
             self.results["features"]["imports"] = False

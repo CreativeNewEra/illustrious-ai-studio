@@ -2,13 +2,17 @@
 """
 MCP Web Fetch Server
 Provides web content fetching and conversion for efficient LLM usage.
+Enhanced with rate limiting and configurable user agent spoofing.
 """
 
 import asyncio
 import logging
+import time
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse, urljoin
 import re
+import json
+from pathlib import Path
 
 import httpx
 from bs4 import BeautifulSoup
@@ -23,10 +27,90 @@ logger = logging.getLogger("web-fetch-server")
 # Initialize the FastMCP server
 mcp = FastMCP("Web Fetch Server")
 
-# Configuration
-USER_AGENT = "Illustrious AI Studio MCP Web Fetch Server/1.0"
-TIMEOUT = 30
-MAX_CONTENT_LENGTH = 10 * 1024 * 1024  # 10MB limit
+# Configuration - can be loaded from config file
+CONFIG_FILE = Path("mcp_servers/web_fetch_config.json")
+
+# Default configuration
+DEFAULT_CONFIG = {
+    "user_agents": {
+        "default": "Illustrious AI Studio MCP Web Fetch Server/1.0",
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "mobile": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1"
+    },
+    "rate_limiting": {
+        "enabled": True,
+        "requests_per_minute": 30,
+        "requests_per_hour": 500
+    },
+    "timeout": 30,
+    "max_content_length": 10485760,  # 10MB
+    "allowed_domains": [],  # Empty means all domains allowed
+    "blocked_domains": ["localhost", "127.0.0.1", "0.0.0.0"]
+}
+
+# Load configuration
+def load_config() -> Dict[str, Any]:
+    """Load configuration from file or return defaults."""
+    if CONFIG_FILE.exists():
+        try:
+            with open(CONFIG_FILE, 'r') as f:
+                user_config = json.load(f)
+            # Merge with defaults
+            config = DEFAULT_CONFIG.copy()
+            config.update(user_config)
+            return config
+        except Exception as e:
+            logger.warning(f"Failed to load config file: {e}, using defaults")
+    return DEFAULT_CONFIG.copy()
+
+# Create config file if it doesn't exist
+def create_default_config():
+    """Create default configuration file."""
+    if not CONFIG_FILE.exists():
+        CONFIG_FILE.parent.mkdir(exist_ok=True)
+        with open(CONFIG_FILE, 'w') as f:
+            json.dump(DEFAULT_CONFIG, f, indent=2)
+        logger.info(f"Created default config file: {CONFIG_FILE}")
+
+# Initialize config
+create_default_config()
+CONFIG = load_config()
+
+# Rate limiting storage
+class RateLimiter:
+    def __init__(self, requests_per_minute: int, requests_per_hour: int):
+        self.requests_per_minute = requests_per_minute
+        self.requests_per_hour = requests_per_hour
+        self.minute_requests = []
+        self.hour_requests = []
+    
+    def can_make_request(self) -> bool:
+        """Check if a request can be made based on rate limits."""
+        now = time.time()
+        
+        # Clean old requests
+        self.minute_requests = [req_time for req_time in self.minute_requests if now - req_time < 60]
+        self.hour_requests = [req_time for req_time in self.hour_requests if now - req_time < 3600]
+        
+        # Check limits
+        if len(self.minute_requests) >= self.requests_per_minute:
+            return False
+        if len(self.hour_requests) >= self.requests_per_hour:
+            return False
+        
+        return True
+    
+    def record_request(self):
+        """Record a new request."""
+        now = time.time()
+        self.minute_requests.append(now)
+        self.hour_requests.append(now)
+
+# Initialize rate limiter
+rate_limiter = RateLimiter(
+    CONFIG['rate_limiting']['requests_per_minute'],
+    CONFIG['rate_limiting']['requests_per_hour']
+) if CONFIG['rate_limiting']['enabled'] else None
 
 def clean_html_content(html: str) -> str:
     """Clean and extract meaningful content from HTML."""
@@ -50,17 +134,22 @@ def clean_html_content(html: str) -> str:
     return cleaned_content.strip()
 
 @mcp.tool()
-async def fetch_url(url: str, extract_content: bool = True) -> Dict[str, Any]:
+async def fetch_url(url: str, extract_content: bool = True, user_agent_type: str = "default") -> Dict[str, Any]:
     """
     Fetch content from a URL and optionally extract meaningful text.
     
     Args:
         url: The URL to fetch
         extract_content: Whether to extract and clean content (default: True)
+        user_agent_type: Type of user agent to use ("default", "browser", "mobile")
         
     Returns:
         Dictionary containing the fetched content and metadata
     """
+    # Check rate limiting
+    if rate_limiter and not rate_limiter.can_make_request():
+        raise Exception("Rate limit exceeded. Please wait before making more requests.")
+    
     # Validate URL
     parsed_url = urlparse(url)
     if not parsed_url.scheme or not parsed_url.netloc:
@@ -69,23 +158,40 @@ async def fetch_url(url: str, extract_content: bool = True) -> Dict[str, Any]:
     if parsed_url.scheme not in ['http', 'https']:
         raise ValueError(f"Unsupported URL scheme: {parsed_url.scheme}")
     
+    # Check domain restrictions
+    domain = parsed_url.netloc.lower()
+    if CONFIG['blocked_domains'] and any(blocked in domain for blocked in CONFIG['blocked_domains']):
+        raise ValueError(f"Access to domain {domain} is blocked")
+    
+    if CONFIG['allowed_domains'] and not any(allowed in domain for allowed in CONFIG['allowed_domains']):
+        raise ValueError(f"Access to domain {domain} is not allowed")
+    
+    # Select user agent
+    user_agent = CONFIG['user_agents'].get(user_agent_type, CONFIG['user_agents']['default'])
+    
     headers = {
-        'User-Agent': USER_AGENT,
+        'User-Agent': user_agent,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.5',
         'Accept-Encoding': 'gzip, deflate',
         'Connection': 'keep-alive',
+        'DNT': '1',
+        'Upgrade-Insecure-Requests': '1',
     }
     
-    async with httpx.AsyncClient(timeout=TIMEOUT) as client:
+    async with httpx.AsyncClient(timeout=CONFIG['timeout']) as client:
         try:
             response = await client.get(url, headers=headers, follow_redirects=True)
             response.raise_for_status()
             
+            # Record successful request for rate limiting
+            if rate_limiter:
+                rate_limiter.record_request()
+            
             # Check content length
             content_length = len(response.content)
-            if content_length > MAX_CONTENT_LENGTH:
-                raise ValueError(f"Content too large: {content_length} bytes (max: {MAX_CONTENT_LENGTH})")
+            if content_length > CONFIG['max_content_length']:
+                raise ValueError(f"Content too large: {content_length} bytes (max: {CONFIG['max_content_length']})")
             
             # Get content type
             content_type = response.headers.get('content-type', '').lower()
@@ -98,6 +204,7 @@ async def fetch_url(url: str, extract_content: bool = True) -> Dict[str, Any]:
                 'title': None,
                 'raw_content': response.text,
                 'cleaned_content': None,
+                'user_agent_used': user_agent,
             }
             
             if extract_content and 'text/html' in content_type:
@@ -110,6 +217,7 @@ async def fetch_url(url: str, extract_content: bool = True) -> Dict[str, Any]:
                 # Clean and extract content
                 result['cleaned_content'] = clean_html_content(response.text)
             
+            logger.info(f"Successfully fetched {url} ({content_length} bytes)")
             return result
             
         except httpx.TimeoutException:
