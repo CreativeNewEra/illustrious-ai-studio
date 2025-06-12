@@ -157,6 +157,7 @@ pytest
 ### 💬 AI Chat Tab
 - Chat with the LLM
 - Use `#generate <description>` to create images
+- Call MCP tools with `/tool <server>.<method> key=value`
 - Maintains conversation history
 
 ### 🔍 Image Analysis Tab
@@ -212,6 +213,12 @@ curl -X POST http://localhost:8000/chat \
     "message": "Tell me about cats",
     "session_id": "default"
   }'
+```
+### MCP Tool Example
+```bash
+curl -X POST http://localhost:8001/tools/read_file \
+  -H "Content-Type: application/json" \
+  -d '{"arguments": {"path": "/tmp/foo.txt"}}'
 ```
 
 ### Image Analysis

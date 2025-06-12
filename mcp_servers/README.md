@@ -183,6 +183,16 @@ response = httpx.post("http://localhost:8003/tools/git_status",
                      json={"arguments": {"repo_path": "/home/ant/AI/Project"}})
 ```
 
+### Using MCP Tools from Chat
+
+In the AI Studio chat box you can call these tools directly:
+
+```text
+/tool filesystem.read_file path=/tmp/foo.txt
+```
+
+The command format is `/tool <server>.<method> key=value`.
+
 ## Monitoring and Logging
 
 All servers include logging and can be monitored:
