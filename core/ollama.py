@@ -23,11 +23,15 @@ def init_ollama(state: AppState) -> Optional[str]:
             return None
         available_models = response.json().get("models", [])
         model_names = [m["name"] for m in available_models]
+        
+        # Initialize text model
         target_model = _get_model_path()
         logger.info("Available Ollama models: %s", model_names)
         if not any(target_model in name for name in model_names):
             logger.error("Model '%s' not found in Ollama", target_model)
             return None
+        
+        # Test text model
         test_data = {
             "model": target_model,
             "messages": [{"role": "user", "content": "Hi"}],
@@ -40,9 +44,19 @@ def init_ollama(state: AppState) -> Optional[str]:
         )
         if test_response.status_code == 200:
             state.model_status["ollama"] = True
-            state.model_status["multimodal"] = "vision" in target_model.lower() or "llava" in target_model.lower()
             state.ollama_model = target_model
-            logger.info("Ollama model '%s' loaded", target_model)
+            logger.info("Ollama text model '%s' loaded", target_model)
+            
+            # Initialize vision model if configured
+            vision_model = getattr(CONFIG, 'ollama_vision_model', None)
+            if vision_model and any(vision_model in name for name in model_names):
+                state.model_status["multimodal"] = True
+                state.ollama_vision_model = vision_model
+                logger.info("Ollama vision model '%s' loaded", vision_model)
+            else:
+                state.model_status["multimodal"] = False
+                logger.warning("Vision model not found or not configured")
+            
             return target_model
         logger.error("Failed to test Ollama model: %s", test_response.text)
     except Exception as e:
@@ -153,14 +167,14 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
 def analyze_image(state: AppState, image: Image.Image, question: str = "Describe this image in detail") -> str:
     if not image:
         return "Please upload an image first."
-    if not state.ollama_model or not state.model_status["multimodal"]:
-        return "❌ Ollama vision model not available. Please use a vision-capable model like 'llava'."
+    if not state.model_status["multimodal"] or not hasattr(state, 'ollama_vision_model'):
+        return "❌ Ollama vision model not available. Please ensure a vision-capable model is configured."
     try:
         buffered = io.BytesIO()
         image.save(buffered, format="PNG")
         img_base64 = base64.b64encode(buffered.getvalue()).decode()
         data = {
-            "model": state.ollama_model,
+            "model": state.ollama_vision_model,
             "messages": [{"role": "user", "content": question, "images": [img_base64]}],
             "stream": False,
         }

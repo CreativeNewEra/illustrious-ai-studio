@@ -1,3 +1,20 @@
-sd_model: "/path/to/sdxl-model.safetensors"
+# Illustrious AI Studio Configuration
+sd_model: "/home/ant/AI/illustrious-ai-studio/models/Illustrious.safetensors"
 ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
+ollama_vision_model: "qwen2.5vl:7b"  # Vision-language model for image analysis
 ollama_base_url: "http://localhost:11434"
+
+# Performance settings for RTX 4090M (16GB VRAM)
+cuda_settings:
+  device: "cuda:0"
+  dtype: "float16"
+  enable_tf32: true
+  memory_fraction: 0.95  # Use up to 95% of VRAM
+
+# Generation defaults
+generation_defaults:
+  steps: 30
+  guidance_scale: 7.5
+  width: 1024
+  height: 1024
+  batch_size: 1

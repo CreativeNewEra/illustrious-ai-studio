@@ -8,7 +8,29 @@ import yaml
 class AppConfig:
     sd_model: str = "/home/ant/AI/Project/SDXL Models/waiNSFWIllustrious_v140.safetensors"
     ollama_model: str = "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
+    ollama_vision_model: str = "qwen2.5vl:7b"
     ollama_base_url: str = "http://localhost:11434"
+    
+    # Performance settings
+    cuda_settings: dict = None
+    generation_defaults: dict = None
+
+    def __post_init__(self):
+        if self.cuda_settings is None:
+            self.cuda_settings = {
+                "device": "cuda:0",
+                "dtype": "float16",
+                "enable_tf32": True,
+                "memory_fraction": 0.95
+            }
+        if self.generation_defaults is None:
+            self.generation_defaults = {
+                "steps": 30,
+                "guidance_scale": 7.5,
+                "width": 1024,
+                "height": 1024,
+                "batch_size": 1
+            }
 
     def as_dict(self) -> dict:
         return asdict(self)

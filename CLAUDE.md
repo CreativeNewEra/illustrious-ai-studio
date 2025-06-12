@@ -1,304 +1,240 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude (or other AI assistants) when working with code in this repository.
 
-## Project Architecture
+## Project Overview
 
-This is an **Illustrious AI Studio** - a local AI application that combines Stable Diffusion XL image generation with Ollama LLM chat capabilities. The application consists of two main components:
+**Illustrious AI Studio** - A local AI application that combines Stable Diffusion XL image generation with Ollama LLM capabilities, including vision models for image analysis.
 
-1. **Gradio Web Interface** (port 7860) - Interactive web UI with tabs for image generation, chat, and image analysis
-2. **FastAPI MCP Server** (port 8000) - RESTful API for programmatic access to AI capabilities
+### Core Components
 
-### Core System Design
+1. **Gradio Web Interface** (port 7860) - Interactive web UI with tabs for:
+   - Text-to-Image generation
+   - AI Chat with prompt enhancement
+   - Image Analysis (vision models)
+   - System Info and configuration
 
-- **Model Integration**: Dual AI system with SDXL for image generation and Ollama for chat/text processing
-- **Cross-Tab Functionality**: Users can generate images from chat using `#generate` commands that appear in both chat and image tabs
-- **Gallery Management**: Automatic saving of generated images with metadata in `/tmp/illustrious_ai/gallery/`
-- **Session Management**: Persistent chat history per session with context preservation
+2. **FastAPI MCP Server** (port 8000) - RESTful API for programmatic access
 
-### Key Components
+### Architecture
 
-- **`init_sdxl()`** - Handles SDXL model loading with GPU optimization and error handling
-- **`init_ollama()`** - Establishes connection to local Ollama server and validates models
-- **`generate_image()`** - Main image generation pipeline with automatic CUDA memory management
-- **`clear_cuda_memory()`** - Automatic CUDA cache clearing and garbage collection
-- **`chat_completion()`** - LLM interface for Ollama API communication
-- **`handle_chat()`** - Session management and command parsing (including `#generate` detection)
-- **`create_gradio_app()`** - Complex multi-tab web interface setup
+- **Triple AI System**: SDXL (images), Ollama LLM (text), Vision models (analysis)
+- **Memory Management**: Automatic CUDA handling with retry logic, plus manual model manager
+- **Cross-Feature Integration**: Generate images from chat, analyze generated images
+- **Session Management**: Persistent chat history with context preservation
+
+## Key Files and Functions
+
+### Core Modules (`core/`)
+
+- **`sdxl.py`**: Image generation with SDXL
+  - `init_sdxl()` - Model loading with GPU optimization
+  - `generate_image()` - Generation pipeline with automatic memory management
+  - `switch_sdxl_model()` - Dynamic model switching
+
+- **`ollama.py`**: LLM and vision model integration
+  - `init_ollama()` - Connects to Ollama, loads text and vision models
+  - `chat_completion()` - LLM chat interface
+  - `analyze_image()` - Vision model image analysis
+  - `generate_prompt()` - AI prompt enhancement
+
+- **`memory.py`**: CUDA memory management
+  - `clear_cuda_memory()` - Cache clearing and garbage collection
+  - `get_model_status()` - System status reporting
+
+- **`config.py`**: Configuration management
+  - Loads from `config.yaml` and environment variables
+  - Supports CUDA settings and generation defaults
+
+- **`state.py`**: Application state management
+  - `AppState` class holds models and session data
+
+### UI and Server
+
+- **`ui/web.py`**: Gradio interface setup
+  - Multi-tab interface with event handlers
+  - Cross-tab communication for integrated experience
+
+- **`server/api.py`**: FastAPI endpoints
+  - `/generate-image` - Image generation
+  - `/chat` - LLM chat
+  - `/analyze-image` - Vision analysis
+  - `/status` - System status
+
+### Utilities
+
+- **`model_manager.py`**: GPU memory optimization tool
+  - Switch between image/LLM modes
+  - Unload models to free VRAM
+  - Interactive and CLI modes
+
+- **`verify_setup.py`**: System verification
+  - Checks Python, CUDA, dependencies
+  - Verifies Ollama and model files
+  - Generates setup report
+
+- **`test_simple.py`**: Functional testing
+  - Tests each component separately
+  - Manages memory between tests
+  - Provides clear pass/fail results
 
 ## Development Commands
 
 ### Running the Application
 ```bash
-# Activate the conda environment first
-conda activate ai-studio
-
-# Run the application
+# Start the full application
 python main.py
+
+# Memory management before heavy tasks
+python model_manager.py --image-mode  # For image generation
+python model_manager.py --llm-mode    # For chat/vision
+python model_manager.py --balanced    # For mixed usage
 ```
-This starts both the Gradio web interface (port 7860) and FastAPI MCP server (port 8000) in background threads.
-
-### Requirements Installation
-```bash
-# Activate the conda environment first
-conda activate ai-studio
-
-# Install requirements
-pip install -r requirements.txt
-# Note: Requires manual CUDA PyTorch installation:
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-```
-
-### Model Configuration
-Edit `config.yaml` or use environment variables:
-- `sd_model` (`SD_MODEL`): Path to SDXL .safetensors model
-- `ollama_model` (`OLLAMA_MODEL`): Ollama model name (e.g., "qwen2.5:7b")
-- `ollama_base_url` (`OLLAMA_BASE_URL`): Ollama server URL
 
 ### Testing
-
-#### Unit Testing with Pytest
 ```bash
-# Run all tests
-pytest
+# Verify setup
+python verify_setup.py
 
-# Run specific test file
-pytest tests/test_api_endpoints.py
+# Test functionality
+python test_simple.py              # Recommended
+python test_full_functionality.py  # Comprehensive
 
-# Run tests with verbose output
-pytest -v
-
-# Run single test
-pytest tests/test_api_endpoints.py::test_status_endpoint
-```
-
-#### API Integration Testing
-```bash
-# Run comprehensive API tests
+# API testing
 cd examples/api_examples
 python test_api.py
 ```
 
-#### Manual Testing Commands
-```bash
-# Activate conda environment first
-conda activate ai-studio
+### Configuration
 
-# Check server status
-curl http://localhost:8000/status
+Edit `config.yaml`:
+```yaml
+sd_model: "/path/to/model.safetensors"
+ollama_model: "model-name"
+ollama_vision_model: "vision-model-name"
+ollama_base_url: "http://localhost:11434"
 
-# Test image generation API
-curl -X POST http://localhost:8000/generate-image -H "Content-Type: application/json" -d '{"prompt": "test image", "steps": 20, "guidance": 7.5}'
+cuda_settings:
+  device: "cuda:0"
+  dtype: "float16"
+  enable_tf32: true
+  memory_fraction: 0.95
 
-# Test chat API  
-curl -X POST http://localhost:8000/chat -H "Content-Type: application/json" -d '{"message": "Hello", "session_id": "test"}'
-
-# Test image analysis API (requires vision-capable model)
-curl -X POST http://localhost:8000/analyze-image -H "Content-Type: application/json" -d '{"image_base64": "base64_encoded_image", "question": "What do you see?"}'
+generation_defaults:
+  steps: 30
+  guidance_scale: 7.5
+  width: 1024
+  height: 1024
 ```
 
-#### Batch Generation Examples
-```bash
-# Run batch generation examples
-cd examples/api_examples
-python batch_generate.py
-```
-
-### MCP Server Status
-The main MCP server (port 8000) provides the following status information:
-- **SDXL Model**: Image generation capability
-- **Ollama Model**: Chat/text processing capability  
-- **CUDA**: GPU acceleration availability
-- **Vision/Multimodal**: Image analysis capability (model dependent)
-
-Expected response format:
-```json
-{
-  "status": "running",
-  "models": {
-    "sdxl": true,
-    "ollama": true, 
-    "multimodal": false
-  },
-  "cuda_available": true
-}
-```
-
-### Additional MCP Servers
-The project includes specialized MCP servers for extended functionality:
-
-#### Filesystem Server (Port 8001)
-```bash
-# Start filesystem server
-cd mcp_servers && python filesystem_server.py
-
-# Test filesystem operations
-curl -X POST http://localhost:8001/tools/read_file \
-  -H "Content-Type: application/json" \
-  -d '{"arguments": {"path": "/home/ant/AI/Project/README.md"}}'
-```
-
-#### Web Fetch Server (Port 8002)
-```bash
-# Start web fetch server
-cd mcp_servers && python web_fetch_server.py
-
-# Test web content fetching
-curl -X POST http://localhost:8002/tools/fetch_url \
-  -H "Content-Type: application/json" \
-  -d '{"arguments": {"url": "https://example.com"}}'
-```
-
-#### Git Server (Port 8003)
-```bash
-# Start git server
-cd mcp_servers && python git_server.py
-
-# Test git operations
-curl -X POST http://localhost:8003/tools/git_status \
-  -H "Content-Type: application/json" \
-  -d '{"arguments": {"repo_path": "/home/ant/AI/Project"}}'
-```
-
-#### Image Analysis Server (Port 8004)
-```bash
-# Start image analysis server
-cd mcp_servers && python image_analysis_server.py
-
-# Test image analysis
-curl -X POST http://localhost:8004/tools/analyze_image_properties \
-  -H "Content-Type: application/json" \
-  -d '{"arguments": {"image_path": "/path/to/image.jpg"}}'
-```
-
-#### Start All MCP Servers
-```bash
-# Start all MCP servers with monitoring
-cd mcp_servers && python start_all.py
-
-# Or use the manager
-cd mcp_servers && python manager.py
-
-# Check MCP server status
-cd mcp_servers && python manager.py --status
-```
+Environment variables override config:
+- `SD_MODEL`
+- `OLLAMA_MODEL`
+- `OLLAMA_BASE_URL`
 
 ## Important Implementation Details
 
-### Model Loading and Error Handling
-- SDXL loading includes comprehensive error handling for missing models, CUDA availability, and memory constraints
-- Ollama connection validates server availability, model existence, and tests with sample requests
-- Model status tracking via global `model_status` dict with states for sdxl, ollama, and multimodal capabilities
+### Memory Management
 
-### Image Generation Workflow
-1. **Pre-generation memory clearing** - Automatic CUDA cache clearing before generation
-2. **Prompt enhancement** via LLM (optional)
-3. **SDXL pipeline execution** with configurable parameters and automatic retry logic
-4. **CUDA memory management** - Automatic out-of-memory error handling with retry (up to 2 attempts)
-5. **Post-generation cleanup** - Memory clearing after successful generation
-6. **Automatic gallery saving** with metadata JSON files
-7. **Cross-reference** between chat and image generation tabs
+1. **Automatic handling**:
+   - Pre/post generation CUDA clearing
+   - Retry on OOM (up to 2 attempts)
+   - Garbage collection integration
 
-### Chat System Architecture
-- Session-based chat history storage in `chat_history_store` global dict
-- Command detection for `#generate` triggers image generation workflow
-- Response cleaning to remove internal thinking tags (`<think>...</think>`)
-- Integration with image generation system for seamless user experience
+2. **Manual optimization**:
+   - `model_manager.py` for mode switching
+   - Unload Ollama models when not needed
+   - Clear cache between heavy operations
 
-### MCP Server Integration
-- FastAPI server runs concurrently with Gradio interface
-- Three main endpoints: `/generate-image`, `/chat`, `/analyze-image`
-- Base64 encoding for image data transfer
-- Comprehensive error handling with appropriate HTTP status codes
+### Error Handling
 
-## Dependencies and External Services
+- **CUDA OOM**: Automatic retry with memory clearing
+- **Model loading**: Comprehensive error messages
+- **API errors**: Proper HTTP status codes (500, 503, 507)
+- **Ollama connection**: Timeout and validation
 
-### Required External Services
-- **Ollama**: Must be running on localhost:11434 with target model loaded
-- **CUDA**: Recommended for SDXL performance (12GB+ VRAM)
+### Performance Optimization
 
-### Python Dependencies (requirements.txt)
-Key packages: torch, diffusers, transformers, gradio, fastapi, uvicorn, PIL, requests
+- **FP16 precision** for speed
+- **TF32 enabled** for RTX 30/40 series
+- **Expandable segments** to prevent fragmentation
+- **95% VRAM utilization** for maximum performance
 
-### Model Requirements
-- SDXL model in .safetensors format
-- Ollama model (any supported model, vision models enable image analysis)
+## Common Issues and Solutions
 
-## Configuration Patterns
+### CUDA Out of Memory
+1. Run `python model_manager.py --image-mode` before generation
+2. Set `export OLLAMA_KEEP_ALIVE=0`
+3. Reduce image size or steps
+4. Monitor with `nvidia-smi`
 
-### Model Path Configuration
-Model locations are defined in `config.yaml`. They can also be provided via the environment variables `SD_MODEL`, `OLLAMA_MODEL`, and `OLLAMA_BASE_URL`.
+### Ollama Connection Failed
+1. Verify Ollama is running: `ollama serve`
+2. Check model exists: `ollama list`
+3. Test: `curl http://localhost:11434/api/tags`
 
-Example configuration:
-```yaml
-sd_model: "/path/to/your/model.safetensors"
-ollama_model: "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
-ollama_base_url: "http://localhost:11434"
+### Model Loading Errors
+1. Verify file paths in config.yaml
+2. Check file permissions
+3. Ensure sufficient disk space
+4. Validate model format (.safetensors)
+
+## API Endpoints
+
+### Image Generation
+```bash
+curl -X POST http://localhost:8000/generate-image \
+  -H "Content-Type: application/json" \
+  -d '{
+    "prompt": "cyberpunk cat",
+    "steps": 30,
+    "guidance": 7.5,
+    "seed": -1
+  }'
 ```
 
-### Performance Optimization
-- **Automatic CUDA Memory Management**: PyTorch memory fragmentation prevention via `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
-- **Dynamic Memory Clearing**: Automatic CUDA cache clearing before/after generation and on OOM errors
-- **Smart Retry Logic**: Automatic retry with memory clearing on CUDA out-of-memory errors (up to 2 attempts)
-- **Generator seed management** for reproducible results
-- **Timeout handling** for Ollama requests (30-60 seconds)
-- **Garbage collection** integration with CUDA memory management
+### Chat
+```bash
+curl -X POST http://localhost:8000/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Hello",
+    "session_id": "default",
+    "temperature": 0.7
+  }'
+```
 
-### Gallery and File Management
-- Temp directory creation with automatic cleanup
-- UUID-based filename generation for uniqueness
-- Metadata JSON files alongside image files for full generation context
+### Image Analysis
+```bash
+curl -X POST http://localhost:8000/analyze-image \
+  -H "Content-Type: application/json" \
+  -d '{
+    "image_base64": "<base64-data>",
+    "question": "What is in this image?"
+  }'
+```
 
-## Troubleshooting
+## Best Practices
 
-### Common Issues
+1. **Memory**: Use model_manager.py for optimal VRAM usage
+2. **Testing**: Run test_simple.py after changes
+3. **Models**: Keep models in the `models/` directory
+4. **Logs**: Check terminal output for detailed errors
+5. **Performance**: 20-30 steps for quality/speed balance
 
-#### CUDA Out of Memory Errors
-**Symptoms:** "CUDA out of memory" errors during image generation.
+## Hardware Requirements
 
-**Automatic Fixes (No User Action Required):**
-- System automatically clears CUDA memory cache and retries generation (up to 2 attempts)
-- PyTorch memory fragmentation prevention enabled by default
-- Garbage collection runs automatically with memory clearing
+- **GPU**: NVIDIA with CUDA support (16GB+ VRAM recommended)
+- **CPU**: Modern multi-core processor
+- **RAM**: 16GB+ system memory
+- **Storage**: 20GB+ for models and outputs
 
-**Manual Solutions (if automatic fixes fail):**
-1. **Reduce image parameters:** Lower steps (20-30), guidance scale (5-8), or image size
-2. **Close other GPU applications** to free VRAM
-3. **Restart application** if memory leaks persist
-4. **Check available VRAM:** Ensure 6GB+ free for SDXL generation
+## Dependencies
 
-#### Image Generation API Returns 500/507 Error
-**Symptoms:** Image generation via API returns HTTP 500 (general error) or 507 (insufficient storage) errors.
+Core packages:
+- PyTorch with CUDA
+- Diffusers, Transformers, Accelerate
+- Gradio, FastAPI, Uvicorn
+- Pillow, Requests, PyYAML
 
-**Cause:** SDXL pipeline memory allocation issue or model loading problem.
-
-**Solutions:**
-1. **Check logs for automatic retry attempts** - system will try up to 2 times with memory clearing
-2. **HTTP 507 specifically indicates memory issues** - automatic fixes should handle this
-3. **Verify model path:** Confirm SDXL model file exists at configured path
-4. **Monitor CUDA memory:** Use `nvidia-smi` to check GPU memory usage
-
-#### Chat Not Working
-**Symptoms:** Chat endpoint returns errors or empty responses.
-
-**Solutions:**
-1. **Verify Ollama:** Ensure Ollama server is running (`ollama serve`)
-2. **Check model:** Confirm target model is loaded (`ollama list`)
-3. **Test connection:** Use `/status` endpoint to verify Ollama connectivity
-
-#### Model Loading Failures
-**Symptoms:** Status shows models as not loaded.
-
-**Solutions:**
-1. **Check paths:** Verify the paths in `config.yaml` (or environment variables) point to existing files
-2. **Memory issues:** Ensure sufficient system/GPU memory
-3. **Dependencies:** Verify all required packages are installed
-4. **Permissions:** Check file permissions for model files
-
-### Performance Optimization
-- **CUDA:** Ensure CUDA-compatible PyTorch installation for GPU acceleration
-- **Memory Management:** Built-in automatic CUDA memory management handles most OOM issues
-- **Memory Monitoring:** Use `nvidia-smi` to monitor GPU memory usage
-- **Application Isolation:** Close other GPU-intensive applications for optimal performance
-- **Model Optimization:** Consider using quantized models for lower memory usage
-- **Parameter Tuning:** Reduce steps (20-30) and guidance scale (5-8) for faster generation with less memory
+See `requirements.txt` for full list.
