@@ -93,6 +93,9 @@ logger = logging.getLogger(__name__)
 # Theme preference storage
 THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
 
+# Marker for first run modal
+FIRST_RUN_FILE = TEMP_DIR / "first_run_complete"
+
 # Special value representing a random seed for image generation
 RANDOM_SEED = -1
 
@@ -345,6 +348,32 @@ def create_gradio_app(state: AppState):
             state.current_project = None
         return gr.update(choices=list_projects(), value=None), f"Project '{name}' deleted"
 
+    def show_first_run_modal():
+        """Display a welcome modal on first launch."""
+        marker = FIRST_RUN_FILE
+        with gr.Modal(visible=False) as modal:
+            gr.Markdown(
+                "### Welcome to Illustrious AI Studio\n"
+                "This brief tour will help you get started generating art and prompts."
+            )
+            close_btn = gr.Button("Let's Go", variant="primary")
+
+        def maybe_open():
+            if not marker.exists():
+                return gr.update(visible=True)
+            return gr.update()
+
+        def dismiss():
+            try:
+                marker.parent.mkdir(parents=True, exist_ok=True)
+                marker.write_text("done")
+            except Exception as e:  # pragma: no cover - unexpected errors
+                logger.error("Failed to write first run marker: %s", e)
+            return gr.update(visible=False)
+
+        close_btn.click(fn=dismiss, outputs=[modal])
+        return maybe_open, modal
+
     current_theme = load_theme_pref()
     theme_pref_exists = current_theme is not None
     if current_theme is None:
@@ -370,6 +399,11 @@ def create_gradio_app(state: AppState):
                     interactive=True,
                     elem_id="theme-selector",
                 )
+                simple_mode_toggle = gr.Checkbox(
+                    value=state.simple_mode,
+                    label="Simple Mode",
+                    interactive=True,
+                )
                 with gr.Row():
                     project_selector = gr.Dropdown(
                         label="Project",
@@ -381,6 +415,9 @@ def create_gradio_app(state: AppState):
                     create_project_btn = gr.Button("Create", variant="secondary", size="sm")
                     delete_project_btn = gr.Button("🗑️", variant="secondary", size="sm")
                 project_status = gr.Textbox(label="Project Status", interactive=False, elem_classes=["status-box"], lines=1)
+
+        open_modal_fn, first_run_modal = show_first_run_modal()
+
         with gr.Tab("🎨 Text-to-Image"):
             with gr.Row():
                 with gr.Column():
@@ -440,7 +477,7 @@ def create_gradio_app(state: AppState):
                         assert len(style_buttons) == 5, f"Expected 5 style buttons, but got {len(style_buttons)}"
                         anime_btn, realistic_btn, artistic_btn, fantasy_btn, cyberpunk_btn = style_buttons
                     
-                    with gr.Accordion("🎯 Creative Controls", open=False):
+                    with gr.Accordion("🎯 Creative Controls", open=False, visible=not state.simple_mode) as creative_controls:
                         # Model Selection Section
                         with gr.Group():
                             gr.Markdown("### 🎭 Model Selection")
@@ -1114,6 +1151,15 @@ def create_gradio_app(state: AppState):
             inputs=theme_selector,
             outputs=[],
             js="(mode) => { if(mode === 'Dark'){ document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } }"
+        )
+        def toggle_simple(val: bool):
+            state.simple_mode = val
+            return gr.update(visible=not val)
+
+        simple_mode_toggle.change(
+            fn=toggle_simple,
+            inputs=simple_mode_toggle,
+            outputs=[creative_controls]
         )
         project_selector.change(
             fn=set_current_project,
@@ -1924,6 +1970,11 @@ def create_gradio_app(state: AppState):
         demo.load(
             fn=initialize_ui,
             outputs=[model_selector, model_info, project_selector, template_list, template_stats, popular_templates, gallery_component, tag_filter, keyword_filter, memory_display, monitor_status]
+        )
+
+        demo.load(
+            fn=open_modal_fn,
+            outputs=[first_run_modal]
         )
         
         # Quick Style Button Handlers

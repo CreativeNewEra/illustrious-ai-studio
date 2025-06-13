@@ -166,3 +166,6 @@ class AppState:
     endeavors. When set, generated images and settings are
     associated with this project context.
     """
+
+    simple_mode: bool = True
+    """Flag to indicate if the UI should run in beginner-friendly simple mode."""
