@@ -91,6 +91,7 @@ def generate_image(
     save_to_gallery_flag: bool = True,
     width: int = 1024,
     height: int = 1024,
+    progress_callback: Optional[callable] = None,
 ) -> Tuple[Optional[Image.Image], str]:
     """Generate an image using SDXL with automatic OOM prevention."""
     if not state.sdxl_pipe:
@@ -114,6 +115,8 @@ def generate_image(
     
     clear_gpu_memory()
     max_retries = 3  # Increased retries with memory guardian
+    if progress_callback:
+        progress_callback(0, steps)
     
     for attempt in range(max_retries):
         try:
@@ -129,6 +132,10 @@ def generate_image(
             if stats and stats.pressure_level.value in ["high", "critical"]:
                 logger.warning(f"Starting generation with {stats.pressure_level.value} memory pressure")
             
+            def _progress_cb(step: int, t, latents):
+                if progress_callback:
+                    progress_callback(step + 1, steps)
+
             result = state.sdxl_pipe(
                 prompt,
                 negative_prompt=negative_prompt,
@@ -137,6 +144,8 @@ def generate_image(
                 generator=generator,
                 width=width,
                 height=height,
+                callback=_progress_cb if progress_callback else None,
+                callback_steps=1,
             )
             
             # Extract image from result - handle StableDiffusionXLPipelineOutput
@@ -153,6 +162,8 @@ def generate_image(
                 return None, f"❌ Invalid image type returned: {type(image)}"
             
             state.latest_generated_image = image
+            if progress_callback:
+                progress_callback(steps, steps)
             if save_to_gallery_flag:
                 save_to_gallery(
                     state,
@@ -191,11 +202,17 @@ def generate_image(
                     logger.info(f"Retrying with reduced settings: {width}x{height}@{steps}")
                     continue
                     
+            if progress_callback:
+                progress_callback(steps, steps)
             return None, f"❌ Generation failed: {e}"
         except Exception as e:
             logger.error("Image generation failed: %s", e)
+            if progress_callback:
+                progress_callback(steps, steps)
             return None, f"❌ Generation failed: {e}"
     
+    if progress_callback:
+        progress_callback(steps, steps)
     return None, "❌ Generation failed after all retries"
 
 def _estimate_generation_memory(width: int, height: int, steps: int) -> float:

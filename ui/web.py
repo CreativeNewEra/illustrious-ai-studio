@@ -924,7 +924,7 @@ def create_gradio_app(state: AppState):
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
         # Updated generate button to use wrapper and update recent prompts
-        def generate_and_update_history(p, n, st, g, se, save_flag, res, auto_flag):
+        def generate_and_update_history(p, n, st, g, se, save_flag, res, auto_flag, progress=gr.Progress()):
             if auto_flag:
                 analysis = analyze_prompt(p)
                 st = analysis.get("steps", st)
@@ -935,7 +935,11 @@ def create_gradio_app(state: AppState):
                 width, height = parse_resolution(res)
             
             # Generate the image with resolution
-            image, status = generate_image(state, p, n, st, g, se, save_flag, width, height)
+            def cb(step, total):
+                progress(step/total, desc=f"{step}/{total}")
+
+            image, status = generate_image(state, p, n, st, g, se, save_flag, width, height, progress_callback=cb)
+            progress(1)
             
             # Store parameters for regenerate functionality if generation was successful
             if image is not None:
@@ -961,22 +965,27 @@ def create_gradio_app(state: AppState):
                 return image, status, gr.update(), gr.update(visible=regenerate_visible)
         
         # Regenerate function
-        def regenerate_image():
+        def regenerate_image(progress=gr.Progress()):
             if state.last_generation_params is None:
                 return None, "❌ No previous generation to repeat", gr.update()
-            
+
             params = state.last_generation_params
+            def cb(step, total):
+                progress(step/total, desc=f"{step}/{total}")
+
             image, status = generate_image(
-                state, 
-                params["prompt"], 
-                params["negative_prompt"], 
-                params["steps"], 
-                params["guidance"], 
-                params["seed"], 
-                params["save_gallery"], 
-                params["width"], 
-                params["height"]
+                state,
+                params["prompt"],
+                params["negative_prompt"],
+                params["steps"],
+                params["guidance"],
+                params["seed"],
+                params["save_gallery"],
+                params["width"],
+                params["height"],
+                progress_callback=cb
             )
+            progress(1)
             
             if image is not None and params["prompt"].strip():
                 updated_prompts = add_to_recent_prompts(params["prompt"].strip())
