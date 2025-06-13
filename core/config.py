@@ -12,19 +12,21 @@ The configuration system supports:
 - YAML file-based configuration
 - Environment variable overrides
 - Runtime configuration updates
-- Type-safe configuration with dataclasses
+- Type-safe configuration with Pydantic
 
 Configuration Priority (highest to lowest):
 1. Environment variables
 2. YAML configuration file
-3. Default values in AppConfig dataclass
+3. Default values in SDXLConfig model
 """
 
-from dataclasses import dataclass, fields, asdict
+
 import os
 from pathlib import Path
 import tempfile
+import warnings
 import yaml
+from pydantic import BaseModel, validator
 
 # ==================================================================
 # CONSTANTS AND PATHS
@@ -39,181 +41,149 @@ MODEL_DIR = Path(os.getenv("MODELS_DIR", "models"))
 # MAIN CONFIGURATION CLASS
 # ==================================================================
 
-@dataclass
-class AppConfig:
-    """
-    Main configuration class for Illustrious AI Studio.
-    
-    This dataclass defines all configurable aspects of the application
-    with sensible defaults. All fields can be overridden via YAML
-    configuration file or environment variables.
-    
-    Attributes:
-        sd_model: Path to the Stable Diffusion XL model file
-        ollama_model: Name of the default Ollama language model
-        ollama_vision_model: Name of the Ollama vision/multimodal model
-        ollama_base_url: Base URL for Ollama API server
-        cuda_settings: GPU/CUDA configuration dictionary
-        generation_defaults: Default parameters for image generation
-        gpu_backend: GPU backend to use ('cuda', 'mps', 'cpu')
-        load_models_on_startup: Whether to load models during startup
-        gallery_dir: Directory for storing generated images
-        memory_guardian: Memory management configuration
-        memory_stats_refresh_interval: UI refresh rate for memory stats
-    """
+
+class SDXLConfig(BaseModel):
+    """Configuration model for Illustrious AI Studio."""
     
     # ==============================================================
     # MODEL CONFIGURATION
     # ==============================================================
     
     sd_model: str = str(MODEL_DIR / "Illustrious.safetensors")
-    """Path to the Stable Diffusion XL model file"""
     
     ollama_model: str = "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
-    """Default Ollama language model for text generation and chat"""
     
     ollama_vision_model: str = "qwen2.5vl:7b"
-    """Ollama vision model for image analysis and multimodal tasks"""
     
     ollama_base_url: str = "http://localhost:11434"
-    """Base URL for the Ollama API server"""
     
     # ==============================================================
     # PERFORMANCE AND GPU SETTINGS
     # ==============================================================
     
     cuda_settings: dict | None = None
-    """GPU/CUDA configuration - set in __post_init__ if None"""
     
     generation_defaults: dict | None = None
-    """Default image generation parameters - set in __post_init__ if None"""
     
     gpu_backend: str = "cuda"
-    """GPU backend: 'cuda' for NVIDIA, 'mps' for Apple Silicon, 'cpu' for CPU-only"""
     
     load_models_on_startup: bool = True
-    """Whether to initialize models during application startup"""
 
     # ==============================================================
     # STORAGE AND UI SETTINGS
     # ==============================================================
     
     gallery_dir: str = str(Path(tempfile.gettempdir()) / "illustrious_ai" / "gallery")
-    """Directory for storing generated images in the gallery"""
     
     memory_guardian: dict | None = None
-    """Memory management system configuration"""
 
     memory_stats_refresh_interval: float = 2.0
-    """Refresh interval (in seconds) for memory statistics in the UI"""
 
-    def __post_init__(self):
-        """
-        Initialize default values for complex dictionary fields.
-        
-        This method is called automatically after dataclass initialization
-        to set up default values for fields that couldn't be set directly
-        in the field definitions.
-        """
-        # Set default CUDA/GPU settings if not provided
-        if self.cuda_settings is None:
-            self.cuda_settings = {
-                "device": "cuda:0",           # Primary GPU device
-                "dtype": "float16",           # Use half precision for memory efficiency
-                "enable_tf32": True,          # Enable TensorFloat-32 for performance
-                "memory_fraction": 0.95       # Use 95% of available GPU memory
-            }
-            
-        # Set default image generation parameters if not provided
-        if self.generation_defaults is None:
-            self.generation_defaults = {
-                "steps": 30,                  # Number of denoising steps
-                "guidance_scale": 7.5,        # How closely to follow the prompt
-                "width": 1024,                # Image width in pixels
-                "height": 1024,               # Image height in pixels
-                "batch_size": 1               # Number of images per generation
-            }
+    @validator("sd_model")
+    def _check_sd_model(cls, v: str) -> str:
+        if v and not Path(v).exists():
+            warnings.warn(f"SDXL model file not found: {v}")
+        return v
+
+    @validator("gallery_dir")
+    def _ensure_gallery_dir(cls, v: str) -> str:
+        try:
+            Path(v).mkdir(parents=True, exist_ok=True)
+        except Exception as e:  # pragma: no cover - unlikely to fail in tests
+            warnings.warn(f"Unable to create gallery directory {v}: {e}")
+        return v
+
+    @validator("cuda_settings", pre=True, always=True)
+    def _default_cuda(cls, v):
+        return v or {
+            "device": "cuda:0",
+            "dtype": "float16",
+            "enable_tf32": True,
+            "memory_fraction": 0.95,
+        }
+
+    @validator("generation_defaults", pre=True, always=True)
+    def _default_generation(cls, v):
+        return v or {
+            "steps": 30,
+            "guidance_scale": 7.5,
+            "width": 1024,
+            "height": 1024,
+            "batch_size": 1,
+        }
 
     def as_dict(self) -> dict:
-        """
-        Convert configuration to dictionary format.
-        
-        Returns:
-            dict: Configuration as a dictionary suitable for serialization
-        """
-        return asdict(self)
+        return self.dict()
 
 # ==================================================================
 # CONFIGURATION LOADING AND MANAGEMENT
 # ==================================================================
 
-def load_config(path: str | None = None) -> AppConfig:
-    """
-    Load configuration from YAML file with environment variable overrides.
-    
-    This function implements a multi-layer configuration system:
-    1. Start with AppConfig defaults
-    2. Override with values from YAML file (if exists)
-    3. Apply environment variable overrides
-    
+def load_config(path: str | None = None) -> SDXLConfig:
+    '''Load configuration from YAML with environment variable overrides.
+
+    The priority order is:
+    1. SDXLConfig defaults
+    2. Values from the YAML file if present
+    3. Environment variable overrides
+
     Args:
-        path: Optional path to YAML config file. If None, uses CONFIG_FILE 
-              environment variable or defaults to 'config.yaml'
-    
+        path: Optional path to YAML config. Defaults to ``config.yaml`` or the
+            ``CONFIG_FILE`` environment variable.
+
     Returns:
-        AppConfig: Fully configured AppConfig instance
-        
-    Environment Variables (override YAML and defaults):
-        CONFIG_FILE: Path to configuration file
-        SD_MODEL: Path to Stable Diffusion model
-        OLLAMA_MODEL: Name of Ollama language model
-        OLLAMA_BASE_URL: Ollama server URL
-        GPU_BACKEND: GPU backend type
-        GALLERY_DIR: Gallery directory path
-        MEMORY_STATS_REFRESH_INTERVAL: UI refresh interval
-        LOAD_MODELS_ON_STARTUP: Whether to load models on startup
-        MODELS_DIR: Base directory for model files
-    """
-    # Start with default configuration
-    config = AppConfig()
-    
+        SDXLConfig: Fully configured configuration instance.
+
+    Environment Variables:
+        - ``CONFIG_FILE``: Path to configuration file
+        - ``SD_MODEL``: Path to Stable Diffusion model
+        - ``OLLAMA_MODEL``: Name of Ollama language model
+        - ``OLLAMA_BASE_URL``: Ollama server URL
+        - ``GPU_BACKEND``: GPU backend type
+        - ``GALLERY_DIR``: Gallery directory path
+        - ``MEMORY_STATS_REFRESH_INTERVAL``: UI refresh interval
+        - ``LOAD_MODELS_ON_STARTUP``: Whether to load models on startup
+        - ``MODELS_DIR``: Base directory for model files
+    '''
+    # Start with defaults
+    cfg_data: dict = {}
+
     # Load from YAML file if it exists
     cfg_path = Path(path or os.getenv("CONFIG_FILE", "config.yaml"))
     if cfg_path.exists():
         try:
             with open(cfg_path, "r") as f:
-                data = yaml.safe_load(f) or {}
-            
-            # Apply YAML values to config fields
-            for field in fields(AppConfig):
-                if field.name in data:
-                    setattr(config, field.name, data[field.name])
-                    
+                file_data = yaml.safe_load(f) or {}
+            if isinstance(file_data, dict):
+                cfg_data.update(file_data)
         except Exception as e:
-            # Log error but continue with defaults
             print(f"Warning: Error loading config file {cfg_path}: {e}")
-    
-    # Apply environment variable overrides (highest priority)
-    config.sd_model = os.getenv("SD_MODEL", config.sd_model)
-    config.ollama_model = os.getenv("OLLAMA_MODEL", config.ollama_model)
-    config.ollama_base_url = os.getenv("OLLAMA_BASE_URL", config.ollama_base_url)
-    config.gpu_backend = os.getenv("GPU_BACKEND", config.gpu_backend)
-    config.gallery_dir = os.getenv("GALLERY_DIR", config.gallery_dir)
-    
-    # Handle numeric environment variables with error checking
+
+    # Environment variable overrides
+    env_map = {
+        "sd_model": "SD_MODEL",
+        "ollama_model": "OLLAMA_MODEL",
+        "ollama_base_url": "OLLAMA_BASE_URL",
+        "gpu_backend": "GPU_BACKEND",
+        "gallery_dir": "GALLERY_DIR",
+    }
+    for key, env_var in env_map.items():
+        val = os.getenv(env_var)
+        if val is not None:
+            cfg_data[key] = val
+
     refresh_val = os.getenv("MEMORY_STATS_REFRESH_INTERVAL")
     if refresh_val is not None:
         try:
-            config.memory_stats_refresh_interval = float(refresh_val)
+            cfg_data["memory_stats_refresh_interval"] = float(refresh_val)
         except ValueError:
             print(f"Warning: Invalid MEMORY_STATS_REFRESH_INTERVAL value: {refresh_val}")
-    
-    # Handle boolean environment variable
+
     env_lazy = os.getenv("LOAD_MODELS_ON_STARTUP")
     if env_lazy is not None:
-        config.load_models_on_startup = env_lazy.lower() not in ("false", "0", "no")
-    
-    return config
+        cfg_data["load_models_on_startup"] = env_lazy.lower() not in ("false", "0", "no")
+
+    return SDXLConfig(**cfg_data)
 
 
 # ==================================================================
