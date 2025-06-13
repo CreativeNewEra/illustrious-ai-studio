@@ -4,8 +4,6 @@ import threading
 
 from ui.web import create_gradio_app
 from server.api import run_mcp_server
-from core.sdxl import init_sdxl
-from core.ollama import init_ollama
 from core.state import AppState
 
 logger = logging.getLogger(__name__)
@@ -15,8 +13,6 @@ app_state = AppState()
 
 
 if __name__ == "__main__":
-    init_sdxl(app_state)
-    init_ollama(app_state)
     mcp_thread = threading.Thread(target=run_mcp_server, args=(app_state,), daemon=True)
     mcp_thread.start()
     logger.info("MCP Server started on http://localhost:8000")
