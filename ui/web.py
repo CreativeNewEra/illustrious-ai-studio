@@ -1062,7 +1062,7 @@ def create_gradio_app(state: AppState):
 
         refresh_timer.tick(
             fn=lambda: (
-                get_memory_stats_markdown(state),
+                get_memory_stats_wrapper(state),
                 get_monitor_status(),
             ),
             outputs=[memory_display, monitor_status],
