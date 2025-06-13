@@ -262,7 +262,7 @@ def create_gradio_app(state: AppState):
                         example_prompts = gr.Dropdown(
                             label="🎲 Example Prompts",
                             choices=EXAMPLE_PROMPTS,
-                            value=None,
+                            value=EXAMPLE_PROMPTS[0] if EXAMPLE_PROMPTS else None,
                             elem_classes=["dropdown"],
                             interactive=True,
                             allow_custom_value=False
