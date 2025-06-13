@@ -204,6 +204,9 @@ pytest
 - Browse saved images in a gallery view
 - View metadata, open files, or copy their paths
 - Use the project selector to switch between different galleries
+- Search images by name or metadata
+- Filter by tags to focus on specific categories
+- Filter settings persist across sessions via files in `TEMP_DIR`
 
 ### 📝 Prompt Templates Tab ✨ **NEW**
 - **Save Templates**: Save your best prompts for reuse
