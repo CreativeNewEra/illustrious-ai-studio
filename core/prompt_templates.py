@@ -17,7 +17,7 @@ class PromptTemplateManager:
     
     def __init__(self, templates_dir: Path = None):
         self.templates_dir = templates_dir or Path("user_prompts")
-        self.templates_dir.mkdir(exist_ok=True)
+        self.templates_dir.mkdir(parents=True, exist_ok=True)
         self.templates_file = self.templates_dir / "user_templates.json"
         self.templates = self._load_templates()
     
