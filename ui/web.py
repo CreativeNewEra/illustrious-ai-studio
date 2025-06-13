@@ -437,6 +437,7 @@ def create_gradio_app(state: AppState):
 
             gr.Markdown("### Memory Usage")
             memory_display = gr.Markdown(get_memory_stats_wrapper(state))
+            refresh_timer = gr.Timer(value=CONFIG.memory_stats_refresh_interval, render=False)
 
             monitor_status = gr.Textbox(
                 value="",
@@ -1059,7 +1060,15 @@ def create_gradio_app(state: AppState):
             outputs=[monitor_status, memory_display],
         )
 
-        
+        refresh_timer.tick(
+            fn=lambda: (
+                get_memory_stats_markdown(state),
+                get_monitor_status(),
+            ),
+            outputs=[memory_display, monitor_status],
+        )
+
+
         # Initialize model selector and templates on load
         # Skip model initialization if in quick-start mode
         def initialize_ui():
