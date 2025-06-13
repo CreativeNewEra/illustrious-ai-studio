@@ -375,19 +375,21 @@ def create_gradio_app(state: AppState):
         return gr.update(choices=list_projects(), value=None), f"Project '{name}' deleted"
 
     def show_first_run_modal():
-        """Display a welcome modal on first launch."""
+        """Display a welcome message on first launch (simplified for Gradio compatibility)."""
         marker = FIRST_RUN_FILE
-        with gr.Modal(visible=False) as modal:
+        
+        # Create a simple welcome group instead of modal
+        with gr.Group(visible=False) as welcome_group:
             gr.Markdown(
-                "### Welcome to Illustrious AI Studio\n"
-                "This brief tour will help you get started generating art and prompts."
+                "### 🎉 Welcome to Illustrious AI Studio\n"
+                "Your creative AI workspace is ready! Generate stunning artwork with SDXL and chat with AI assistants."
             )
-            close_btn = gr.Button("Let's Go", variant="primary")
+            close_btn = gr.Button("Get Started", variant="primary")
 
-        def maybe_open():
+        def maybe_show():
             if not marker.exists():
                 return gr.update(visible=True)
-            return gr.update()
+            return gr.update(visible=False)
 
         def dismiss():
             try:
@@ -397,8 +399,8 @@ def create_gradio_app(state: AppState):
                 logger.error("Failed to write first run marker: %s", e)
             return gr.update(visible=False)
 
-        close_btn.click(fn=dismiss, outputs=[modal])
-        return maybe_open, modal
+        close_btn.click(fn=dismiss, outputs=[welcome_group])
+        return maybe_show, welcome_group
 
     current_theme = load_theme_pref()
     theme_pref_exists = current_theme is not None
@@ -470,7 +472,7 @@ def create_gradio_app(state: AppState):
                                                 example_prompts = gr.Dropdown(
                                                     label="🎲 Example Prompts",
                                                     choices=EXAMPLE_PROMPTS,
-                                                    value=EXAMPLE_PROMPTS[0] if EXAMPLE_PROMPTS else None,
+                                                    value=EXAMPLE_PROMPTS[0] if EXAMPLE_PROMPTS and len(EXAMPLE_PROMPTS) > 0 else None,
                                                     elem_classes=["dropdown"],
                                                     interactive=True,
                                                     allow_custom_value=False
@@ -1272,21 +1274,68 @@ def create_gradio_app(state: AppState):
             )
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
-        # Updated generate button to use wrapper and update recent prompts
-        async def generate_and_update_history(p, n, st, g, se, save_flag, res, auto_flag, progress=gr.Progress()):
-            # Enhanced UI parameter validation
+        # Encapsulate generation state in a dedicated class for maintainability
+        class GenerationState:
+            def __init__(self):
+                self.prompt = ""
+                self.negative_prompt = "blurry, low quality, text, watermark, deformed"
+                self.steps = 30
+                self.guidance = 7.5
+                self.seed = RANDOM_SEED
+                self.save_gallery = True
+                self.resolution = "1024x1024 (Square - High Quality)"
+                self.auto_best = False
+
+        generation_state = GenerationState()
+
+        def update_prompt_value(value):
+            generation_state.prompt = value or ""
+            # No return value needed as outputs=[] in .change()
+
+        def update_negative_prompt_value(value):
+            generation_state.negative_prompt = value or ""
+            # No return value needed
+
+        def update_steps_value(value):
+            generation_state.steps = value if value is not None else 30
+            # No return value needed
+
+        def update_guidance_value(value):
+            generation_state.guidance = value if value is not None else 7.5
+            # No return value needed
+
+        def update_seed_value(value):
+            generation_state.seed = value if value is not None else RANDOM_SEED
+            # No return value needed
+
+        def update_save_gallery_value(value):
+            generation_state.save_gallery = value if value is not None else True
+            # No return value needed
+
+        def update_resolution_value(value):
+            generation_state.resolution = value or "1024x1024 (Square - High Quality)"
+            # No return value needed
+
+        def update_auto_best_value(value):
+            generation_state.auto_best = value if value is not None else False
+            # No return value needed
+
+        # State-based generation function that doesn't rely on parameter passing
+        async def generate_and_update_history(progress=gr.Progress()):
             try:
-                # Debug logging to understand what's being passed
-                logger.info(f"UI: Received prompt parameter: {repr(p)} (type: {type(p)})")
+                # Get values from our encapsulated generation state
+                logger.info("UI: Using state-based parameter retrieval")
                 
-                # More lenient prompt validation - only check for truly empty prompts
-                if p is None:
-                    return (
-                        None, 
-                        "❌ Error: Prompt cannot be None. Please provide a descriptive text prompt.",
-                        gr.update(),
-                        gr.update(visible=False)
-                    )
+                p = generation_state.prompt.strip() if generation_state.prompt else "A beautiful landscape with mountains and trees"
+                n = generation_state.negative_prompt.strip() if generation_state.negative_prompt else "blurry, low quality, text, watermark, deformed"
+                st = generation_state.steps
+                g = generation_state.guidance
+                se = generation_state.seed
+                save_flag = generation_state.save_gallery
+                res = generation_state.resolution
+                auto_flag = generation_state.auto_best
+                
+                logger.info(f"UI: Using parameters - prompt='{p[:50]}...', steps={st}, guidance={g}, seed={se}")
                 
                 # Convert to string if needed
                 if not isinstance(p, str):
@@ -1452,28 +1501,56 @@ def create_gradio_app(state: AppState):
             else:
                 return image, status, gr.update()
 
-        async def quick_generate_image(p, n, progress=gr.Progress()):
+        async def quick_generate_image(progress=gr.Progress()):
+            # Use encapsulated generation state for prompt and negative prompt
+            p = generation_state.prompt.strip() if generation_state.prompt else "A beautiful landscape with mountains and trees"
+            n = generation_state.negative_prompt.strip() if generation_state.negative_prompt else "blurry, low quality, text, watermark, deformed"
+            
             preset = GENERATION_PRESETS.get(DEFAULT_PRESET, {})
             st = preset.get("steps", 25)
             g = preset.get("guidance", 7.5)
             width = preset.get("width", 768)
             height = preset.get("height", 768)
-            res = get_resolution_option(width, height)
-            return await generate_and_update_history(
-                p,
-                n,
-                st,
-                g,
-                RANDOM_SEED,
-                True,
-                res,
-                False,
-                progress,
-            )
+            res_str = get_resolution_option(width, height) # Store the string for state
+            
+            logger.info(f"UI (Quick Generate): Using parameters - prompt='{p[:50]}...', steps={st}, guidance={g}, seed={RANDOM_SEED}")
+            
+            if not p:
+                return (
+                    None, 
+                    "❌ Error: Prompt cannot be empty for Quick Generate.",
+                    gr.update(),
+                    gr.update(visible=False)
+                )
+
+            # Create proper GenerationParams
+            gen_params = {
+                "prompt": p,
+                "negative_prompt": n,
+                "steps": int(st),
+                "guidance": float(g),
+                "seed": RANDOM_SEED,
+                "save_to_gallery_flag": True, # Default for quick generate
+                "width": int(width),
+                "height": int(height),
+            }
+            image, status = await generate_with_notifications(state, gen_params, progress)
+
+            if image is not None:
+                state.last_generation_params = {
+                    "prompt": p, "negative_prompt": n, "steps": st, "guidance": g, "seed": RANDOM_SEED,
+                    "save_to_gallery_flag": True, "resolution": res_str, "width": width, "height": height
+                }
+            
+            if p and p.strip() and image is not None:
+                updated_prompts = add_to_recent_prompts(p.strip())
+                return image, status, gr.update(choices=updated_prompts), gr.update(visible=True)
+            else:
+                return image, status, gr.update(), gr.update(visible=image is not None)
 
         def restore_last_settings(curr_p, curr_n, curr_st, curr_g, curr_se, curr_res):
             params = state.last_generation_params
-            if not params:
+            if params is None:
                 return (
                     curr_p,
                     curr_n,
@@ -1502,7 +1579,7 @@ def create_gradio_app(state: AppState):
         try:
             generate_btn.click(
                 fn=generate_and_update_history,
-                inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution, auto_best],
+                inputs=[],
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
                 js=show_loading_js,
             ).then(
@@ -1519,7 +1596,7 @@ def create_gradio_app(state: AppState):
         except TypeError:
             generate_btn.click(
                 fn=generate_and_update_history,
-                inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution, auto_best],
+                inputs=[],
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
             ).then(
                 fn=refresh_gallery,
@@ -1565,8 +1642,8 @@ def create_gradio_app(state: AppState):
 
         try:
             quick_generate_btn.click(
-                fn=quick_generate_image,
-                inputs=[prompt, negative_prompt],
+                fn=quick_generate_image, # No inputs needed as it uses global state
+                inputs=[], 
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
                 js=show_loading_js,
             ).then(
@@ -1582,8 +1659,8 @@ def create_gradio_app(state: AppState):
             )
         except TypeError:
             quick_generate_btn.click(
-                fn=quick_generate_image,
-                inputs=[prompt, negative_prompt],
+                fn=quick_generate_image, # No inputs needed
+                inputs=[],
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
             ).then(
                 fn=refresh_gallery,
@@ -2020,16 +2097,6 @@ def create_gradio_app(state: AppState):
                 outputs=action_status,
             )
 
-        prev_page.click(
-            fn=prev_page_fn,
-            outputs=[gallery_component, page_display],
-        )
-
-        next_page.click(
-            fn=next_page_fn,
-            outputs=[gallery_component, page_display],
-        )
-
         def next_page_fn():
             nonlocal gallery_page
             items, _ = load_gallery_items(gallery_filter)
@@ -2045,6 +2112,16 @@ def create_gradio_app(state: AppState):
             total_pages = max(1, (len(items) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)
             paged = load_gallery_page(gallery_page)
             return gr.update(value=paged), f"{gallery_page + 1}/{total_pages}"
+
+        prev_page.click(
+            fn=prev_page_fn,
+            outputs=[gallery_component, page_display],
+        )
+
+        next_page.click(
+            fn=next_page_fn,
+            outputs=[gallery_component, page_display],
+        )
 
         def get_monitor_status():
             guardian = get_memory_guardian(state)
@@ -2251,6 +2328,16 @@ def create_gradio_app(state: AppState):
             outputs=[first_run_modal]
         )
         
+        # Component change handlers to track values
+        prompt.change(fn=update_prompt_value, inputs=[prompt], outputs=[])
+        negative_prompt.change(fn=update_negative_prompt_value, inputs=[negative_prompt], outputs=[])
+        steps.change(fn=update_steps_value, inputs=[steps], outputs=[])
+        guidance.change(fn=update_guidance_value, inputs=[guidance], outputs=[])
+        seed.change(fn=update_seed_value, inputs=[seed], outputs=[])
+        save_gallery.change(fn=update_save_gallery_value, inputs=[save_gallery], outputs=[])
+        resolution.change(fn=update_resolution_value, inputs=[resolution], outputs=[])
+        auto_best.change(fn=update_auto_best_value, inputs=[auto_best], outputs=[])
+        
         # Quick Style Button Handlers
         def apply_style_prefix(current_prompt, style_prefix):
             """Apply a style prefix to the current prompt."""
@@ -2296,23 +2383,54 @@ def create_gradio_app(state: AppState):
     return demo
 
 def parse_resolution(resolution_string):
-    """Parse resolution string to width and height."""
+    """Parse resolution string to width and height with robust error handling."""
     try:
-        # Handle None or empty string
-        if not resolution_string:
+        # Handle None, empty string, or non-string types
+        if not resolution_string or not isinstance(resolution_string, str):
+            logger.warning(f"Invalid resolution string: {resolution_string}, using default 1024x1024")
             return 1024, 1024
         
         # Extract resolution from strings like "1024x1024 (Square - High Quality)"
-        resolution_part = resolution_string.split(' ')[0]  # Get "1024x1024"
-        width, height = map(int, resolution_part.split('x'))
+        parts = resolution_string.split(' ')
+        if not parts:
+            logger.warning(f"Could not split resolution string: {resolution_string}")
+            return 1024, 1024
+            
+        resolution_part = parts[0]  # Get "1024x1024"
+        
+        # Check if resolution part contains 'x'
+        if 'x' not in resolution_part:
+            logger.warning(f"Resolution string missing 'x' separator: {resolution_part}")
+            return 1024, 1024
+        
+        # Split by 'x' and validate we have exactly 2 parts
+        dimension_parts = resolution_part.split('x')
+        if len(dimension_parts) != 2:
+            logger.warning(f"Resolution string has incorrect format: {resolution_part} (expected 'WIDTHxHEIGHT')")
+            return 1024, 1024
+        
+        # Convert to integers with validation
+        try:
+            width = int(dimension_parts[0])
+            height = int(dimension_parts[1])
+        except ValueError as e:
+            logger.warning(f"Could not convert resolution dimensions to integers: {dimension_parts} - {e}")
+            return 1024, 1024
+        
+        # Validate dimensions are reasonable
+        if width <= 0 or height <= 0 or width > 2048 or height > 2048:
+            logger.warning(f"Resolution dimensions out of valid range: {width}x{height}, using 1024x1024")
+            return 1024, 1024
+            
         return width, height
-    except (ValueError, IndexError, AttributeError):
-        # Default to 1024x1024 if parsing fails
+        
+    except Exception as e:
+        # Catch-all for any unexpected errors
+        logger.error(f"Unexpected error parsing resolution '{resolution_string}': {e}")
         return 1024, 1024
-
-
-def get_resolution_option(width: int, height: int) -> str:
-    """Return dropdown option matching the given width and height."""
+    except (ValueError, TypeError) as e:
+        logger.error(f"Error parsing resolution '{resolution_string}': {e}")
+        return 1024, 1024
     for opt in RESOLUTION_OPTIONS:
         w, h = parse_resolution(opt)
         if w == width and h == height:
