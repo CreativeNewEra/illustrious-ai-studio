@@ -950,8 +950,6 @@ def create_gradio_app(state: AppState):
   }} else {{
     const darkPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
     mode = darkPref ? 'dark' : 'light';
-    const input = document.querySelector('#theme-selector input[value="' + (mode === 'dark' ? 'Dark' : 'Light') + '"]');
-    if(input) {{ input.click(); }}
   }}
   if(mode === 'dark') {{
     document.documentElement.classList.add('dark');
