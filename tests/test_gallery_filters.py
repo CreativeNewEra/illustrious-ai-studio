@@ -3,11 +3,12 @@ import os
 import sys
 from pathlib import Path
 
-if os.getcwd() not in sys.path:
-    sys.path.insert(0, os.getcwd())
+# Removed global modification of sys.path
+
 
 
 def test_save_and_load_gallery_filter(tmp_path, monkeypatch):
+    monkeypatch.syspath_prepend(os.getcwd())
     from core import gallery_filters
 
     filter_file = tmp_path / "filter.json"
