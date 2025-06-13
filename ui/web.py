@@ -667,11 +667,11 @@ def create_gradio_app(state: AppState):
                 med_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.medium_threshold*100), label="Medium %")
                 high_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.high_threshold*100), label="High %")
                 crit_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.critical_threshold*100), label="Critical %")
-            apply_thresholds_btn = gr.Button(
-                "Apply Thresholds",
-                variant="secondary",
-                elem_classes=["secondary-button"],
-            )
+                apply_thresholds_btn = gr.Button(
+                    "Apply Thresholds",
+                    variant="secondary",
+                    elem_classes=["secondary-button"],
+                )
 
             gr.Markdown("### Model Loader")
             with gr.Row():
