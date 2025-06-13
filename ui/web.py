@@ -62,7 +62,7 @@ def create_gradio_app(state: AppState):
             if THEME_PREF_FILE.exists():
                 with open(THEME_PREF_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    return data.get("theme", "light")
+                    return data.get("theme", "dark")
         except Exception as e:
             logger.error("Error loading theme preference: %s", e)
         return None
@@ -206,7 +206,7 @@ def create_gradio_app(state: AppState):
     current_theme = load_theme_pref()
     theme_pref_exists = current_theme is not None
     if current_theme is None:
-        current_theme = "light"
+        current_theme = "dark"
     with gr.Blocks(
         title="Illustrious AI Studio",
         theme="default",
@@ -1309,8 +1309,7 @@ def create_gradio_app(state: AppState):
   if(hasPref) {{
     mode = '{current_theme}';
   }} else {{
-    const darkPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    mode = darkPref ? 'dark' : 'light';
+    mode = 'dark';
   }}
   if(mode === 'dark') {{
     document.documentElement.classList.add('dark');
