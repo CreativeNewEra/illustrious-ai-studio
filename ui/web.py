@@ -649,6 +649,30 @@ def create_gradio_app(state: AppState):
                     elem_classes=["secondary-button"]
                 )
 
+            with gr.Row():
+                guardian_cfg = get_memory_guardian(state)
+                profile_dropdown = gr.Dropdown(
+                    choices=["conservative", "balanced", "aggressive"],
+                    value=guardian_cfg.config.get("profile", "balanced"),
+                    label="Memory Profile",
+                )
+                apply_profile_btn = gr.Button(
+                    "Apply Profile",
+                    variant="secondary",
+                    elem_classes=["secondary-button"],
+                )
+
+            with gr.Row():
+                low_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.low_threshold*100), label="Low %")
+                med_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.medium_threshold*100), label="Medium %")
+                high_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.high_threshold*100), label="High %")
+                crit_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.critical_threshold*100), label="Critical %")
+            apply_thresholds_btn = gr.Button(
+                "Apply Thresholds",
+                variant="secondary",
+                elem_classes=["secondary-button"],
+            )
+
             gr.Markdown("### Model Loader")
             with gr.Row():
                 sdxl_checkbox = gr.Checkbox(label="SDXL")
@@ -1375,6 +1399,28 @@ def create_gradio_app(state: AppState):
         def stop_guardian_ui():
             stop_memory_guardian()
             return get_monitor_status(), get_memory_stats_markdown(state)
+
+        def set_profile_ui(profile):
+            guardian = get_memory_guardian(state)
+            try:
+                guardian.set_profile(profile)
+            except ValueError as e:
+                logger.error("%s", e)
+            return get_memory_stats_markdown(state)
+
+        def set_thresholds_ui(low, medium, high, critical):
+            guardian = get_memory_guardian(state)
+            for lvl, val in [
+                ("low", low),
+                ("medium", medium),
+                ("high", high),
+                ("critical", critical),
+            ]:
+                try:
+                    guardian.set_threshold(lvl, val)
+                except ValueError as e:
+                    logger.error("%s", e)
+            return get_memory_stats_markdown(state)
         
         def do_switch(sd_path, ollama_name):
             if sd_path:
@@ -1444,6 +1490,16 @@ def create_gradio_app(state: AppState):
         stop_guardian_btn.click(
             fn=stop_guardian_ui,
             outputs=[monitor_status, memory_display],
+        )
+        apply_profile_btn.click(
+            fn=set_profile_ui,
+            inputs=profile_dropdown,
+            outputs=memory_display,
+        )
+        apply_thresholds_btn.click(
+            fn=set_thresholds_ui,
+            inputs=[low_slider, med_slider, high_slider, crit_slider],
+            outputs=memory_display,
         )
 
         refresh_timer.tick(

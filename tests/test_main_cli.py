@@ -14,6 +14,8 @@ def test_defaults():
     assert args.web_port == 7860
     assert args.api_port == 8000
     assert args.log_level == "INFO"
+    assert args.memory_profile is None
+    assert args.memory_threshold is None
 
 
 def test_flags_and_ports():
@@ -24,3 +26,14 @@ def test_flags_and_ports():
     assert args.no_api is True
     assert args.web_port == 9000
     assert args.api_port == 1234
+
+def test_memory_cli_options():
+    from main import create_parser
+    parser = create_parser()
+    args = parser.parse_args([
+        "--memory-profile", "aggressive",
+        "--memory-threshold", "low:60",
+        "--memory-threshold", "high:90",
+    ])
+    assert args.memory_profile == "aggressive"
+    assert args.memory_threshold == ["low:60", "high:90"]

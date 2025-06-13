@@ -139,6 +139,34 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
         guardian = get_memory_guardian(state)
         return guardian.get_memory_report()
 
+    class ProfileRequest(BaseModel):
+        profile: str
+
+    @app.post("/memory-profile")
+    async def set_memory_profile(req: ProfileRequest, state: AppState = Depends(get_state)):
+        guardian = get_memory_guardian(state)
+        try:
+            guardian.set_profile(req.profile)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        return {"profile": guardian.config.get("profile")}
+
+    class ThresholdsRequest(BaseModel):
+        low: float | None = None
+        medium: float | None = None
+        high: float | None = None
+        critical: float | None = None
+
+    @app.post("/memory-thresholds")
+    async def set_memory_thresholds(req: ThresholdsRequest, state: AppState = Depends(get_state)):
+        guardian = get_memory_guardian(state)
+        for level, val in req.dict(exclude_none=True).items():
+            try:
+                guardian.set_threshold(level, val)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+        return guardian.get_memory_report()["thresholds"]
+
     return app
 
 
