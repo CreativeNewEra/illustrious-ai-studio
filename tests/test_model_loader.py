@@ -69,6 +69,7 @@ def test_model_loader_button(monkeypatch):
     monkeypatch.setattr(web, 'get_model_status', lambda st: 'ok')
 
     state = AppState()
+    assert state.ollama_vision_model is None
     web.create_gradio_app(state)
     fn = events.get('fn')
     assert fn is not None

@@ -16,7 +16,9 @@ def test_config_overrides(monkeypatch):
     monkeypatch.setattr(CONFIG, "memory_guardian", custom, raising=False)
     from core.state import AppState
     from core.memory_guardian import MemoryGuardian
-    guardian = MemoryGuardian(AppState())
+    state = AppState()
+    assert state.ollama_vision_model is None
+    guardian = MemoryGuardian(state)
     th = guardian.thresholds
     assert th.low_threshold == 0.60
     assert th.medium_threshold == 0.80
@@ -36,7 +38,9 @@ def test_defaults_preserved(monkeypatch):
     monkeypatch.setattr(CONFIG, "memory_guardian", partial, raising=False)
     from core.state import AppState
     from core.memory_guardian import MemoryGuardian
-    guardian = MemoryGuardian(AppState())
+    state2 = AppState()
+    assert state2.ollama_vision_model is None
+    guardian = MemoryGuardian(state2)
     th = guardian.thresholds
     assert th.low_threshold == 0.70
     assert th.medium_threshold == 0.85

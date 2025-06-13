@@ -20,6 +20,7 @@ def main():
     
     # Initialize app state
     state = AppState()
+    assert state.ollama_vision_model is None
     
     # Test 1: Get available models
     print("\n1. Scanning for available models...")

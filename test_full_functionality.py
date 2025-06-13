@@ -29,6 +29,7 @@ from core.config import CONFIG
 class FunctionalityTester:
     def __init__(self):
         self.state = AppState()
+        assert self.state.ollama_vision_model is None
         self.test_results = {}
         
     def print_header(self, text):

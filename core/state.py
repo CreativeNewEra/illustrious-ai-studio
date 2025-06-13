@@ -11,6 +11,7 @@ class AppState:
 
     sdxl_pipe: Optional[StableDiffusionXLPipeline] = None
     ollama_model: Optional[str] = None
+    ollama_vision_model: Optional[str] = None
     model_status: Dict[str, bool] = field(
         default_factory=lambda: {"sdxl": False, "ollama": False, "multimodal": False}
     )
