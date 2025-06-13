@@ -419,537 +419,543 @@ def create_gradio_app(state: AppState):
 
         open_modal_fn, first_run_modal = show_first_run_modal()
 
-        with gr.Tab("🎨 Text-to-Image"):
-            with gr.Row():
-                with gr.Column():
-                    # Recent prompts functionality
-                    with gr.Row():
-                        recent_prompts = gr.Dropdown(
-                            label="🕐 Recent Prompts",
-                            choices=[],
-                            value=None,
-                            elem_classes=["dropdown"],
-                            interactive=True,
-                            allow_custom_value=False
-                        )
-                        clear_history_btn = gr.Button(
-                            "🗑️ Clear History",
-                            variant="secondary",
-                            size="sm",
-                            elem_classes=["secondary-button"]
-                        )
-                    with gr.Row():
-                        example_prompts = gr.Dropdown(
-                            label="🎲 Example Prompts",
-                            choices=EXAMPLE_PROMPTS,
-                            value=EXAMPLE_PROMPTS[0] if EXAMPLE_PROMPTS else None,
-                            elem_classes=["dropdown"],
-                            interactive=True,
-                            allow_custom_value=False
-                        )
-                    prompt = gr.Textbox(
-                        label="Prompt",
-                        placeholder="Describe what you want to create...",
-                        lines=3,
-                        elem_id="prompt-box",
-                        value="",  # Initialize with empty string instead of None
-                    )
-                    
-                    # Quick Style Buttons
-                    with gr.Row():
-                        gr.Markdown("**🎨 Quick Styles:**")
-                    with gr.Row():
-                        quick_styles = [
-                            {"label": "🌸 Anime", "tooltip": "Applies anime style"},
-                            {"label": "📷 Realistic", "tooltip": "Applies realistic style"},
-                            {"label": "🎭 Artistic", "tooltip": "Applies artistic style"},
-                            {"label": "🧙 Fantasy", "tooltip": "Applies fantasy style"},
-                            {"label": "🤖 Cyberpunk", "tooltip": "Applies cyberpunk style"},
-                        ]
-                        style_buttons = []
-                        for style in quick_styles:
-                            btn = gr.Button(
-                                style["label"],
-                                variant="secondary",
-                                size="sm"
-                            )
-                            style_buttons.append(btn)
-                        # Assign buttons to named variables for event handlers
-                        assert len(style_buttons) == 5, f"Expected 5 style buttons, but got {len(style_buttons)}"
-                        anime_btn, realistic_btn, artistic_btn, fantasy_btn, cyberpunk_btn = style_buttons
-                    
-                    with gr.Accordion("🎯 Creative Controls", open=False, visible=not state.simple_mode) as creative_controls:
-                        # Model Selection Section
-                        with gr.Group():
-                            gr.Markdown("### 🎭 Model Selection")
+        with gr.Tabs():
+            with gr.Tab("🎨 Create"):
+                with gr.Tabs():
+                    with gr.Tab("Generate"):
+                                    with gr.Row():
+                                        with gr.Column():
+                                            # Recent prompts functionality
+                                            with gr.Row():
+                                                recent_prompts = gr.Dropdown(
+                                                    label="🕐 Recent Prompts",
+                                                    choices=[],
+                                                    value=None,
+                                                    elem_classes=["dropdown"],
+                                                    interactive=True,
+                                                    allow_custom_value=False
+                                                )
+                                                clear_history_btn = gr.Button(
+                                                    "🗑️ Clear History",
+                                                    variant="secondary",
+                                                    size="sm",
+                                                    elem_classes=["secondary-button"]
+                                                )
+                                            with gr.Row():
+                                                example_prompts = gr.Dropdown(
+                                                    label="🎲 Example Prompts",
+                                                    choices=EXAMPLE_PROMPTS,
+                                                    value=EXAMPLE_PROMPTS[0] if EXAMPLE_PROMPTS else None,
+                                                    elem_classes=["dropdown"],
+                                                    interactive=True,
+                                                    allow_custom_value=False
+                                                )
+                                            prompt = gr.Textbox(
+                                                label="Prompt",
+                                                placeholder="Describe what you want to create...",
+                                                lines=3,
+                                                elem_id="prompt-box",
+                                                value="",  # Initialize with empty string instead of None
+                                            )
+                                            
+                                            # Quick Style Buttons
+                                            with gr.Row():
+                                                gr.Markdown("**🎨 Quick Styles:**")
+                                            with gr.Row():
+                                                quick_styles = [
+                                                    {"label": "🌸 Anime", "tooltip": "Applies anime style"},
+                                                    {"label": "📷 Realistic", "tooltip": "Applies realistic style"},
+                                                    {"label": "🎭 Artistic", "tooltip": "Applies artistic style"},
+                                                    {"label": "🧙 Fantasy", "tooltip": "Applies fantasy style"},
+                                                    {"label": "🤖 Cyberpunk", "tooltip": "Applies cyberpunk style"},
+                                                ]
+                                                style_buttons = []
+                                                for style in quick_styles:
+                                                    btn = gr.Button(
+                                                        style["label"],
+                                                        variant="secondary",
+                                                        size="sm"
+                                                    )
+                                                    style_buttons.append(btn)
+                                                # Assign buttons to named variables for event handlers
+                                                assert len(style_buttons) == 5, f"Expected 5 style buttons, but got {len(style_buttons)}"
+                                                anime_btn, realistic_btn, artistic_btn, fantasy_btn, cyberpunk_btn = style_buttons
+                                            
+                                            with gr.Accordion("🎯 Creative Controls", open=False, visible=not state.simple_mode) as creative_controls:
+                                                # Model Selection Section
+                                                with gr.Group():
+                                                    gr.Markdown("### 🎭 Model Selection")
+                                                    with gr.Row():
+                                                        model_selector = gr.Dropdown(
+                                                            label="Art Style Model",
+                                                            elem_classes=["dropdown"],
+                                                            interactive=True
+                                                        )
+                                                        test_model_btn = gr.Button(
+                                                            "🧪 Test Model",
+                                                            variant="secondary",
+                                                            size="sm",
+                                                            elem_classes=["secondary-button"]
+                                                        )
+                                                    model_info = gr.Textbox(
+                                                        label="Model Information",
+                                                        interactive=False,
+                                                        lines=1,
+                                                        elem_classes=["info-box"]
+                                                    )
+                                                    model_switch_status = gr.Textbox(
+                                                        label="Model Status",
+                                                        interactive=False,
+                                                        lines=1,
+                                                        elem_classes=["status-box"],
+                                                        visible=False
+                                                    )
+                                                with gr.Row():
+                                                    preset_selector = gr.Dropdown(
+                                                        label="🎛️ Generation Preset",
+                                                        choices=list(GENERATION_PRESETS.keys()),
+                                                        value="balanced",
+                                                        elem_classes=["dropdown"]
+                                                    )
+                        
+                                                with gr.Row():
+                                                    steps = gr.Slider(
+                                                        10, 100,
+                                                        value=30,
+                                                        step=1,
+                                                        label="Detail Level",
+                                                        elem_classes=["artistic-slider"]
+                                                    )
+                                                    guidance = gr.Slider(
+                                                        1.0, 20.0,
+                                                        value=7.5,
+                                                        step=0.1,
+                                                        label="Creative Freedom",
+                                                        elem_classes=["artistic-slider"]
+                                                    )
+                                                with gr.Row():
+                                                    resolution = gr.Dropdown(
+                                                        label="🖼️ Image Resolution",
+                                                        choices=RESOLUTION_OPTIONS,
+                                                        value="1024x1024 (Square - High Quality)",
+                                                        elem_classes=["dropdown"]
+                                                    )
+                                                with gr.Accordion("Advanced", open=False):
+                                                    negative_prompt = gr.Textbox(
+                                                        label="Elements to Avoid",
+                                                        value="blurry, low quality, text, watermark, deformed",
+                                                        lines=2,
+                                                        elem_classes=["textbox"]
+                                                    )
+                                                    seed = gr.Number(
+                                                        value=RANDOM_SEED,
+                                                        label="Inspiration Seed (-1 for random)",
+                                                        elem_classes=["number-input"]
+                                                    )
+                                                    save_gallery = gr.Checkbox(
+                                                        value=True,
+                                                        label="Add to Gallery Collection",
+                                                        elem_classes=["checkbox-input"]
+                                                    )
+                                                    auto_best = gr.Checkbox(
+                                                        value=False,
+                                                        label="Auto-Best",
+                                                        elem_classes=["checkbox-input"]
+                                                    )
+                                            with gr.Row():
+                                                generate_btn = gr.Button(
+                                                    "🎨 Create Masterpiece",
+                                                    variant="primary",
+                                                    size="lg",
+                                                    elem_classes=["primary-button"],
+                                                    elem_id="generate-btn",
+                                                )
+                                                enhance_btn = gr.Button(
+                                                    "✨ Enhance Vision",
+                                                    variant="secondary",
+                                                    elem_classes=["secondary-button"]
+                                                )
+                                                regenerate_btn = gr.Button(
+                                                    "🔄 Regenerate Same",
+                                                    variant="secondary",
+                                                    size="sm",
+                                                    elem_classes=["secondary-button", "regenerate-btn"],
+                                                    visible=False
+                                                )
+                                                reset_btn = gr.Button(
+                                                    "♻️ Reset",
+                                                    variant="secondary",
+                                                    size="sm",
+                                                    elem_classes=["secondary-button"]
+                                                )
+                                        with gr.Column():
+                                            output_image = gr.Image(
+                                                label="Your Masterpiece",
+                                                type="pil",
+                                                interactive=False,
+                                                elem_classes=["gallery-item"]
+                                            )
+                                            generation_status = gr.Textbox(
+                                                label="Creative Process",
+                                                interactive=False,
+                                                lines=2,
+                                                elem_classes=["status-box"]
+                                            )
+                                            with gr.Row():
+                                                download_btn = gr.DownloadButton(
+                                                    "💾 Save Artwork",
+                                                    variant="secondary",
+                                                    elem_classes=["secondary-button"]
+                                                )
+                    with gr.Tab("Templates"):
+                                    with gr.Row():
+                                        with gr.Column(scale=1):
+                                            gr.Markdown("### 💾 Save Current Prompt")
+                                            template_name = gr.Textbox(
+                                                label="Template Name",
+                                                placeholder="My awesome prompt...",
+                                                elem_classes=["textbox"]
+                                            )
+                                            template_category = gr.Dropdown(
+                                                choices=template_manager.templates["categories"],
+                                                value="General",
+                                                label="Category",
+                                                allow_custom_value=True,
+                                                elem_classes=["dropdown"]
+                                            )
+                                            template_tags = gr.Textbox(
+                                                label="Tags (comma-separated)",
+                                                placeholder="anime, character, fantasy",
+                                                elem_classes=["textbox"]
+                                            )
+                                            save_template_btn = gr.Button(
+                                                "💾 Save Template",
+                                                variant="primary",
+                                                elem_classes=["primary-button"]
+                                            )
+                                            template_save_status = gr.Textbox(
+                                                label="Save Status",
+                                                interactive=False,
+                                                elem_classes=["status-box"]
+                                            )
+                                            
+                                            gr.Markdown("### 📤 Export/Import")
+                                            with gr.Row():
+                                                export_btn = gr.Button(
+                                                    "📤 Export All",
+                                                    variant="secondary",
+                                                    elem_classes=["secondary-button"]
+                                                )
+                                                import_file = gr.File(
+                                                    label="Import Templates",
+                                                    file_types=[".json"],
+                                                    elem_classes=["file-input"]
+                                                )
+                                            import_merge = gr.Checkbox(
+                                                value=True,
+                                                label="Merge with existing templates",
+                                                elem_classes=["checkbox-input"]
+                                            )
+                                            export_download = gr.DownloadButton(
+                                                "💾 Download Export",
+                                                variant="secondary",
+                                                visible=False,
+                                                elem_classes=["secondary-button"]
+                                            )
+                                            
+                                        with gr.Column(scale=2):
+                                            gr.Markdown("### 📋 Template Library")
+                                            
+                                            # Search and filter
+                                            with gr.Row():
+                                                template_search = gr.Textbox(
+                                                    label="Search Templates",
+                                                    placeholder="Search by name, content, or tags...",
+                                                    elem_classes=["textbox"]
+                                                )
+                                                category_filter = gr.Dropdown(
+                                                    choices=["All"] + template_manager.templates["categories"],
+                                                    value="All",
+                                                    label="Filter by Category",
+                                                    elem_classes=["dropdown"]
+                                                )
+                                            
+                                            # Template list
+                                            template_list = gr.Dropdown(
+                                                choices=[],
+                                                label="Select Template",
+                                                elem_classes=["dropdown"]
+                                            )
+                                            
+                                            # Template preview
+                                            with gr.Group():
+                                                template_preview_name = gr.Textbox(
+                                                    label="Template Name",
+                                                    interactive=False,
+                                                    elem_classes=["textbox"]
+                                                )
+                                                template_preview_prompt = gr.Textbox(
+                                                    label="Prompt",
+                                                    lines=4,
+                                                    interactive=False,
+                                                    elem_classes=["textbox"]
+                                                )
+                                                template_preview_negative = gr.Textbox(
+                                                    label="Negative Prompt",
+                                                    lines=2,
+                                                    interactive=False,
+                                                    elem_classes=["textbox"]
+                                                )
+                                                template_preview_info = gr.Textbox(
+                                                    label="Template Info",
+                                                    lines=2,
+                                                    interactive=False,
+                                                    elem_classes=["info-box"]
+                                                )
+                                            
+                                            # Template actions
+                                            with gr.Row():
+                                                use_template_btn = gr.Button(
+                                                    "✨ Use Template",
+                                                    variant="primary",
+                                                    elem_classes=["primary-button"]
+                                                )
+                                                delete_template_btn = gr.Button(
+                                                    "🗑️ Delete",
+                                                    variant="secondary",
+                                                    elem_classes=["secondary-button"]
+                                                )
+                                            
+                                            # Template statistics
+                                            with gr.Accordion("📊 Template Statistics", open=False):
+                                                template_stats = gr.JSON(
+                                                    label="Collection Stats",
+                                                    elem_classes=["json-display"]
+                                                )
+                                                popular_templates = gr.Dropdown(
+                                                    choices=[],
+                                                    label="Most Popular Templates",
+                                                    elem_classes=["dropdown"]
+                                                )
+                        
+            with gr.Tab("🗂️ Library"):
                             with gr.Row():
-                                model_selector = gr.Dropdown(
-                                    label="Art Style Model",
-                                    elem_classes=["dropdown"],
-                                    interactive=True
+                                tag_filter = gr.Dropdown(
+                                    label="Filter by Tag",
+                                    choices=[],
+                                    value=gallery_filter.get("tag"),
+                                    allow_custom_value=True,
+                                    interactive=True,
                                 )
-                                test_model_btn = gr.Button(
-                                    "🧪 Test Model",
+                                keyword_filter = gr.Textbox(
+                                    label="Search Metadata",
+                                    value=gallery_filter.get("keyword", ""),
+                                    interactive=True,
+                                )
+                            gallery_component = gr.Gallery(
+                                label="Gallery",
+                                elem_classes=["gallery-section"],
+                                columns=[1, 2, 3, 4],
+                                height="auto",
+                            )
+                            metadata_display = gr.JSON(label="Metadata")
+                            selected_path = gr.Textbox(visible=False)
+                            with gr.Row():
+                                open_file_btn = gr.Button(
+                                    "📂 Open File",
                                     variant="secondary",
-                                    size="sm",
                                     elem_classes=["secondary-button"]
                                 )
-                            model_info = gr.Textbox(
-                                label="Model Information",
+                                copy_path_btn = gr.Button(
+                                    "📋 Copy Path",
+                                    variant="secondary",
+                                    elem_classes=["secondary-button"]
+                                )
+                            action_status = gr.Textbox(
+                                label="Action Status",
                                 interactive=False,
-                                lines=1,
-                                elem_classes=["info-box"]
-                            )
-                            model_switch_status = gr.Textbox(
-                                label="Model Status",
-                                interactive=False,
-                                lines=1,
                                 elem_classes=["status-box"],
-                                visible=False
                             )
-                        with gr.Row():
-                            preset_selector = gr.Dropdown(
-                                label="🎛️ Generation Preset",
-                                choices=list(GENERATION_PRESETS.keys()),
-                                value="balanced",
-                                elem_classes=["dropdown"]
-                            )
-
-                        with gr.Row():
-                            steps = gr.Slider(
-                                10, 100,
-                                value=30,
-                                step=1,
-                                label="Detail Level",
-                                elem_classes=["artistic-slider"]
-                            )
-                            guidance = gr.Slider(
-                                1.0, 20.0,
-                                value=7.5,
-                                step=0.1,
-                                label="Creative Freedom",
-                                elem_classes=["artistic-slider"]
-                            )
-                        with gr.Row():
-                            resolution = gr.Dropdown(
-                                label="🖼️ Image Resolution",
-                                choices=RESOLUTION_OPTIONS,
-                                value="1024x1024 (Square - High Quality)",
-                                elem_classes=["dropdown"]
-                            )
-                        with gr.Accordion("Advanced", open=False):
-                            negative_prompt = gr.Textbox(
-                                label="Elements to Avoid",
-                                value="blurry, low quality, text, watermark, deformed",
-                                lines=2,
-                                elem_classes=["textbox"]
-                            )
-                            seed = gr.Number(
-                                value=RANDOM_SEED,
-                                label="Inspiration Seed (-1 for random)",
-                                elem_classes=["number-input"]
-                            )
-                            save_gallery = gr.Checkbox(
-                                value=True,
-                                label="Add to Gallery Collection",
-                                elem_classes=["checkbox-input"]
-                            )
-                            auto_best = gr.Checkbox(
-                                value=False,
-                                label="Auto-Best",
-                                elem_classes=["checkbox-input"]
-                            )
-                    with gr.Row():
-                        generate_btn = gr.Button(
-                            "🎨 Create Masterpiece",
-                            variant="primary",
-                            size="lg",
-                            elem_classes=["primary-button"],
-                            elem_id="generate-btn",
-                        )
-                        enhance_btn = gr.Button(
-                            "✨ Enhance Vision",
-                            variant="secondary",
-                            elem_classes=["secondary-button"]
-                        )
-                        regenerate_btn = gr.Button(
-                            "🔄 Regenerate Same",
-                            variant="secondary",
-                            size="sm",
-                            elem_classes=["secondary-button", "regenerate-btn"],
-                            visible=False
-                        )
-                        reset_btn = gr.Button(
-                            "♻️ Reset",
-                            variant="secondary",
-                            size="sm",
-                            elem_classes=["secondary-button"]
-                        )
-                with gr.Column():
-                    output_image = gr.Image(
-                        label="Your Masterpiece",
-                        type="pil",
-                        interactive=False,
-                        elem_classes=["gallery-item"]
-                    )
-                    generation_status = gr.Textbox(
-                        label="Creative Process",
-                        interactive=False,
-                        lines=2,
-                        elem_classes=["status-box"]
-                    )
-                    with gr.Row():
-                        download_btn = gr.DownloadButton(
-                            "💾 Save Artwork",
-                            variant="secondary",
-                            elem_classes=["secondary-button"]
-                        )
-        with gr.Tab("💬 AI Chat & Prompt Crafting"):
-            with gr.Row():
-                with gr.Column(scale=2):
-                    chatbot = gr.Chatbot(
-                        height=500,
-                        show_copy_button=True,
-                        elem_classes=["chatbot"],
-                        type="messages"
-                    )
-                    with gr.Row():
-                        msg = gr.Textbox(
-                            label="Your Creative Brief",
-                            placeholder="Share your artistic vision or use '#generate [description]' to create images...",
-                            scale=4,
-                            elem_classes=["textbox"]
-                        )
-                        send_btn = gr.Button(
-                            "📤 Share",
-                            variant="primary",
-                            scale=1,
-                            elem_classes=["primary-button"]
-                        )
-                    with gr.Row():
-                        clear_btn = gr.Button(
-                            "🗑️ Clear Canvas",
-                            variant="secondary",
-                            elem_classes=["secondary-button"]
-                        )
-                        session_info = gr.Textbox(
-                            value="Session: default",
-                            label="Creative Session",
-                            interactive=False,
-                            scale=2,
-                            elem_classes=["info-box"]
-                        )
-        with gr.Tab("🔍 Image Analysis"):
-            if state.model_status["multimodal"]:
-                with gr.Row():
-                    with gr.Column():
-                        input_image = gr.Image(
-                            label="📁 Upload or Drag & Drop Artwork",
-                            type="pil",
-                            elem_classes=["gallery-item"],
-                            show_download_button=False,
-                            show_share_button=False,
-                            container=True,
-                            sources=["upload", "clipboard"]
-                        )
-                        analysis_question = gr.Textbox(
-                            label="Artistic Inquiry",
-                            value="Describe this artwork in detail",
-                            lines=2,
-                            elem_classes=["textbox"]
-                        )
-                        analyze_btn = gr.Button(
-                            "🔍 Analyze Artwork",
-                            variant="primary",
-                            elem_classes=["primary-button"]
-                        )
-                    with gr.Column(elem_classes=["analysis-container"]):
-                        analysis_output = gr.Textbox(
-                            label="Artistic Analysis",
-                            interactive=False,
-                            lines=15,
-                            show_copy_button=True,
-                            elem_classes=["textbox"]
-                        )
-            else:
-                gr.Markdown("## ❌ Multimodal Analysis Unavailable")
-                gr.Markdown("Please ensure you have a multimodal LLM and mmproj model configured.")
                 
-        with gr.Tab("📝 Prompt Templates"):
-            with gr.Row():
-                with gr.Column(scale=1):
-                    gr.Markdown("### 💾 Save Current Prompt")
-                    template_name = gr.Textbox(
-                        label="Template Name",
-                        placeholder="My awesome prompt...",
-                        elem_classes=["textbox"]
-                    )
-                    template_category = gr.Dropdown(
-                        choices=template_manager.templates["categories"],
-                        value="General",
-                        label="Category",
-                        allow_custom_value=True,
-                        elem_classes=["dropdown"]
-                    )
-                    template_tags = gr.Textbox(
-                        label="Tags (comma-separated)",
-                        placeholder="anime, character, fantasy",
-                        elem_classes=["textbox"]
-                    )
-                    save_template_btn = gr.Button(
-                        "💾 Save Template",
-                        variant="primary",
-                        elem_classes=["primary-button"]
-                    )
-                    template_save_status = gr.Textbox(
-                        label="Save Status",
-                        interactive=False,
-                        elem_classes=["status-box"]
-                    )
-                    
-                    gr.Markdown("### 📤 Export/Import")
-                    with gr.Row():
-                        export_btn = gr.Button(
-                            "📤 Export All",
-                            variant="secondary",
-                            elem_classes=["secondary-button"]
-                        )
-                        import_file = gr.File(
-                            label="Import Templates",
-                            file_types=[".json"],
-                            elem_classes=["file-input"]
-                        )
-                    import_merge = gr.Checkbox(
-                        value=True,
-                        label="Merge with existing templates",
-                        elem_classes=["checkbox-input"]
-                    )
-                    export_download = gr.DownloadButton(
-                        "💾 Download Export",
-                        variant="secondary",
-                        visible=False,
-                        elem_classes=["secondary-button"]
-                    )
-                    
-                with gr.Column(scale=2):
-                    gr.Markdown("### 📋 Template Library")
-                    
-                    # Search and filter
-                    with gr.Row():
-                        template_search = gr.Textbox(
-                            label="Search Templates",
-                            placeholder="Search by name, content, or tags...",
-                            elem_classes=["textbox"]
-                        )
-                        category_filter = gr.Dropdown(
-                            choices=["All"] + template_manager.templates["categories"],
-                            value="All",
-                            label="Filter by Category",
-                            elem_classes=["dropdown"]
-                        )
-                    
-                    # Template list
-                    template_list = gr.Dropdown(
-                        choices=[],
-                        label="Select Template",
-                        elem_classes=["dropdown"]
-                    )
-                    
-                    # Template preview
-                    with gr.Group():
-                        template_preview_name = gr.Textbox(
-                            label="Template Name",
-                            interactive=False,
-                            elem_classes=["textbox"]
-                        )
-                        template_preview_prompt = gr.Textbox(
-                            label="Prompt",
-                            lines=4,
-                            interactive=False,
-                            elem_classes=["textbox"]
-                        )
-                        template_preview_negative = gr.Textbox(
-                            label="Negative Prompt",
-                            lines=2,
-                            interactive=False,
-                            elem_classes=["textbox"]
-                        )
-                        template_preview_info = gr.Textbox(
-                            label="Template Info",
-                            lines=2,
-                            interactive=False,
-                            elem_classes=["info-box"]
-                        )
-                    
-                    # Template actions
-                    with gr.Row():
-                        use_template_btn = gr.Button(
-                            "✨ Use Template",
-                            variant="primary",
-                            elem_classes=["primary-button"]
-                        )
-                        delete_template_btn = gr.Button(
-                            "🗑️ Delete",
-                            variant="secondary",
-                            elem_classes=["secondary-button"]
-                        )
-                    
-                    # Template statistics
-                    with gr.Accordion("📊 Template Statistics", open=False):
-                        template_stats = gr.JSON(
-                            label="Collection Stats",
-                            elem_classes=["json-display"]
-                        )
-                        popular_templates = gr.Dropdown(
-                            choices=[],
-                            label="Most Popular Templates",
-                            elem_classes=["dropdown"]
-                        )
-
-        with gr.Tab("🖼️ Gallery"):
-            with gr.Row():
-                tag_filter = gr.Dropdown(
-                    label="Filter by Tag",
-                    choices=[],
-                    value=gallery_filter.get("tag"),
-                    allow_custom_value=True,
-                    interactive=True,
-                )
-                keyword_filter = gr.Textbox(
-                    label="Search Metadata",
-                    value=gallery_filter.get("keyword", ""),
-                    interactive=True,
-                )
-            gallery_component = gr.Gallery(
-                label="Gallery",
-                elem_classes=["gallery-section"],
-                columns=[1, 2, 3, 4],
-                height="auto",
-            )
-            metadata_display = gr.JSON(label="Metadata")
-            selected_path = gr.Textbox(visible=False)
-            with gr.Row():
-                open_file_btn = gr.Button(
-                    "📂 Open File",
-                    variant="secondary",
-                    elem_classes=["secondary-button"]
-                )
-                copy_path_btn = gr.Button(
-                    "📋 Copy Path",
-                    variant="secondary",
-                    elem_classes=["secondary-button"]
-                )
-            action_status = gr.Textbox(
-                label="Action Status",
-                interactive=False,
-                elem_classes=["status-box"],
-            )
-
-        with gr.Tab("📊 System Info"):
-            gr.Markdown("### Model Configuration")
-            config_display = gr.Code(value=json.dumps(CONFIG.as_dict(), indent=2), language="json", label="Configuration")
-            with gr.Row():
-                sd_model_input = gr.Textbox(
-                    value=CONFIG.sd_model,
-                    label="Artist Model Path",
-                    elem_classes=["textbox"]
-                )
-                ollama_model_input = gr.Textbox(
-                    value=CONFIG.ollama_model,
-                    label="Assistant Model",
-                    elem_classes=["textbox"]
-                )
-            switch_btn = gr.Button(
-                "🔄 Switch Creative Tools",
-                variant="primary",
-                elem_classes=["primary-button"]
-            )
-            refresh_btn = gr.Button(
-                "🔄 Refresh Studio Status",
-                variant="secondary",
-                elem_classes=["secondary-button"]
-            )
-
-            gr.Markdown("### Memory Usage")
-            memory_display = gr.Markdown(get_memory_stats_wrapper(state))
-            refresh_timer = gr.Timer(value=CONFIG.memory_stats_refresh_interval, render=False)
-
-            monitor_status = gr.Textbox(
-                value="",
-                label="Memory Guardian Status",
-                interactive=False,
-                lines=1,
-                elem_classes=["status-box"]
-            )
-            with gr.Row():
-                start_guardian_btn = gr.Button(
-                    "🛡️ Start Guardian",
-                    variant="secondary",
-                    elem_classes=["secondary-button"]
-                )
-                stop_guardian_btn = gr.Button(
-                    "⏹️ Stop Guardian",
-                    variant="secondary",
-                    elem_classes=["secondary-button"]
-                )
-
-            with gr.Row():
-                guardian_cfg = get_memory_guardian(state)
-                profile_dropdown = gr.Dropdown(
-                    choices=["conservative", "balanced", "aggressive"],
-                    value=guardian_cfg.config.get("profile", "balanced"),
-                    label="Memory Profile",
-                )
-                apply_profile_btn = gr.Button(
-                    "Apply Profile",
-                    variant="secondary",
-                    elem_classes=["secondary-button"],
-                )
-
-            with gr.Row():
-                low_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.low_threshold*100), label="Low %")
-                med_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.medium_threshold*100), label="Medium %")
-                high_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.high_threshold*100), label="High %")
-                crit_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.critical_threshold*100), label="Critical %")
-                apply_thresholds_btn = gr.Button(
-                    "Apply Thresholds",
-                    variant="secondary",
-                    elem_classes=["secondary-button"],
-                )
-
-            gr.Markdown("### Model Loader")
-            with gr.Row():
-                sdxl_checkbox = gr.Checkbox(label="SDXL")
-                ollama_checkbox = gr.Checkbox(label="Ollama Text Model")
-                vision_checkbox = gr.Checkbox(label="Vision Model")
-            load_selected_btn = gr.Button(
-                "⚡ Load Selected",
-                variant="secondary",
-                elem_classes=["secondary-button"]
-            )
-            gr.Markdown("### CUDA Memory Management")
-            gr.Markdown(
-                """
-                **Automatic Memory Management Features:**
-                - 🔄 **Auto-retry**: Up to 2 attempts with memory clearing on CUDA OOM errors
-                - 🧹 **Memory clearing**: Automatic CUDA cache clearing before/after generation
-                - 🗑️ **Garbage collection**: Automatic Python garbage collection with memory clearing
-                - ⚡ **Fragmentation prevention**: `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
-                - 📊 **Smart error handling**: Helpful suggestions when memory limits are reached
-                """
-            )
-            gr.Markdown("### MCP Server")
-            gr.Markdown("**Base URL:** http://localhost:8000")
-            gr.Markdown(
-                """
-                **Available Endpoints:**
-                - `GET /status` - Server status
-                - `POST /generate-image` - Generate images (with automatic memory management)
-                - `POST /chat` - Chat with LLM
-                - `POST /analyze-image` - Analyze images (if multimodal available)
-                """
-            )
-        
+            with gr.Tab("🤖 AI Assistant"):
+                            with gr.Row():
+                                with gr.Column(scale=2):
+                                    chatbot = gr.Chatbot(
+                                        height=500,
+                                        show_copy_button=True,
+                                        elem_classes=["chatbot"],
+                                        type="messages"
+                                    )
+                                    with gr.Row():
+                                        msg = gr.Textbox(
+                                            label="Your Creative Brief",
+                                            placeholder="Share your artistic vision or use '#generate [description]' to create images...",
+                                            scale=4,
+                                            elem_classes=["textbox"]
+                                        )
+                                        send_btn = gr.Button(
+                                            "📤 Share",
+                                            variant="primary",
+                                            scale=1,
+                                            elem_classes=["primary-button"]
+                                        )
+                                    with gr.Row():
+                                        clear_btn = gr.Button(
+                                            "🗑️ Clear Canvas",
+                                            variant="secondary",
+                                            elem_classes=["secondary-button"]
+                                        )
+                                        session_info = gr.Textbox(
+                                            value="Session: default",
+                                            label="Creative Session",
+                                            interactive=False,
+                                            scale=2,
+                                            elem_classes=["info-box"]
+                                        )
+                            if state.model_status["multimodal"]:
+                                with gr.Group(elem_classes=["image-analysis-group"]):
+                                    gr.Markdown(
+                                        "### Image Analysis",
+                                        elem_classes=["section-header"]
+                                    )
+                                    with gr.Row():
+                                        with gr.Column():
+                                            input_image = gr.Image(
+                                                label="📁 Upload or Drag & Drop Artwork",
+                                                type="pil",
+                                                elem_classes=["gallery-item"],
+                                                show_download_button=False,
+                                                show_share_button=False,
+                                                container=True,
+                                                sources=["upload", "clipboard"]
+                                            )
+                                            analysis_question = gr.Textbox(
+                                                label="Artistic Inquiry",
+                                                value="Describe this artwork in detail",
+                                                lines=2,
+                                                elem_classes=["textbox"]
+                                            )
+                                            analyze_btn = gr.Button(
+                                                "🔍 Analyze Artwork",
+                                                variant="primary",
+                                                elem_classes=["primary-button"]
+                                            )
+                                        with gr.Column(elem_classes=["analysis-container"]):
+                                            analysis_output = gr.Textbox(
+                                                label="Artistic Analysis",
+                                                interactive=False,
+                                                lines=15,
+                                                show_copy_button=True,
+                                                elem_classes=["textbox"]
+                                            )
+                                gr.Markdown("## ❌ Multimodal Analysis Unavailable")
+                                gr.Markdown("Please ensure you have a multimodal LLM and mmproj model configured.")
+                                
+            with gr.Tab("⚙️ Settings"):
+                            gr.Markdown("### Model Configuration")
+                            config_display = gr.Code(value=json.dumps(CONFIG.as_dict(), indent=2), language="json", label="Configuration")
+                            with gr.Row():
+                                sd_model_input = gr.Textbox(
+                                    value=CONFIG.sd_model,
+                                    label="Artist Model Path",
+                                    elem_classes=["textbox"]
+                                )
+                                ollama_model_input = gr.Textbox(
+                                    value=CONFIG.ollama_model,
+                                    label="Assistant Model",
+                                    elem_classes=["textbox"]
+                                )
+                            switch_btn = gr.Button(
+                                "🔄 Switch Creative Tools",
+                                variant="primary",
+                                elem_classes=["primary-button"]
+                            )
+                            refresh_btn = gr.Button(
+                                "🔄 Refresh Studio Status",
+                                variant="secondary",
+                                elem_classes=["secondary-button"]
+                            )
+                
+                            gr.Markdown("### Memory Usage")
+                            memory_display = gr.Markdown(get_memory_stats_wrapper(state))
+                            refresh_timer = gr.Timer(value=CONFIG.memory_stats_refresh_interval, render=False)
+                
+                            monitor_status = gr.Textbox(
+                                value="",
+                                label="Memory Guardian Status",
+                                interactive=False,
+                                lines=1,
+                                elem_classes=["status-box"]
+                            )
+                            with gr.Row():
+                                start_guardian_btn = gr.Button(
+                                    "🛡️ Start Guardian",
+                                    variant="secondary",
+                                    elem_classes=["secondary-button"]
+                                )
+                                stop_guardian_btn = gr.Button(
+                                    "⏹️ Stop Guardian",
+                                    variant="secondary",
+                                    elem_classes=["secondary-button"]
+                                )
+                
+                            with gr.Row():
+                                guardian_cfg = get_memory_guardian(state)
+                                profile_dropdown = gr.Dropdown(
+                                    choices=["conservative", "balanced", "aggressive"],
+                                    value=guardian_cfg.config.get("profile", "balanced"),
+                                    label="Memory Profile",
+                                )
+                                apply_profile_btn = gr.Button(
+                                    "Apply Profile",
+                                    variant="secondary",
+                                    elem_classes=["secondary-button"],
+                                )
+                
+                            with gr.Row():
+                                low_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.low_threshold*100), label="Low %")
+                                med_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.medium_threshold*100), label="Medium %")
+                                high_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.high_threshold*100), label="High %")
+                                crit_slider = gr.Slider(50, 100, value=int(guardian_cfg.thresholds.critical_threshold*100), label="Critical %")
+                                apply_thresholds_btn = gr.Button(
+                                    "Apply Thresholds",
+                                    variant="secondary",
+                                    elem_classes=["secondary-button"],
+                                )
+                
+                            gr.Markdown("### Model Loader")
+                            with gr.Row():
+                                sdxl_checkbox = gr.Checkbox(label="SDXL")
+                                ollama_checkbox = gr.Checkbox(label="Ollama Text Model")
+                                vision_checkbox = gr.Checkbox(label="Vision Model")
+                            load_selected_btn = gr.Button(
+                                "⚡ Load Selected",
+                                variant="secondary",
+                                elem_classes=["secondary-button"]
+                            )
+                            gr.Markdown("### CUDA Memory Management")
+                            gr.Markdown(
+                                """
+                                **Automatic Memory Management Features:**
+                                - 🔄 **Auto-retry**: Up to 2 attempts with memory clearing on CUDA OOM errors
+                                - 🧹 **Memory clearing**: Automatic CUDA cache clearing before/after generation
+                                - 🗑️ **Garbage collection**: Automatic Python garbage collection with memory clearing
+                                - ⚡ **Fragmentation prevention**: `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True`
+                                - 📊 **Smart error handling**: Helpful suggestions when memory limits are reached
+                                """
+                            )
+                            gr.Markdown("### MCP Server")
+                            gr.Markdown("**Base URL:** http://localhost:8000")
+                            gr.Markdown(
+                                """
+                                **Available Endpoints:**
+                                - `GET /status` - Server status
+                                - `POST /generate-image` - Generate images (with automatic memory management)
+                                - `POST /chat` - Chat with LLM
+                                - `POST /analyze-image` - Analyze images (if multimodal available)
+                                """
+                            )
+                        
         # Recent prompts management
         RECENT_PROMPTS_FILE = TEMP_DIR / "recent_prompts.json"
         MAX_RECENT_PROMPTS = 20
