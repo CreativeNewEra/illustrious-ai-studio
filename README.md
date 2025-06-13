@@ -343,6 +343,11 @@ python memory_manager.py --clear
 - **High (95%)**: Aggressive management (model unloading)
 - **Critical (98%)**: Emergency intervention (force unload all models)
 
+**Profiles:** configure `memory_guardian.profile` to quickly set these thresholds.
+- **Conservative** – early intervention (60/75/90/95)
+- **Balanced** – default thresholds (70/85/95/98)
+- **Aggressive** – waits longer before intervening (80/90/97/99)
+
 **Testing the System:**
 ```bash
 # Test the Memory Guardian functionality
