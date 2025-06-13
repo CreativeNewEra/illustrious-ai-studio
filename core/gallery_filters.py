@@ -25,7 +25,11 @@ def load_gallery_filter() -> dict:
         if GALLERY_FILTER_FILE.exists():
             with open(GALLERY_FILTER_FILE, "r", encoding="utf-8") as f:
                 return json.load(f)
-    except Exception as e:  # pragma: no cover - log and return default
-        logger.error("Failed to load gallery filter: %s", e)
+    except FileNotFoundError as e:  # pragma: no cover - log and return default
+        logger.error("Gallery filter file not found: %s", e)
+    except json.JSONDecodeError as e:  # pragma: no cover - log and return default
+        logger.error("Failed to decode gallery filter JSON: %s", e)
+    except PermissionError as e:  # pragma: no cover - log and return default
+        logger.error("Permission error while loading gallery filter: %s", e)
     return {}
 
