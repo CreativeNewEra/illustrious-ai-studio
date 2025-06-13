@@ -291,6 +291,7 @@ generation_defaults:
   guidance_scale: 7.5
   width: 1024
   height: 1024
+  batch_size: 1
 gallery_dir: "/tmp/illustrious_ai/gallery"
 ```
 These defaults are optimized for GPUs with **16GB or more VRAM**. If you have a lower-memory card (8–12GB), reduce `width`, `height`, and `steps` in your `config.yaml` – for example `512x512` at 15 steps.

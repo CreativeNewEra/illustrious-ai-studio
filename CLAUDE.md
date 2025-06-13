@@ -129,6 +129,7 @@ generation_defaults:
   guidance_scale: 7.5
   width: 1024
   height: 1024
+  batch_size: 1
 ```
 
 Environment variables override config:
