@@ -22,6 +22,8 @@ logger = logging.getLogger(__name__)
 TEMP_DIR = Path(tempfile.gettempdir()) / "illustrious_ai"
 TEMP_DIR.mkdir(exist_ok=True)
 GALLERY_DIR = Path(CONFIG.gallery_dir)
+PROJECTS_DIR = Path("projects")
+PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 
@@ -52,11 +54,20 @@ def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
         return None
 
 
-def save_to_gallery(image: Image.Image, prompt: str, metadata: dict | None = None) -> str:
+def _get_active_gallery_dir(state: AppState) -> Path:
+    """Return gallery directory for the current project or default gallery."""
+    if state.current_project:
+        return PROJECTS_DIR / state.current_project / "gallery"
+    return GALLERY_DIR
+
+
+def save_to_gallery(state: AppState, image: Image.Image, prompt: str, metadata: dict | None = None) -> str:
+    """Save image and metadata to the active project's gallery."""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{uuid.uuid4().hex[:8]}.png"
-    filepath = GALLERY_DIR / filename
-    GALLERY_DIR.mkdir(parents=True, exist_ok=True)
+    gallery_dir = _get_active_gallery_dir(state)
+    gallery_dir.mkdir(parents=True, exist_ok=True)
+    filepath = gallery_dir / filename
     image.save(filepath)
     metadata_file = filepath.with_suffix('.json')
     metadata_info = {
@@ -144,6 +155,7 @@ def generate_image(
             state.latest_generated_image = image
             if save_to_gallery_flag:
                 save_to_gallery(
+                    state,
                     image,
                     prompt,
                     {

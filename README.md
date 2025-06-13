@@ -54,6 +54,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **Smart Resolution Selector**: 7 optimized resolution presets with quality indicators
 - **Automatic Gallery**: Generated images saved with metadata
 - **Gallery Viewer Tab**: Browse saved images and metadata
+- **Project Galleries**: Organize images under named projects
 - **Prompt Enhancement**: LLM improves your image prompts
 - **Session Management**: Chat history automatically saved under your system's
   temporary directory and reloaded at startup
@@ -140,6 +141,7 @@ Open the UI at `http://localhost:<web-port>` (7860 by default).
 
 Use the **Model Loader** section on the System Info tab to load SDXL or Ollama
 models on demand when starting with `--lazy-load`.
+Create new projects from the header and switch between them to view individual galleries.
 
 ### Memory Management
 ```bash
@@ -200,6 +202,7 @@ pytest
 ### 🖼️ Gallery Tab ✨ **NEW**
 - Browse saved images in a gallery view
 - View metadata, open files, or copy their paths
+- Use the project selector to switch between different galleries
 
 ### 📝 Prompt Templates Tab ✨ **NEW**
 - **Save Templates**: Save your best prompts for reuse

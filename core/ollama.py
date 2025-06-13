@@ -184,6 +184,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
             image, status = generate_image(state, enhanced_prompt, save_to_gallery_flag=False)
             if image:
                 saved_path = save_to_gallery(
+                    state,
                     image,
                     enhanced_prompt,
                     {"generated_from_chat": True, "original_request": clean_prompt},
