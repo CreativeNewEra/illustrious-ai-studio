@@ -2,6 +2,9 @@ import json
 import logging
 import uuid
 from pathlib import Path
+import os
+import subprocess
+import sys
 
 import gradio as gr
 
@@ -43,6 +46,64 @@ def create_gradio_app(state: AppState):
         except Exception as e:
             logger.error("Error saving theme preference: %s", e)
         return choice
+
+    gallery_files: list[Path] = []
+
+    def load_gallery_items():
+        """Return gallery images with captions and track file paths."""
+        nonlocal gallery_files
+        gallery_dir = Path(CONFIG.gallery_dir)
+        gallery_dir.mkdir(parents=True, exist_ok=True)
+        items: list[tuple[str, str]] = []
+        gallery_files = []
+        for img_path in sorted(gallery_dir.glob("*.png"), reverse=True):
+            caption = ""
+            meta_path = img_path.with_suffix(".json")
+            if meta_path.exists():
+                try:
+                    with open(meta_path, "r", encoding="utf-8") as f:
+                        meta = json.load(f)
+                    caption = meta.get("prompt", "")
+                except Exception as e:  # pragma: no cover - non-critical
+                    logger.error("Failed to load metadata for %s: %s", img_path, e)
+            items.append((str(img_path), caption))
+            gallery_files.append(img_path)
+        return items
+
+    def refresh_gallery():
+        """Update gallery component value."""
+        return gr.update(value=load_gallery_items())
+
+    def show_metadata(evt: gr.SelectData):
+        """Display metadata for selected gallery image."""
+        if evt.index is None:
+            return {}, ""
+        if 0 <= evt.index < len(gallery_files):
+            img_path = gallery_files[evt.index]
+            meta_path = img_path.with_suffix(".json")
+            metadata = {}
+            if meta_path.exists():
+                with open(meta_path, "r", encoding="utf-8") as f:
+                    metadata = json.load(f)
+            return metadata, str(img_path)
+        return {}, ""
+
+    def open_image_file(path: str):
+        """Open the image using the system's default viewer."""
+        try:
+            if sys.platform.startswith("win"):
+                os.startfile(path)  # type: ignore[attr-defined]
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", path])
+            else:
+                subprocess.Popen(["xdg-open", path])
+            return f"Opened {path}"
+        except Exception as e:
+            return f"Failed to open: {e}"
+
+    def copy_image_path(path: str):
+        """Return the path for clipboard copy via JS."""
+        return path
 
     current_theme = load_theme_pref()
     with gr.Blocks(
@@ -409,7 +470,33 @@ def create_gradio_app(state: AppState):
                             label="Most Popular Templates",
                             elem_classes=["dropdown"]
                         )
-        
+
+        with gr.Tab("🖼️ Gallery"):
+            gallery_component = gr.Gallery(
+                label="Gallery",
+                elem_classes=["gallery-section"],
+                columns=4,
+                height="auto",
+            )
+            metadata_display = gr.JSON(label="Metadata")
+            selected_path = gr.Textbox(visible=False)
+            with gr.Row():
+                open_file_btn = gr.Button(
+                    "📂 Open File",
+                    variant="secondary",
+                    elem_classes=["secondary-button"],
+                )
+                copy_path_btn = gr.Button(
+                    "📋 Copy Path",
+                    variant="secondary",
+                    elem_classes=["secondary-button"],
+                )
+            action_status = gr.Textbox(
+                label="Action Status",
+                interactive=False,
+                elem_classes=["status-box"],
+            )
+
         with gr.Tab("📊 System Info"):
             gr.Markdown("### Model Configuration")
             config_display = gr.Code(value=json.dumps(CONFIG.as_dict(), indent=2), language="json", label="Configuration")
@@ -743,12 +830,20 @@ def create_gradio_app(state: AppState):
             fn=generate_and_update_history,
             inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution],
             outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
+        ).then(
+            fn=refresh_gallery,
+            inputs=None,
+            outputs=gallery_component,
         )
-        
+
         regenerate_btn.click(
             fn=regenerate_image,
             inputs=[],
             outputs=[output_image, generation_status, recent_prompts],
+        ).then(
+            fn=refresh_gallery,
+            inputs=None,
+            outputs=gallery_component,
         )
         
         # Recent prompts selection handler
@@ -997,6 +1092,31 @@ def create_gradio_app(state: AppState):
             outputs=template_list
         )
 
+        if hasattr(gallery_component, "select"):
+            gallery_component.select(
+                fn=show_metadata,
+                inputs=None,
+                outputs=[metadata_display, selected_path],
+            )
+        open_file_btn.click(
+            fn=open_image_file,
+            inputs=selected_path,
+            outputs=action_status,
+        )
+        try:
+            copy_path_btn.click(
+                fn=copy_image_path,
+                inputs=selected_path,
+                outputs=action_status,
+                js="(p)=>{navigator.clipboard.writeText(p); return 'Copied';}"
+            )
+        except TypeError:  # For dummy components in tests
+            copy_path_btn.click(
+                fn=copy_image_path,
+                inputs=selected_path,
+                outputs=action_status,
+            )
+
         def get_monitor_status():
             guardian = get_memory_guardian(state)
             return "🟢 Monitoring" if guardian.is_monitoring else "🔴 Stopped"
@@ -1076,6 +1196,7 @@ def create_gradio_app(state: AppState):
                     "⚡ Quick Start Mode: Models can be loaded manually from the System Info tab",
                     refresh_template_list(),
                     *get_template_statistics(),
+                    refresh_gallery(),
                     get_memory_stats_markdown(state),
                     get_monitor_status()
                 )
@@ -1086,13 +1207,14 @@ def create_gradio_app(state: AppState):
                     update_model_info(CONFIG.sd_model),
                     refresh_template_list(),
                     *get_template_statistics(),
+                    refresh_gallery(),
                     get_memory_stats_markdown(state),
                     get_monitor_status()
                 )
         
         demo.load(
             fn=initialize_ui,
-            outputs=[model_selector, model_info, template_list, template_stats, popular_templates, memory_display, monitor_status]
+            outputs=[model_selector, model_info, template_list, template_stats, popular_templates, gallery_component, memory_display, monitor_status]
         )
         
         # Quick Style Button Handlers
