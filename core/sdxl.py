@@ -482,6 +482,37 @@ async def generate_image_async(state: AppState, params: GenerationParams) -> Tup
     """Asynchronous wrapper for ``generate_image`` running in a thread."""
     return await asyncio.to_thread(generate_image, state, params)
 
+
+async def generate_with_notifications(
+    state: AppState, params: GenerationParams, progress
+) -> Tuple[Optional[Image.Image], str]:
+    """Generate an image while emitting high level progress notifications."""
+    # Initializing
+    if progress:
+        progress(0.1, desc="Initializing model…")
+    if state.sdxl_pipe is None:
+        init_sdxl(state)
+
+    # Processing prompt
+    if progress:
+        progress(0.3, desc="Processing prompt…")
+
+    # Prepare progress callback for generation phase
+    if progress:
+        progress(0.6, desc="Generating image…")
+
+        def cb(step: int, total: int):
+            progress(0.6 + (step / total) * 0.4, desc=f"{step}/{total}")
+        params["progress_callback"] = cb
+
+    # Run the actual generation
+    image, status = await generate_image_async(state, params)
+
+    if progress:
+        progress(1.0, desc="Complete!")
+
+    return image, status
+
 def _estimate_generation_memory(width: int, height: int, steps: int) -> float:
     """Estimate memory requirements for image generation in GB"""
     # Base memory for SDXL model (~6GB)

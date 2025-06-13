@@ -52,7 +52,7 @@ import gradio as gr
 # Image generation and model management
 from core.sdxl import (
     generate_image,
-    generate_image_async,
+    generate_with_notifications,
     TEMP_DIR,
     get_latest_image,
     init_sdxl,
@@ -1301,9 +1301,6 @@ def create_gradio_app(state: AppState):
                 logger.info(f"UI: Validated parameters - prompt='{p[:50]}...', steps={st}, guidance={g}, seed={se}, dimensions={width}x{height}")
                 
                 # Generate the image with resolution
-                def cb(step, total):
-                    progress(step/total, desc=f"{step}/{total}")
-
                 params = {
                     "prompt": p,
                     "negative_prompt": n,
@@ -1313,10 +1310,8 @@ def create_gradio_app(state: AppState):
                     "save_to_gallery_flag": save_flag,
                     "width": width,
                     "height": height,
-                    "progress_callback": cb,
                 }
-                image, status = await generate_image_async(state, params)
-                progress(1)
+                image, status = await generate_with_notifications(state, params, progress)
                 
                 # Store parameters for regenerate functionality if generation was successful
                 if image is not None:
@@ -1360,10 +1355,7 @@ def create_gradio_app(state: AppState):
                 )
 
             params = state.last_generation_params
-            def cb(step, total):
-                progress(step/total, desc=f"{step}/{total}")
-
-            image, status = await generate_image_async(
+            image, status = await generate_with_notifications(
                 state,
                 {
                     "prompt": params["prompt"],
@@ -1374,10 +1366,9 @@ def create_gradio_app(state: AppState):
                     "save_to_gallery_flag": params["save_to_gallery_flag"],
                     "width": params["width"],
                     "height": params["height"],
-                    "progress_callback": cb,
                 },
+                progress,
             )
-            progress(1)
             
             if image is not None and params["prompt"].strip():
                 updated_prompts = add_to_recent_prompts(params["prompt"].strip())
