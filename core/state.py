@@ -17,3 +17,4 @@ class AppState:
     chat_history_store: Dict[str, List[Tuple[str, str]]] = field(default_factory=dict)
     latest_generated_image: Optional[Image.Image] = None
     last_generation_params: Optional[Dict[str, Any]] = None
+    current_project: Optional[str] = None

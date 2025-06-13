@@ -9,6 +9,7 @@ if os.getcwd() not in sys.path:
 
 def test_save_to_gallery_creates_directory(tmp_path, monkeypatch):
     from core import sdxl
+    from core.state import AppState
 
     gallery_dir = tmp_path / "gallery"
     # Ensure directory does not exist beforehand
@@ -16,8 +17,9 @@ def test_save_to_gallery_creates_directory(tmp_path, monkeypatch):
 
     monkeypatch.setattr(sdxl, "GALLERY_DIR", gallery_dir)
 
+    state = AppState()
     img = Image.new("RGB", (10, 10), color="red")
-    saved_path = sdxl.save_to_gallery(img, "test prompt")
+    saved_path = sdxl.save_to_gallery(state, img, "test prompt")
 
     assert gallery_dir.exists()
     assert os.path.exists(saved_path)

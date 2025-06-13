@@ -8,7 +8,7 @@ import sys
 
 import gradio as gr
 
-from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl, get_available_models, get_current_model_info, test_model_generation, switch_sdxl_model
+from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl, get_available_models, get_current_model_info, test_model_generation, switch_sdxl_model, PROJECTS_DIR
 from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core import sdxl, ollama
@@ -49,10 +49,15 @@ def create_gradio_app(state: AppState):
 
     gallery_files: list[Path] = []
 
+    def _get_gallery_dir() -> Path:
+        if state.current_project:
+            return PROJECTS_DIR / state.current_project / "gallery"
+        return Path(CONFIG.gallery_dir)
+
     def load_gallery_items():
         """Return gallery images with captions and track file paths."""
         nonlocal gallery_files
-        gallery_dir = Path(CONFIG.gallery_dir)
+        gallery_dir = _get_gallery_dir()
         gallery_dir.mkdir(parents=True, exist_ok=True)
         items: list[tuple[str, str]] = []
         gallery_files = []
@@ -105,6 +110,22 @@ def create_gradio_app(state: AppState):
         """Return the path for clipboard copy via JS."""
         return path
 
+    def list_projects():
+        PROJECTS_DIR.mkdir(exist_ok=True)
+        return [p.name for p in PROJECTS_DIR.iterdir() if p.is_dir()]
+
+    def set_current_project(name: str):
+        state.current_project = name or None
+        return refresh_gallery()
+
+    def create_project(name: str):
+        name = name.strip()
+        if not name:
+            return gr.update(), "Please enter a project name"
+        (PROJECTS_DIR / name / "gallery").mkdir(parents=True, exist_ok=True)
+        state.current_project = name
+        return gr.update(choices=list_projects(), value=name), f"Project '{name}' created"
+
     current_theme = load_theme_pref()
     with gr.Blocks(
         title="Illustrious AI Studio",
@@ -125,6 +146,16 @@ def create_gradio_app(state: AppState):
                     label="Theme",
                     interactive=True,
                 )
+                with gr.Row():
+                    project_selector = gr.Dropdown(
+                        label="Project",
+                        choices=list_projects(),
+                        value=state.current_project,
+                        interactive=True,
+                    )
+                    new_project = gr.Textbox(label="New Project", scale=2)
+                    create_project_btn = gr.Button("Create", variant="secondary", size="sm")
+                project_status = gr.Textbox(label="Project Status", interactive=False, elem_classes=["status-box"], lines=1)
         with gr.Tab("🎨 Text-to-Image"):
             with gr.Row():
                 with gr.Column():
@@ -662,6 +693,9 @@ def create_gradio_app(state: AppState):
             except Exception as e:
                 logger.error("Failed to refresh model list: %s", e)
                 return gr.update(choices=[("❌ Error loading models", "")], value="")
+
+        def refresh_project_list():
+            return gr.update(choices=list_projects(), value=state.current_project)
         
         def update_model_info(selected_path):
             """Update model information display."""
@@ -769,6 +803,20 @@ def create_gradio_app(state: AppState):
             inputs=theme_selector,
             outputs=[],
             js="(mode) => { if(mode === 'Dark'){ document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } }"
+        )
+        project_selector.change(
+            fn=set_current_project,
+            inputs=project_selector,
+            outputs=gallery_component
+        )
+
+        create_project_btn.click(
+            fn=create_project,
+            inputs=new_project,
+            outputs=[project_selector, project_status]
+        ).then(
+            fn=lambda: refresh_gallery(),
+            outputs=gallery_component
         )
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
@@ -1203,6 +1251,7 @@ def create_gradio_app(state: AppState):
                 return (
                     gr.update(choices=[("⚡ Quick Start Mode - Models Not Loaded", "")], value=""),
                     "⚡ Quick Start Mode: Models can be loaded manually from the System Info tab",
+                    refresh_project_list(),
                     refresh_template_list(),
                     *get_template_statistics(),
                     refresh_gallery(),
@@ -1214,6 +1263,7 @@ def create_gradio_app(state: AppState):
                 return (
                     refresh_model_list(),
                     update_model_info(CONFIG.sd_model),
+                    refresh_project_list(),
                     refresh_template_list(),
                     *get_template_statistics(),
                     refresh_gallery(),
@@ -1223,7 +1273,7 @@ def create_gradio_app(state: AppState):
         
         demo.load(
             fn=initialize_ui,
-            outputs=[model_selector, model_info, template_list, template_stats, popular_templates, gallery_component, memory_display, monitor_status]
+            outputs=[model_selector, model_info, project_selector, template_list, template_stats, popular_templates, gallery_component, memory_display, monitor_status]
         )
         
         # Quick Style Button Handlers
