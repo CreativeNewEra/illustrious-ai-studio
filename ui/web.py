@@ -296,6 +296,12 @@ def create_gradio_app(state: AppState):
                             elem_classes=["secondary-button", "regenerate-btn"],
                             visible=False
                         )
+                        reset_btn = gr.Button(
+                            "♻️ Reset",
+                            variant="secondary",
+                            size="sm",
+                            elem_classes=["secondary-button"]
+                        )
                 with gr.Column():
                     output_image = gr.Image(
                         label="Your Masterpiece",
@@ -942,6 +948,39 @@ def create_gradio_app(state: AppState):
                 inputs=None,
                 outputs=gallery_component,
             )
+
+        # Reset controls handler
+        def reset_generation():
+            state.last_generation_params = None
+            defaults = CONFIG.generation_defaults
+            steps_def = defaults.get("steps", 30)
+            guidance_def = defaults.get("guidance_scale", 7.5)
+            width_def = defaults.get("width", 1024)
+            height_def = defaults.get("height", 1024)
+            resolution_def = get_resolution_option(width_def, height_def)
+            return (
+                "",
+                defaults.get("negative_prompt", "blurry, low quality, text, watermark, deformed"),
+                steps_def,
+                guidance_def,
+                RANDOM_SEED,
+                resolution_def,
+                gr.update(visible=False)
+            )
+
+        reset_btn.click(
+            fn=reset_generation,
+            inputs=None,
+            outputs=[
+                prompt,
+                negative_prompt,
+                steps,
+                guidance,
+                seed,
+                resolution,
+                regenerate_btn,
+            ],
+        )
         
         # Recent prompts selection handler
         recent_prompts.change(
@@ -1428,3 +1467,12 @@ def parse_resolution(resolution_string):
     except (ValueError, IndexError):
         # Default to 1024x1024 if parsing fails
         return 1024, 1024
+
+
+def get_resolution_option(width: int, height: int) -> str:
+    """Return dropdown option matching the given width and height."""
+    for opt in RESOLUTION_OPTIONS:
+        w, h = parse_resolution(opt)
+        if w == width and h == height:
+            return opt
+    return "1024x1024 (Square - High Quality)"
