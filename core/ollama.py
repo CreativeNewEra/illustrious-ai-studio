@@ -33,7 +33,7 @@ def load_chat_history(state: AppState) -> None:
 def save_chat_history(state: AppState) -> None:
     """Persist chat history from the application state to disk."""
     try:
-        CHAT_HISTORY_FILE.parent.mkdir(exist_ok=True)
+        CHAT_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
         serializable = {
             sid: [list(msg) for msg in history]
             for sid, history in state.chat_history_store.items()
