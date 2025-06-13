@@ -2396,6 +2396,9 @@ def parse_resolution(resolution_string):
 
     try:
         resolution_part = resolution_string.split()[0]
+        if "x" not in resolution_part:
+            logger.warning(f"Invalid resolution format: {resolution_string}, using default 1024x1024")
+            return 1024, 1024
         width_str, height_str = resolution_part.split("x", 1)
         width, height = int(width_str), int(height_str)
         if width <= 0 or height <= 0:
