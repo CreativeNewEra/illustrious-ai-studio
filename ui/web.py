@@ -18,6 +18,29 @@ logger = logging.getLogger(__name__)
 def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     css_file = (Path(__file__).parent / "custom.css").read_text()
+
+    THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
+
+    def load_theme_pref():
+        try:
+            if THEME_PREF_FILE.exists():
+                with open(THEME_PREF_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data.get("theme", "light")
+        except Exception as e:
+            logger.error("Error loading theme preference: %s", e)
+        return "light"
+
+    def save_theme_pref(choice: str):
+        try:
+            TEMP_DIR.mkdir(exist_ok=True)
+            with open(THEME_PREF_FILE, "w", encoding="utf-8") as f:
+                json.dump({"theme": choice}, f)
+        except Exception as e:
+            logger.error("Error saving theme preference: %s", e)
+        return choice
+
+    current_theme = load_theme_pref()
     with gr.Blocks(
         title="Illustrious AI Studio",
         theme="default",
@@ -31,6 +54,12 @@ def create_gradio_app(state: AppState):
                     Transform your imagination into stunning artwork with the power of AI
                 """)
                 status_display = gr.Markdown(get_model_status(state))
+                theme_selector = gr.Radio(
+                    ["Light", "Dark"],
+                    value="Dark" if current_theme == "dark" else "Light",
+                    label="Theme",
+                    interactive=True,
+                )
         with gr.Tab("🎨 Text-to-Image"):
             with gr.Row():
                 with gr.Column():
@@ -617,6 +646,11 @@ def create_gradio_app(state: AppState):
                 )
         
         # Event Handlers
+        theme_selector.change(
+            fn=lambda m: save_theme_pref(m.lower()),
+            inputs=theme_selector,
+            js="(mode) => { if(mode === 'Dark'){ document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } }"
+        )
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
         # Updated generate button to use wrapper and update recent prompts
@@ -712,6 +746,10 @@ def create_gradio_app(state: AppState):
             fn=init_recent_prompts,
             inputs=[],
             outputs=[recent_prompts]
+        )
+
+        demo.load(
+            js=f"() => {{ if('{current_theme}' === 'dark') {{ document.documentElement.classList.add('dark'); }} else {{ document.documentElement.classList.remove('dark'); }} }}"
         )
 
         def prepare_download(image):
