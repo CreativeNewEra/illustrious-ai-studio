@@ -20,6 +20,7 @@ from core.memory_guardian import (
 )
 from core.state import AppState
 from core.prompt_templates import template_manager
+from core.prompt_analyzer import analyze_prompt
 
 logger = logging.getLogger(__name__)
 
@@ -230,6 +231,11 @@ def create_gradio_app(state: AppState):
                         save_gallery = gr.Checkbox(
                             value=True,
                             label="Add to Gallery Collection",
+                            elem_classes=["checkbox-input"]
+                        )
+                        auto_best = gr.Checkbox(
+                            value=False,
+                            label="Auto-Best",
                             elem_classes=["checkbox-input"]
                         )
                     with gr.Row():
@@ -773,9 +779,15 @@ def create_gradio_app(state: AppState):
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
         # Updated generate button to use wrapper and update recent prompts
-        def generate_and_update_history(p, n, st, g, se, save_flag, res):
-            # Parse resolution
-            width, height = parse_resolution(res)
+        def generate_and_update_history(p, n, st, g, se, save_flag, res, auto_flag):
+            if auto_flag:
+                analysis = analyze_prompt(p)
+                st = analysis.get("steps", st)
+                g = analysis.get("guidance", g)
+                width = analysis.get("width", 1024)
+                height = analysis.get("height", 1024)
+            else:
+                width, height = parse_resolution(res)
             
             # Generate the image with resolution
             image, status = generate_image(state, p, n, st, g, se, save_flag, width, height)
@@ -829,7 +841,7 @@ def create_gradio_app(state: AppState):
         
         generate_btn.click(
             fn=generate_and_update_history,
-            inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution],
+            inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution, auto_best],
             outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
         ).then(
             fn=refresh_gallery,

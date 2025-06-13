@@ -1,0 +1,29 @@
+import sys
+import os
+
+if os.getcwd() not in sys.path:
+    sys.path.insert(0, os.getcwd())
+
+from core.prompt_analyzer import analyze_prompt
+
+
+def test_analyze_anime_portrait():
+    res = analyze_prompt("beautiful anime portrait of a hero")
+    assert res["style"] == "anime"
+    assert res["orientation"] == "portrait"
+    assert res["width"] == 768
+    assert res["height"] == 1024
+
+
+def test_analyze_realistic_landscape():
+    res = analyze_prompt("realistic landscape photo of mountains")
+    assert res["style"] == "realistic"
+    assert res["orientation"] == "landscape"
+    assert res["width"] == 1024
+    assert res["height"] == 768
+
+
+def test_analyze_general_square():
+    res = analyze_prompt("abstract shapes")
+    assert res["orientation"] == "square"
+
