@@ -15,12 +15,11 @@ from core.prompt_templates import template_manager
 
 logger = logging.getLogger(__name__)
 
+THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
+
 def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     css_file = (Path(__file__).parent / "custom.css").read_text()
-
-    THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
-
     def load_theme_pref():
         try:
             if THEME_PREF_FILE.exists():
