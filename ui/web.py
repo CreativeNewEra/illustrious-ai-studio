@@ -371,7 +371,7 @@ def create_gradio_app(state: AppState):
                 logger.error("Failed to write first run marker: %s", e)
             return gr.update(visible=False)
 
-        close_btn.click(fn=dismiss, outputs=modal)
+        close_btn.click(fn=dismiss, outputs=[modal])
         return maybe_open, modal
 
     current_theme = load_theme_pref()
