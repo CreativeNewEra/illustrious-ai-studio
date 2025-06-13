@@ -89,8 +89,7 @@ def test_resolution_parsing():
         print(f"❌ Resolution parsing test failed: {e}")
         return False
 
-def test_api_error_handling():
-    """Test the improved API error handling."""
+# Removed duplicate definition of test_api_error_handling
 def test_api_error_handling():
     """Test the improved API error handling."""
     print("\n🧪 Testing API Error Handling")
