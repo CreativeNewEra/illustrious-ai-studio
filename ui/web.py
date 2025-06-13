@@ -27,6 +27,9 @@ logger = logging.getLogger(__name__)
 
 THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
 
+# Special value representing a random seed for image generation
+RANDOM_SEED = -1
+
 def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     css_file = (Path(__file__).parent / "custom.css").read_text()
@@ -302,8 +305,8 @@ def create_gradio_app(state: AppState):
                                 elem_classes=["textbox"]
                             )
                             seed = gr.Number(
-                                value=-1,
-                                label="Inspiration Seed (-1 for random)",
+                                value=RANDOM_SEED,
+                                label=f"Inspiration Seed ({RANDOM_SEED} for random)",
                                 elem_classes=["number-input"]
                             )
                             save_gallery = gr.Checkbox(
