@@ -150,8 +150,4 @@ def run_mcp_server(state: AppState, auto_load: bool = True) -> None:
 
     # Start monitoring before launching the server
     start_memory_guardian(state)
-    try:
-        uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
-    finally:
-        # Ensure the guardian is stopped when the server shuts down
-        stop_memory_guardian()
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
