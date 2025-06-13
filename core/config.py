@@ -1,6 +1,7 @@
 from dataclasses import dataclass, fields, asdict
 import os
 from pathlib import Path
+import tempfile
 import yaml
 
 MODEL_DIR = Path(os.getenv("MODELS_DIR", "models"))
@@ -18,6 +19,9 @@ class AppConfig:
     generation_defaults: dict | None = None
     gpu_backend: str = "cuda"
     load_models_on_startup: bool = True
+
+    # Gallery directory for generated images
+    gallery_dir: str = str(Path(tempfile.gettempdir()) / "illustrious_ai" / "gallery")
     
     # Memory Guardian settings
     memory_guardian: dict | None = None
@@ -58,6 +62,7 @@ def load_config(path: str | None = None) -> AppConfig:
     config.ollama_model = os.getenv("OLLAMA_MODEL", config.ollama_model)
     config.ollama_base_url = os.getenv("OLLAMA_BASE_URL", config.ollama_base_url)
     config.gpu_backend = os.getenv("GPU_BACKEND", config.gpu_backend)
+    config.gallery_dir = os.getenv("GALLERY_DIR", config.gallery_dir)
     env_lazy = os.getenv("LOAD_MODELS_ON_STARTUP")
     if env_lazy is not None:
         config.load_models_on_startup = env_lazy.lower() not in ("false", "0", "no")
