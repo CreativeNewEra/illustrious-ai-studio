@@ -18,6 +18,9 @@ def test_model_loader_button(monkeypatch):
             if self.label == "⚡ Load Selected":
                 events['fn'] = fn
             return self
+        def tick(self, fn=None, inputs=None, outputs=None):
+            events['tick_fn'] = fn
+            return self
         def change(self, *a, **k):
             return self
         def submit(self, *a, **k):
@@ -47,7 +50,7 @@ def test_model_loader_button(monkeypatch):
         def __getattr__(self, name):
             if name in ["Blocks", "Row", "Column", "Tab", "Accordion", "Group"]:
                 return DummyBlocks
-            if name in ["Button", "DownloadButton", "Checkbox", "Textbox", "Slider", "Dropdown", "Image", "Chatbot", "File", "JSON", "Code"]:
+            if name in ["Button", "DownloadButton", "Checkbox", "Textbox", "Slider", "Dropdown", "Image", "Chatbot", "File", "JSON", "Code", "Timer"]:
                 return DummyComp
             if name == "Markdown":
                 return lambda *a, **k: None

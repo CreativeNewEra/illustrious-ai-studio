@@ -17,6 +17,7 @@ generation_defaults:
   batch_size: 1
 conda_env: illustrious
 gallery_dir: /tmp/illustrious_ai/gallery
+memory_stats_refresh_interval: 2.0
 
 # Memory Guardian Configuration
 memory_guardian:

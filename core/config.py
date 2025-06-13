@@ -26,6 +26,9 @@ class AppConfig:
     # Memory Guardian settings
     memory_guardian: dict | None = None
 
+    # UI settings
+    memory_stats_refresh_interval: float = 2.0
+
     def __post_init__(self):
         if self.cuda_settings is None:
             self.cuda_settings = {
@@ -63,6 +66,12 @@ def load_config(path: str | None = None) -> AppConfig:
     config.ollama_base_url = os.getenv("OLLAMA_BASE_URL", config.ollama_base_url)
     config.gpu_backend = os.getenv("GPU_BACKEND", config.gpu_backend)
     config.gallery_dir = os.getenv("GALLERY_DIR", config.gallery_dir)
+    refresh_val = os.getenv("MEMORY_STATS_REFRESH_INTERVAL")
+    if refresh_val is not None:
+        try:
+            config.memory_stats_refresh_interval = float(refresh_val)
+        except ValueError:
+            pass
     env_lazy = os.getenv("LOAD_MODELS_ON_STARTUP")
     if env_lazy is not None:
         config.load_models_on_startup = env_lazy.lower() not in ("false", "0", "no")
