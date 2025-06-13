@@ -54,7 +54,8 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **Smart Resolution Selector**: 7 optimized resolution presets with quality indicators
 - **Automatic Gallery**: Generated images saved with metadata
 - **Prompt Enhancement**: LLM improves your image prompts
-- **Session Management**: Persistent chat history
+- **Session Management**: Chat history automatically saved under your system's
+  temporary directory and reloaded at startup
 - **Model Switching**: Change models without restarting
 - **Improved Error Handling**: Better recovery from generation failures
 
@@ -188,7 +189,7 @@ pytest
 - Chat with the LLM
 - Use `#generate <description>` to create images
 - Call MCP tools with `/tool <server>.<method> key=value`
-- Maintains conversation history
+- Maintains conversation history across restarts
 
 ### 🔍 Image Analysis Tab
 - Upload any image for AI analysis

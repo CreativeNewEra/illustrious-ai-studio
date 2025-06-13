@@ -1,17 +1,47 @@
 import base64
 import io
+import json
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from PIL import Image
 import requests
 
 from .state import AppState
-from .sdxl import generate_image, save_to_gallery
+from .sdxl import generate_image, save_to_gallery, TEMP_DIR
 from .config import CONFIG
 from .mcp_tools import call_tool
 
 logger = logging.getLogger(__name__)
+
+CHAT_HISTORY_FILE = Path(TEMP_DIR) / "chat_history.json"
+
+
+def load_chat_history(state: AppState) -> None:
+    """Load chat history from disk into the application state."""
+    try:
+        if CHAT_HISTORY_FILE.exists():
+            with open(CHAT_HISTORY_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for session_id, history in data.items():
+                state.chat_history_store[session_id] = [tuple(msg) for msg in history]
+    except Exception as e:
+        logger.error("Failed to load chat history: %s", e)
+
+
+def save_chat_history(state: AppState) -> None:
+    """Persist chat history from the application state to disk."""
+    try:
+        CHAT_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        serializable = {
+            sid: [list(msg) for msg in history]
+            for sid, history in state.chat_history_store.items()
+        }
+        with open(CHAT_HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(serializable, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error("Failed to save chat history: %s", e)
 
 
 
@@ -47,6 +77,7 @@ def init_ollama(state: AppState) -> Optional[str]:
             state.model_status["ollama"] = True
             state.ollama_model = target_model
             logger.info("Ollama text model '%s' loaded", target_model)
+            load_chat_history(state)
             
             # Initialize vision model if configured
             vision_model = getattr(CONFIG, 'ollama_vision_model', None)
@@ -76,6 +107,7 @@ def switch_ollama_model(state: AppState, name: str) -> bool:
     state.model_status["ollama"] = False
     state.model_status["multimodal"] = False
     state.chat_history_store.clear()
+    save_chat_history(state)
     CONFIG.ollama_model = name
     logger.info("Switching Ollama model to %s", name)
     return init_ollama(state) is not None
@@ -178,6 +210,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
             if len(parts) > 1:
                 response = parts[-1].strip()
     state.chat_history_store[session_id].append((message, response))
+    save_chat_history(state)
     if chat_history is None:
         chat_history = []
     chat_history.append([message, response])
