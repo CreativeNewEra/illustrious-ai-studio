@@ -431,7 +431,7 @@ def create_gradio_app(state: AppState):
             )
 
             gr.Markdown("### Memory Usage")
-            memory_display = gr.Markdown(get_memory_stats_markdown(state))
+            memory_display = gr.Markdown(get_memory_stats_wrapper(state))
 
             gr.Markdown("### Model Loader")
             with gr.Row():
