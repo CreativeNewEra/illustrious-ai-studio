@@ -291,8 +291,9 @@ generation_defaults:
   guidance_scale: 7.5
   width: 1024
   height: 1024
+gallery_dir: "/tmp/illustrious_ai/gallery"
 ```
-Model paths can also be set via environment variables, e.g. `SD_MODEL` for the SDXL model or `MCP_CONFIG` for MCP servers.
+Model paths can also be set via environment variables, e.g. `SD_MODEL` for the SDXL model or `MCP_CONFIG` for MCP servers. Use `GALLERY_DIR` to customize where generated images are saved.
 
 ## 🎯 Performance Tips
 

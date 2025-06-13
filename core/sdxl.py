@@ -21,8 +21,7 @@ logger = logging.getLogger(__name__)
 
 TEMP_DIR = Path(tempfile.gettempdir()) / "illustrious_ai"
 TEMP_DIR.mkdir(exist_ok=True)
-GALLERY_DIR = TEMP_DIR / "gallery"
-GALLERY_DIR.mkdir(exist_ok=True)
+GALLERY_DIR = Path(CONFIG.gallery_dir)
 
 
 

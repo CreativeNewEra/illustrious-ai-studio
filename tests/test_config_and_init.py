@@ -15,10 +15,12 @@ def test_load_config_file_and_env(tmp_path, monkeypatch):
         "sd_model: '/tmp/model.pt'\nollama_model: 'test-model'\nollama_base_url: 'http://example.com'"
     )
     monkeypatch.setenv("SD_MODEL", "/env/model.pt")
+    monkeypatch.setenv("GALLERY_DIR", "/tmp/gallery_env")
     conf = config.load_config(str(cfg))
     assert conf.sd_model == "/env/model.pt"
     assert conf.ollama_model == "test-model"
     assert conf.ollama_base_url == "http://example.com"
+    assert conf.gallery_dir == "/tmp/gallery_env"
 
 
 def test_init_sdxl_missing_model(tmp_path, monkeypatch):

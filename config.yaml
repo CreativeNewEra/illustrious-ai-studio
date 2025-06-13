@@ -14,8 +14,9 @@ generation_defaults:
   guidance_scale: 7.5
   width: 512
   height: 512
-  batch_size: 1
+batch_size: 1
 conda_env: illustrious
+gallery_dir: /tmp/illustrious_ai/gallery
 
 # Memory Guardian Configuration
 memory_guardian:
