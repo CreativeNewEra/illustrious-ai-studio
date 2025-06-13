@@ -58,7 +58,7 @@ def create_gradio_app(state: AppState):
                 with open(GALLERY_FILTER_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     return data.get("search", ""), data.get("tags", "")
-        except Exception as e:  # pragma: no cover - non-critical
+        except (json.JSONDecodeError, IOError) as e:  # pragma: no cover - non-critical
             logger.error("Error loading gallery filter: %s", e)
         return "", ""
 
