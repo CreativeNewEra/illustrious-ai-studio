@@ -21,6 +21,7 @@ from core.memory_guardian import (
 from core.state import AppState
 from core.prompt_templates import template_manager
 from core.prompt_analyzer import analyze_prompt
+from core.gallery_filters import load_gallery_filter, save_gallery_filter
 
 logger = logging.getLogger(__name__)
 
@@ -52,21 +53,26 @@ def create_gradio_app(state: AppState):
         return choice
 
     gallery_files: list[Path] = []
+    gallery_filter: dict = load_gallery_filter() or {}
 
     def _get_gallery_dir() -> Path:
         if state.current_project:
             return PROJECTS_DIR / state.current_project / "gallery"
         return Path(CONFIG.gallery_dir)
 
-    def load_gallery_items():
+    def load_gallery_items(filters: dict | None = None):
         """Return gallery images with captions and track file paths."""
         nonlocal gallery_files
+        if filters is None:
+            filters = gallery_filter
         gallery_dir = _get_gallery_dir()
         gallery_dir.mkdir(parents=True, exist_ok=True)
         items: list[tuple[str, str]] = []
         gallery_files = []
+        tag_set: set[str] = set()
         for img_path in sorted(gallery_dir.glob("*.png"), reverse=True):
             caption = ""
+            meta: dict = {}
             meta_path = img_path.with_suffix(".json")
             if meta_path.exists():
                 try:
@@ -75,13 +81,40 @@ def create_gradio_app(state: AppState):
                     caption = meta.get("prompt", "")
                 except Exception as e:  # pragma: no cover - non-critical
                     logger.error("Failed to load metadata for %s: %s", img_path, e)
+            tags: list[str] = []
+            if isinstance(meta.get("tags"), str):
+                tags = [t.strip() for t in meta["tags"].split(",") if t.strip()]
+            elif isinstance(meta.get("tags"), list):
+                tags = meta["tags"]
+            elif meta.get("tag"):
+                tag_val = meta["tag"]
+                tags = [tag_val] if isinstance(tag_val, str) else tag_val
+            tag_set.update(tags)
+
+            tag_filter_val = (filters or {}).get("tag")
+            keyword_val = (filters or {}).get("keyword")
+            if tag_filter_val and tag_filter_val not in tags:
+                continue
+            if keyword_val:
+                search_text = json.dumps(meta).lower() + " " + caption.lower()
+                if keyword_val.lower() not in search_text:
+                    continue
             items.append((str(img_path), caption))
             gallery_files.append(img_path)
-        return items
+        return items, sorted(tag_set)
 
     def refresh_gallery():
-        """Update gallery component value."""
-        return gr.update(value=load_gallery_items())
+        """Update gallery component value and tag dropdown."""
+        items, tags = load_gallery_items()
+        return gr.update(value=items), gr.update(choices=tags, value=gallery_filter.get("tag"))
+
+    def update_gallery_filters(tag_value: str, keyword_value: str):
+        """Persist gallery filters and refresh."""
+        nonlocal gallery_filter
+        gallery_filter = {"tag": tag_value, "keyword": keyword_value}
+        save_gallery_filter(gallery_filter)
+        items, tags = load_gallery_items(gallery_filter)
+        return gr.update(value=items), gr.update(choices=tags, value=tag_value)
 
     def show_metadata(evt: gr.SelectData):
         """Display metadata for selected gallery image."""
@@ -530,6 +563,19 @@ def create_gradio_app(state: AppState):
                         )
 
         with gr.Tab("🖼️ Gallery"):
+            with gr.Row():
+                tag_filter = gr.Dropdown(
+                    label="Filter by Tag",
+                    choices=[],
+                    value=gallery_filter.get("tag"),
+                    allow_custom_value=True,
+                    interactive=True,
+                )
+                keyword_filter = gr.Textbox(
+                    label="Search Metadata",
+                    value=gallery_filter.get("keyword", ""),
+                    interactive=True,
+                )
             gallery_component = gr.Gallery(
                 label="Gallery",
                 elem_classes=["gallery-section"],
@@ -834,7 +880,7 @@ def create_gradio_app(state: AppState):
         project_selector.change(
             fn=set_current_project,
             inputs=project_selector,
-            outputs=gallery_component
+            outputs=[gallery_component, tag_filter]
         )
 
         create_project_btn.click(
@@ -843,7 +889,7 @@ def create_gradio_app(state: AppState):
             outputs=[project_selector, project_status]
         ).then(
             fn=lambda: refresh_gallery(),
-            outputs=gallery_component
+            outputs=[gallery_component, tag_filter]
         )
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
@@ -917,7 +963,7 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=gallery_component,
+                outputs=[gallery_component, tag_filter],
             ).then(
                 js=hide_loading_js
             )
@@ -929,7 +975,7 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=gallery_component,
+                outputs=[gallery_component, tag_filter],
             )
 
         try:
@@ -941,7 +987,7 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=gallery_component,
+                outputs=[gallery_component, tag_filter],
             ).then(
                 js=hide_loading_js
             )
@@ -953,7 +999,7 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=gallery_component,
+                outputs=[gallery_component, tag_filter],
             )
 
         # Reset controls handler
@@ -1281,6 +1327,18 @@ def create_gradio_app(state: AppState):
             outputs=template_list
         )
 
+        tag_filter.change(
+            fn=update_gallery_filters,
+            inputs=[tag_filter, keyword_filter],
+            outputs=[gallery_component, tag_filter]
+        )
+
+        keyword_filter.change(
+            fn=update_gallery_filters,
+            inputs=[tag_filter, keyword_filter],
+            outputs=[gallery_component, tag_filter]
+        )
+
         if hasattr(gallery_component, "select"):
             gallery_component.select(
                 fn=show_metadata,
@@ -1414,7 +1472,8 @@ def create_gradio_app(state: AppState):
                     refresh_project_list(),
                     refresh_template_list(),
                     *get_template_statistics(),
-                    refresh_gallery(),
+                    *refresh_gallery(),
+                    gallery_filter.get("keyword", ""),
                     get_memory_stats_markdown(state),
                     get_monitor_status()
                 )
@@ -1426,14 +1485,15 @@ def create_gradio_app(state: AppState):
                     refresh_project_list(),
                     refresh_template_list(),
                     *get_template_statistics(),
-                    refresh_gallery(),
+                    *refresh_gallery(),
+                    gallery_filter.get("keyword", ""),
                     get_memory_stats_markdown(state),
                     get_monitor_status()
                 )
         
         demo.load(
             fn=initialize_ui,
-            outputs=[model_selector, model_info, project_selector, template_list, template_stats, popular_templates, gallery_component, memory_display, monitor_status]
+            outputs=[model_selector, model_info, project_selector, template_list, template_stats, popular_templates, gallery_component, tag_filter, keyword_filter, memory_display, monitor_status]
         )
         
         # Quick Style Button Handlers
