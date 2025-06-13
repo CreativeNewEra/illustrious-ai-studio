@@ -94,6 +94,36 @@ class MemoryGuardian:
         # Load from CONFIG if available
         memory_config = getattr(CONFIG, 'memory_guardian', {})
 
+        # Apply threshold presets based on the selected profile
+        profile = memory_config.get("profile", default_config["profile"]).lower()
+        profile_thresholds = {
+            "conservative": {
+                "low": 0.60,
+                "medium": 0.75,
+                "high": 0.90,
+                "critical": 0.95,
+            },
+            "balanced": {
+                "low": 0.70,
+                "medium": 0.85,
+                "high": 0.95,
+                "critical": 0.98,
+            },
+            "aggressive": {
+                "low": 0.80,
+                "medium": 0.90,
+                "high": 0.97,
+                "critical": 0.99,
+            },
+        }
+
+        if profile in profile_thresholds:
+            th = profile_thresholds[profile]
+            self.thresholds.low_threshold = th["low"]
+            self.thresholds.medium_threshold = th["medium"]
+            self.thresholds.high_threshold = th["high"]
+            self.thresholds.critical_threshold = th["critical"]
+
         # Update threshold values if provided
         thresholds_cfg = memory_config.get("thresholds", {}) or {}
 
