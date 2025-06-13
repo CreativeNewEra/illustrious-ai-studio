@@ -42,6 +42,7 @@ import os
 import subprocess
 import sys
 import shutil
+import random
 
 import gradio as gr
 
@@ -70,7 +71,7 @@ from core.state import AppState
 # Chat and language model functionality  
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core import sdxl, ollama
-from core.generation_presets import GENERATION_PRESETS
+from core.generation_presets import GENERATION_PRESETS, DEFAULT_PRESET
 
 # Memory and system monitoring
 from core.memory import get_model_status, get_memory_stats_markdown, get_memory_stats_wrapper
@@ -562,6 +563,25 @@ def create_gradio_app(state: AppState):
                                                         label="Auto-Best",
                                                         elem_classes=["checkbox-input"]
                                                     )
+                                            with gr.Row():
+                                                quick_generate_btn = gr.Button(
+                                                    "⚡ Quick Generate",
+                                                    variant="secondary",
+                                                    size="sm",
+                                                    elem_classes=["secondary-button"]
+                                                )
+                                                use_last_btn = gr.Button(
+                                                    "🔄 Use Last Settings",
+                                                    variant="secondary",
+                                                    size="sm",
+                                                    elem_classes=["secondary-button"]
+                                                )
+                                                random_prompt_btn = gr.Button(
+                                                    "🎲 Random Prompt",
+                                                    variant="secondary",
+                                                    size="sm",
+                                                    elem_classes=["secondary-button"]
+                                                )
                                             with gr.Row():
                                                 generate_btn = gr.Button(
                                                     "🎨 Create Masterpiece",
@@ -1403,7 +1423,54 @@ def create_gradio_app(state: AppState):
                 return image, status, gr.update(choices=updated_prompts)
             else:
                 return image, status, gr.update()
-        
+
+        async def quick_generate_image(p, n, progress=gr.Progress()):
+            preset = GENERATION_PRESETS.get(DEFAULT_PRESET, {})
+            st = preset.get("steps", 25)
+            g = preset.get("guidance", 7.5)
+            width = preset.get("width", 768)
+            height = preset.get("height", 768)
+            res = get_resolution_option(width, height)
+            return await generate_and_update_history(
+                p,
+                n,
+                st,
+                g,
+                RANDOM_SEED,
+                True,
+                res,
+                False,
+                progress,
+            )
+
+        def restore_last_settings(curr_p, curr_n, curr_st, curr_g, curr_se, curr_res):
+            params = state.last_generation_params
+            if not params:
+                return (
+                    curr_p,
+                    curr_n,
+                    curr_st,
+                    curr_g,
+                    curr_se,
+                    curr_res,
+                    gr.update(visible=False),
+                )
+            return (
+                params.get("prompt", curr_p),
+                params.get("negative_prompt", curr_n),
+                params.get("steps", curr_st),
+                params.get("guidance", curr_g),
+                params.get("seed", curr_se),
+                params.get(
+                    "resolution",
+                    get_resolution_option(params.get("width", 1024), params.get("height", 1024)),
+                ),
+                gr.update(visible=True),
+            )
+
+        def get_random_prompt():
+            return random.choice(EXAMPLE_PROMPTS)
+
         try:
             generate_btn.click(
                 fn=generate_and_update_history,
@@ -1467,6 +1534,50 @@ def create_gradio_app(state: AppState):
                 inputs=None,
                 outputs=[live_status],
             )
+
+        try:
+            quick_generate_btn.click(
+                fn=quick_generate_image,
+                inputs=[prompt, negative_prompt],
+                outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
+                js=show_loading_js,
+            ).then(
+                fn=refresh_gallery,
+                inputs=None,
+                outputs=[gallery_component, tag_filter],
+            ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
+            ).then(
+                js=hide_loading_js
+            )
+        except TypeError:
+            quick_generate_btn.click(
+                fn=quick_generate_image,
+                inputs=[prompt, negative_prompt],
+                outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
+            ).then(
+                fn=refresh_gallery,
+                inputs=None,
+                outputs=[gallery_component, tag_filter],
+            ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
+            )
+
+        use_last_btn.click(
+            fn=restore_last_settings,
+            inputs=[prompt, negative_prompt, steps, guidance, seed, resolution],
+            outputs=[prompt, negative_prompt, steps, guidance, seed, resolution, regenerate_btn],
+        )
+
+        random_prompt_btn.click(
+            fn=get_random_prompt,
+            inputs=None,
+            outputs=[prompt],
+        )
 
         # Reset controls handler
         def reset_generation():
@@ -1500,6 +1611,7 @@ def create_gradio_app(state: AppState):
                 regenerate_btn,
             ],
         )
+
 
         def apply_generation_preset(name: str):
             preset = GENERATION_PRESETS.get(name, GENERATION_PRESETS.get("balanced"))
