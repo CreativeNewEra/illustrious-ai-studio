@@ -29,6 +29,8 @@ THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
 def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     css_file = (Path(__file__).parent / "custom.css").read_text()
+    show_loading_js = "() => { const el = document.querySelector('.loading-indicator'); if(el){ el.style.display='block'; } }"
+    hide_loading_js = "() => { const el = document.querySelector('.loading-indicator'); if(el){ el.style.display='none'; } }"
     def load_theme_pref():
         try:
             if THEME_PREF_FILE.exists():
@@ -133,6 +135,7 @@ def create_gradio_app(state: AppState):
         theme="default",
         css=css_file
     ) as demo:
+        loading_indicator = gr.HTML("<div class='loading-indicator' style='display:none'></div>")
         with gr.Row(elem_classes=["main-container"]):
             with gr.Column():
                 gr.Markdown("""
@@ -887,25 +890,53 @@ def create_gradio_app(state: AppState):
             else:
                 return image, status, gr.update()
         
-        generate_btn.click(
-            fn=generate_and_update_history,
-            inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution, auto_best],
-            outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
-        ).then(
-            fn=refresh_gallery,
-            inputs=None,
-            outputs=gallery_component,
-        )
+        try:
+            generate_btn.click(
+                fn=generate_and_update_history,
+                inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution, auto_best],
+                outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
+                js=show_loading_js,
+            ).then(
+                fn=refresh_gallery,
+                inputs=None,
+                outputs=gallery_component,
+            ).then(
+                js=hide_loading_js
+            )
+        except TypeError:
+            generate_btn.click(
+                fn=generate_and_update_history,
+                inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution, auto_best],
+                outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
+            ).then(
+                fn=refresh_gallery,
+                inputs=None,
+                outputs=gallery_component,
+            )
 
-        regenerate_btn.click(
-            fn=regenerate_image,
-            inputs=[],
-            outputs=[output_image, generation_status, recent_prompts],
-        ).then(
-            fn=refresh_gallery,
-            inputs=None,
-            outputs=gallery_component,
-        )
+        try:
+            regenerate_btn.click(
+                fn=regenerate_image,
+                inputs=[],
+                outputs=[output_image, generation_status, recent_prompts],
+                js=show_loading_js,
+            ).then(
+                fn=refresh_gallery,
+                inputs=None,
+                outputs=gallery_component,
+            ).then(
+                js=hide_loading_js
+            )
+        except TypeError:
+            regenerate_btn.click(
+                fn=regenerate_image,
+                inputs=[],
+                outputs=[output_image, generation_status, recent_prompts],
+            ).then(
+                fn=refresh_gallery,
+                inputs=None,
+                outputs=gallery_component,
+            )
         
         # Recent prompts selection handler
         recent_prompts.change(
@@ -967,15 +998,29 @@ def create_gradio_app(state: AppState):
             analyze_btn.click(fn=lambda img, q: analyze_image(state, img, q), inputs=[input_image, analysis_question], outputs=analysis_output)
         
         # Model Selection Event Handlers
-        model_selector.change(
-            fn=update_model_info,
-            inputs=model_selector,
-            outputs=model_info
-        ).then(
-            fn=switch_model,
-            inputs=model_selector,
-            outputs=[model_switch_status, model_info, status_display, memory_display]
-        )
+        try:
+            model_selector.change(
+                fn=update_model_info,
+                inputs=model_selector,
+                outputs=model_info,
+                js=show_loading_js
+            ).then(
+                fn=switch_model,
+                inputs=model_selector,
+                outputs=[model_switch_status, model_info, status_display, memory_display]
+            ).then(
+                js=hide_loading_js
+            )
+        except TypeError:
+            model_selector.change(
+                fn=update_model_info,
+                inputs=model_selector,
+                outputs=model_info,
+            ).then(
+                fn=switch_model,
+                inputs=model_selector,
+                outputs=[model_switch_status, model_info, status_display, memory_display]
+            )
         
         test_model_btn.click(
             fn=test_selected_model,
@@ -1200,11 +1245,21 @@ def create_gradio_app(state: AppState):
                 json.dumps(CONFIG.as_dict(), indent=2),
                 get_memory_stats_markdown(state),
             )
-        switch_btn.click(
-            fn=do_switch,
-            inputs=[sd_model_input, ollama_model_input],
-            outputs=[status_display, config_display, memory_display, monitor_status],
-        )
+        try:
+            switch_btn.click(
+                fn=do_switch,
+                inputs=[sd_model_input, ollama_model_input],
+                outputs=[status_display, config_display, memory_display, monitor_status],
+                js=show_loading_js,
+            ).then(
+                js=hide_loading_js
+            )
+        except TypeError:
+            switch_btn.click(
+                fn=do_switch,
+                inputs=[sd_model_input, ollama_model_input],
+                outputs=[status_display, config_display, memory_display, monitor_status],
+            )
         refresh_btn.click(
             fn=lambda: (
                 get_model_status(state),
@@ -1225,11 +1280,21 @@ def create_gradio_app(state: AppState):
                 get_monitor_status(),
             )
 
-        load_selected_btn.click(
-            fn=load_selected_models,
-            inputs=[sdxl_checkbox, ollama_checkbox, vision_checkbox],
-            outputs=[status_display, memory_display, monitor_status],
-        )
+        try:
+            load_selected_btn.click(
+                fn=load_selected_models,
+                inputs=[sdxl_checkbox, ollama_checkbox, vision_checkbox],
+                outputs=[status_display, memory_display, monitor_status],
+                js=show_loading_js,
+            ).then(
+                js=hide_loading_js
+            )
+        except TypeError:
+            load_selected_btn.click(
+                fn=load_selected_models,
+                inputs=[sdxl_checkbox, ollama_checkbox, vision_checkbox],
+                outputs=[status_display, memory_display, monitor_status],
+            )
 
         start_guardian_btn.click(
             fn=start_guardian_ui,
