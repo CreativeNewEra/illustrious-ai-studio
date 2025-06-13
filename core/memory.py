@@ -41,3 +41,8 @@ def get_memory_stats_markdown(state: AppState) -> str:
     text += f"• RAM: {stats.system_ram_usage_percent:.1f}% used\n"
     text += f"• Pressure: {stats.pressure_level.value}"
     return text
+
+
+def get_memory_stats_wrapper(state: AppState) -> str:
+    """Compatibility wrapper returning formatted memory statistics."""
+    return get_memory_stats_markdown(state)
