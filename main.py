@@ -38,6 +38,17 @@ def create_parser() -> argparse.ArgumentParser:
     parser.add_argument("--open-browser", action="store_true", help="Open browser on launch")
     parser.add_argument("--optimize-memory", action="store_true", help="Enable memory optimizations")
     parser.add_argument("--log-level", default="INFO", help="Logging level")
+    parser.add_argument(
+        "--memory-profile",
+        choices=["conservative", "balanced", "aggressive"],
+        help="Set memory guardian profile",
+    )
+    parser.add_argument(
+        "--memory-threshold",
+        action="append",
+        metavar="LEVEL:PERCENT",
+        help="Override memory threshold (can be repeated)",
+    )
     return parser
 
 class IllustriousAIStudio:
@@ -127,7 +138,20 @@ class IllustriousAIStudio:
 
         # Start Memory Guardian
         self.logger.info("🛡️ Starting Memory Guardian...")
-        start_memory_guardian(self.app_state)
+        guardian = start_memory_guardian(self.app_state)
+        if self.args.memory_profile:
+            try:
+                guardian.set_profile(self.args.memory_profile)
+                self.logger.info("Memory profile set to %s", self.args.memory_profile)
+            except ValueError as e:
+                self.logger.error("%s", e)
+        if self.args.memory_threshold:
+            for th in self.args.memory_threshold:
+                try:
+                    level, val = th.split(":")
+                    guardian.set_threshold(level, float(val))
+                except Exception as e:
+                    self.logger.error("Invalid threshold '%s': %s", th, e)
         self.logger.info("✅ Memory Guardian started")
         
         # Model initialization with progress feedback

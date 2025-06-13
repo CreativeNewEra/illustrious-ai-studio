@@ -155,3 +155,19 @@ def test_switch_models_endpoint(monkeypatch):
     assert resp.status_code == 200
     assert calls['sdxl'] == 'a'
     assert calls['ollama'] == 'b'
+
+
+def test_memory_profile_endpoint():
+    client = get_client()
+    resp = client.post('/memory-profile', json={"profile": "conservative"})
+    assert resp.status_code == 200
+    assert resp.json()["profile"] == "conservative"
+
+
+def test_memory_thresholds_endpoint():
+    client = get_client()
+    resp = client.post('/memory-thresholds', json={"low": 60, "critical": 99})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["low"] == "60%"
+    assert data["critical"] == "99%"

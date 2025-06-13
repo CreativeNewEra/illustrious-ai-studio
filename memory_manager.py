@@ -27,8 +27,13 @@ def create_parser():
     parser.add_argument("--test-pressure", choices=['medium', 'high', 'critical'], 
                        help="Test memory pressure handling")
     parser.add_argument("--config", action="store_true", help="Show memory guardian configuration")
-    parser.add_argument("--threshold", type=str, metavar="LEVEL:PERCENT", 
+    parser.add_argument("--threshold", action="append", metavar="LEVEL:PERCENT",
                        help="Set memory threshold (e.g. medium:80)")
+    parser.add_argument(
+        "--profile",
+        choices=["conservative", "balanced", "aggressive"],
+        help="Set memory guardian profile",
+    )
     parser.add_argument("--enable", action="store_true", help="Enable memory guardian")
     parser.add_argument("--disable", action="store_true", help="Disable memory guardian")
     return parser
@@ -205,20 +210,13 @@ class MemoryManagerCLI:
         """Set memory threshold"""
         try:
             level, percent_str = threshold_spec.split(':')
-            percent = float(percent_str) / 100.0
-            
-            if level == 'low':
-                self.guardian.thresholds.low_threshold = percent
-            elif level == 'medium':
-                self.guardian.thresholds.medium_threshold = percent
-            elif level == 'high':
-                self.guardian.thresholds.high_threshold = percent
-            elif level == 'critical':
-                self.guardian.thresholds.critical_threshold = percent
-            else:
-                print(f"❌ Unknown threshold level: {level}")
+            percent = float(percent_str)
+            try:
+                self.guardian.set_threshold(level, percent)
+            except ValueError as ve:
+                print(f"❌ {ve}")
                 return
-                
+
             print(f"✅ Set {level} threshold to {percent*100:.0f}%")
             
         except ValueError:
@@ -239,6 +237,14 @@ class MemoryManagerCLI:
             print("✅ Memory Guardian disabled")
         else:
             print("⚠️ Memory Guardian already stopped")
+
+    def set_profile(self, profile: str):
+        """Change memory guardian profile"""
+        try:
+            self.guardian.set_profile(profile)
+            print(f"✅ Profile set to {profile}")
+        except ValueError as ve:
+            print(f"❌ {ve}")
 
 def main():
     parser = create_parser()
@@ -264,8 +270,11 @@ def main():
             cli.monitor_interactive()
         elif args.test_pressure:
             cli.test_pressure_handling(args.test_pressure)
+        elif args.profile:
+            cli.set_profile(args.profile)
         elif args.threshold:
-            cli.set_threshold(args.threshold)
+            for th in args.threshold:
+                cli.set_threshold(th)
         elif args.enable:
             cli.enable_guardian()
         elif args.disable:

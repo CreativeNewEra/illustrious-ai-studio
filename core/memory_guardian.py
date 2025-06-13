@@ -13,6 +13,13 @@ import torch
 from .config import CONFIG
 from .memory import clear_gpu_memory
 
+# Preset threshold values for supported profiles
+PROFILE_PRESETS = {
+    "conservative": {"low": 0.60, "medium": 0.75, "high": 0.90, "critical": 0.95},
+    "balanced": {"low": 0.70, "medium": 0.85, "high": 0.95, "critical": 0.98},
+    "aggressive": {"low": 0.80, "medium": 0.90, "high": 0.97, "critical": 0.99},
+}
+
 logger = logging.getLogger(__name__)
 
 class MemoryPressureLevel(Enum):
@@ -96,29 +103,8 @@ class MemoryGuardian:
 
         # Apply threshold presets based on the selected profile
         profile = memory_config.get("profile", default_config["profile"]).lower()
-        profile_thresholds = {
-            "conservative": {
-                "low": 0.60,
-                "medium": 0.75,
-                "high": 0.90,
-                "critical": 0.95,
-            },
-            "balanced": {
-                "low": 0.70,
-                "medium": 0.85,
-                "high": 0.95,
-                "critical": 0.98,
-            },
-            "aggressive": {
-                "low": 0.80,
-                "medium": 0.90,
-                "high": 0.97,
-                "critical": 0.99,
-            },
-        }
-
-        if profile in profile_thresholds:
-            th = profile_thresholds[profile]
+        if profile in PROFILE_PRESETS:
+            th = PROFILE_PRESETS[profile]
             self.thresholds.low_threshold = th["low"]
             self.thresholds.medium_threshold = th["medium"]
             self.thresholds.high_threshold = th["high"]
@@ -402,6 +388,35 @@ class MemoryGuardian:
         except Exception as e:
             logger.error(f"Force model unload failed: {e}")
             return False
+
+    # ======================== Configuration APIs ========================
+
+    def set_profile(self, profile: str) -> None:
+        """Update threshold presets based on a named profile."""
+        profile = profile.lower()
+        if profile not in PROFILE_PRESETS:
+            raise ValueError(f"Unknown profile: {profile}")
+        th = PROFILE_PRESETS[profile]
+        self.thresholds.low_threshold = th["low"]
+        self.thresholds.medium_threshold = th["medium"]
+        self.thresholds.high_threshold = th["high"]
+        self.thresholds.critical_threshold = th["critical"]
+        self.config["profile"] = profile
+
+    def set_threshold(self, level: str, value: float) -> None:
+        """Update a single threshold level at runtime."""
+        level = level.lower()
+        if value > 1:
+            value = value / 100.0
+        mapping = {
+            "low": "low_threshold",
+            "medium": "medium_threshold",
+            "high": "high_threshold",
+            "critical": "critical_threshold",
+        }
+        if level not in mapping:
+            raise ValueError(f"Unknown threshold level: {level}")
+        setattr(self.thresholds, mapping[level], float(value))
     
     # ======================== Utility Methods ========================
     
