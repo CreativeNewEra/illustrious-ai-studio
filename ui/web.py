@@ -2383,54 +2383,31 @@ def create_gradio_app(state: AppState):
     return demo
 
 def parse_resolution(resolution_string):
-    """Parse resolution string to width and height with robust error handling."""
+    """Convert a resolution dropdown value to ``(width, height)``.
+
+    The UI dropdown values are strings like ``"1024x1024 (Square - High Quality)"``.
+    This helper extracts the numeric width and height components and returns
+    sensible defaults if the format is unexpected.
+    """
+
+    if not isinstance(resolution_string, str):
+        logger.warning(f"Invalid resolution value: {resolution_string}, using default 1024x1024")
+        return 1024, 1024
+
     try:
-        # Handle None, empty string, or non-string types
-        if not resolution_string or not isinstance(resolution_string, str):
-            logger.warning(f"Invalid resolution string: {resolution_string}, using default 1024x1024")
-            return 1024, 1024
-        
-        # Extract resolution from strings like "1024x1024 (Square - High Quality)"
-        parts = resolution_string.split(' ')
-        if not parts:
-            logger.warning(f"Could not split resolution string: {resolution_string}")
-            return 1024, 1024
-            
-        resolution_part = parts[0]  # Get "1024x1024"
-        
-        # Check if resolution part contains 'x'
-        if 'x' not in resolution_part:
-            logger.warning(f"Resolution string missing 'x' separator: {resolution_part}")
-            return 1024, 1024
-        
-        # Split by 'x' and validate we have exactly 2 parts
-        dimension_parts = resolution_part.split('x')
-        if len(dimension_parts) != 2:
-            logger.warning(f"Resolution string has incorrect format: {resolution_part} (expected 'WIDTHxHEIGHT')")
-            return 1024, 1024
-        
-        # Convert to integers with validation
-        try:
-            width = int(dimension_parts[0])
-            height = int(dimension_parts[1])
-        except ValueError as e:
-            logger.warning(f"Could not convert resolution dimensions to integers: {dimension_parts} - {e}")
-            return 1024, 1024
-        
-        # Validate dimensions are reasonable
-        if width <= 0 or height <= 0 or width > 2048 or height > 2048:
-            logger.warning(f"Resolution dimensions out of valid range: {width}x{height}, using 1024x1024")
-            return 1024, 1024
-            
+        resolution_part = resolution_string.split()[0]
+        width_str, height_str = resolution_part.split("x", 1)
+        width, height = int(width_str), int(height_str)
+        if width <= 0 or height <= 0:
+            raise ValueError("resolution must be positive")
         return width, height
-        
     except Exception as e:
-        # Catch-all for any unexpected errors
         logger.error(f"Unexpected error parsing resolution '{resolution_string}': {e}")
         return 1024, 1024
-    except (ValueError, TypeError) as e:
-        logger.error(f"Error parsing resolution '{resolution_string}': {e}")
-        return 1024, 1024
+
+
+def get_resolution_option(width, height):
+    """Return the dropdown option string that matches the given dimensions."""
     for opt in RESOLUTION_OPTIONS:
         w, h = parse_resolution(opt)
         if w == width and h == height:
