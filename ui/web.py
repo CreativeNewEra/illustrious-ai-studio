@@ -9,7 +9,7 @@ from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl, get
 from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core import sdxl, ollama
-from core.memory import get_model_status, get_memory_stats_markdown
+from core.memory import get_model_status, get_memory_stats_markdown, get_memory_stats_wrapper
 from core.state import AppState
 from core.prompt_templates import template_manager
 
