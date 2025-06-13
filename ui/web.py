@@ -848,7 +848,10 @@ def create_gradio_app(state: AppState):
                 return gr.update(choices=choices, value=current_selection)
             except Exception as e:
                 logger.error("Failed to refresh model list: %s", e)
-                return gr.update(choices=[("❌ Error loading models", "")], value="")
+                return gr.update(
+                    choices=[("❌ Error loading models - check the models directory", "")],
+                    value="",
+                )
 
         def refresh_project_list():
             return gr.update(choices=list_projects(), value=state.current_project)
@@ -877,7 +880,7 @@ def create_gradio_app(state: AppState):
                 return " | ".join(info_parts)
                 
             except Exception as e:
-                return f"❌ Error: {str(e)}"
+                return f"❌ Error: {str(e)}. Check logs for details."
         
         def switch_model(selected_path):
             """Switch to the selected model."""
@@ -905,7 +908,10 @@ def create_gradio_app(state: AppState):
                 if success:
                     status_msg = f"✅ Successfully switched to {Path(selected_path).stem}"
                 else:
-                    status_msg = "❌ Failed to switch model - check logs for details"
+                    status_msg = (
+                        "❌ Failed to switch model. "
+                        "Verify the model file exists and check logs for details."
+                    )
                 
                 return (
                     gr.update(visible=True, value=status_msg),
@@ -917,7 +923,10 @@ def create_gradio_app(state: AppState):
             except Exception as e:
                 logger.error("Model switch failed: %s", e)
                 return (
-                    gr.update(visible=True, value=f"❌ Switch failed: {str(e)}"),
+                    gr.update(
+                        visible=True,
+                        value=f"❌ Switch failed: {str(e)}. Check logs for details."
+                    ),
                     update_model_info(selected_path),
                     get_model_status(state),
                     get_memory_stats_markdown(state)
@@ -942,14 +951,20 @@ def create_gradio_app(state: AppState):
                     )
                 else:
                     return (
-                        gr.update(visible=True, value=f"❌ Test failed: {message}"),
+                        gr.update(
+                            visible=True,
+                            value=f"❌ Test failed: {message}. Verify the model path or check GPU memory."
+                        ),
                         gr.update()
                     )
                     
             except Exception as e:
                 logger.error("Model test failed: %s", e)
                 return (
-                    gr.update(visible=True, value=f"❌ Test error: {str(e)}"),
+                    gr.update(
+                        visible=True,
+                        value=f"❌ Test error: {str(e)}. Check logs for more details."
+                    ),
                     gr.update()
                 )
         
@@ -1039,7 +1054,11 @@ def create_gradio_app(state: AppState):
         # Regenerate function
         def regenerate_image(progress=gr.Progress()):
             if state.last_generation_params is None:
-                return None, "❌ No previous generation to repeat", gr.update()
+                return (
+                    None,
+                    "❌ No previous generation to repeat. Generate an image first.",
+                    gr.update(),
+                )
 
             params = state.last_generation_params
             def cb(step, total):
@@ -1327,7 +1346,10 @@ def create_gradio_app(state: AppState):
                 )
                 return f"✅ Template '{name}' saved successfully! (ID: {template_id[:8]}...)"
             except Exception as e:
-                return f"❌ Failed to save template: {str(e)}"
+                return (
+                    f"❌ Failed to save template: {str(e)}. "
+                    "Check write permissions in the templates directory."
+                )
         
         def use_selected_template(template_id):
             """Apply selected template to the main prompt fields."""
@@ -1359,7 +1381,7 @@ def create_gradio_app(state: AppState):
             if template_manager.delete_template(template_id):
                 return f"✅ Template '{template['name']}' deleted successfully"
             else:
-                return "❌ Failed to delete template"
+                return "❌ Failed to delete template. Check permissions."
         
         def export_templates():
             """Export all templates to a file."""
@@ -1379,7 +1401,10 @@ def create_gradio_app(state: AppState):
                 count = template_manager.import_templates(import_path, merge=merge_flag)
                 return f"✅ Successfully imported {count} templates!"
             except Exception as e:
-                return f"❌ Import failed: {str(e)}"
+                return (
+                    f"❌ Import failed: {str(e)}. "
+                    "Verify the file format and check logs for details."
+                )
         
         def get_template_statistics():
             """Get template collection statistics."""
