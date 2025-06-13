@@ -18,9 +18,11 @@ from core.memory_guardian import start_memory_guardian, stop_memory_guardian
 import uvicorn
 
 
-def force_exit_after_timeout() -> None:
+def force_exit_after_timeout() -> threading.Timer:
     """Force terminate the process if graceful shutdown hangs."""
-    threading.Timer(10.0, lambda: os._exit(1)).start()
+    timer = threading.Timer(10.0, lambda: os._exit(1))
+    timer.start()
+    return timer
 
 def create_parser() -> argparse.ArgumentParser:
     """Return argument parser for the CLI."""
