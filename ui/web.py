@@ -648,6 +648,7 @@ def create_gradio_app(state: AppState):
         theme_selector.change(
             fn=lambda m: save_theme_pref(m.lower()),
             inputs=theme_selector,
+            outputs=[],
             js="(mode) => { if(mode === 'Dark'){ document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } }"
         )
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
