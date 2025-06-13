@@ -7,6 +7,14 @@
     --text-color: #2c3e50;
     --accent-color: #27ae60;
 }
+:root.dark {
+    --primary-color: #d35400;
+    --secondary-color: #8e44ad;
+    --background-color: #1e1e1e;
+    --canvas-color: #2c2c2c;
+    --text-color: #f0f0f0;
+    --accent-color: #27ae60;
+}
 
 /* Main container styling */
 .main-container {
