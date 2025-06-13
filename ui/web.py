@@ -101,6 +101,9 @@ FIRST_RUN_FILE = TEMP_DIR / "first_run_complete"
 # Special value representing a random seed for image generation
 RANDOM_SEED = -1
 
+# Number of images to display per gallery page
+ITEMS_PER_PAGE = 20
+
 # Available image resolutions for the generation interface
 RESOLUTION_OPTIONS = [
     "512x512 (Square - Fast)",        # Quick generation for testing
@@ -199,6 +202,8 @@ def create_gradio_app(state: AppState):
 
     # Gallery state variables
     gallery_files: list[Path] = []  # Track file paths for gallery items
+    gallery_items: list[tuple[str, str]] = []  # Cached gallery items
+    gallery_page: int = 0
     gallery_filter: dict = load_gallery_filter() or {}  # Current filter settings
 
     def _get_gallery_dir() -> Path:
@@ -229,7 +234,7 @@ def create_gradio_app(state: AppState):
             - Updates global gallery_files list
             - Collects available tags for filtering UI
         """
-        nonlocal gallery_files
+        nonlocal gallery_files, gallery_items
         if filters is None:
             filters = gallery_filter
             
@@ -272,20 +277,39 @@ def create_gradio_app(state: AppState):
                     continue
             items.append((str(img_path), caption))
             gallery_files.append(img_path)
+        gallery_items = items
         return items, sorted(tag_set)
+
+    def load_gallery_page(page: int = 0, per_page: int = ITEMS_PER_PAGE):
+        """Load gallery images in chunks."""
+        start = page * per_page
+        end = start + per_page
+        return gallery_items[start:end]
 
     def refresh_gallery():
         """Update gallery component value and tag dropdown."""
+        nonlocal gallery_page
         items, tags = load_gallery_items()
-        return gr.update(value=items), gr.update(choices=tags, value=gallery_filter.get("tag"))
+        paged = load_gallery_page(gallery_page)
+        return (
+            gr.update(value=paged),
+            gr.update(choices=tags, value=gallery_filter.get("tag")),
+            f"{gallery_page + 1}/{max(1, (len(items) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)}",
+        )
 
     def update_gallery_filters(tag_value: str, keyword_value: str):
         """Persist gallery filters and refresh."""
-        nonlocal gallery_filter
+        nonlocal gallery_filter, gallery_page
         gallery_filter = {"tag": tag_value, "keyword": keyword_value}
+        gallery_page = 0
         save_gallery_filter(gallery_filter)
         items, tags = load_gallery_items(gallery_filter)
-        return gr.update(value=items), gr.update(choices=tags, value=tag_value)
+        paged = load_gallery_page(gallery_page)
+        return (
+            gr.update(value=paged),
+            gr.update(choices=tags, value=tag_value),
+            f"{gallery_page + 1}/{max(1, (len(items) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)}",
+        )
 
     def show_metadata(evt: gr.SelectData):
         """Display metadata for selected gallery image."""
@@ -791,6 +815,10 @@ def create_gradio_app(state: AppState):
                                     variant="secondary",
                                     elem_classes=["secondary-button"]
                                 )
+                            with gr.Row():
+                                prev_page = gr.Button("⬅️", variant="secondary", size="sm")
+                                page_display = gr.Textbox(value="1/1", interactive=False, scale=1, label="Page")
+                                next_page = gr.Button("➡️", variant="secondary", size="sm")
                             action_status = gr.Textbox(
                                 label="Action Status",
                                 interactive=False,
@@ -1212,7 +1240,7 @@ def create_gradio_app(state: AppState):
         project_selector.change(
             fn=set_current_project,
             inputs=project_selector,
-            outputs=[gallery_component, tag_filter]
+            outputs=[gallery_component, tag_filter, page_display]
         )
 
         create_project_btn.click(
@@ -1221,7 +1249,7 @@ def create_gradio_app(state: AppState):
             outputs=[project_selector, project_status]
         ).then(
             fn=lambda: refresh_gallery(),
-            outputs=[gallery_component, tag_filter]
+            outputs=[gallery_component, tag_filter, page_display]
         )
         try:
             delete_project_btn.click(
@@ -1231,7 +1259,7 @@ def create_gradio_app(state: AppState):
                 js="(p)=>confirm('Delete project ' + p + '?') ? p : null"
             ).then(
                 fn=lambda: refresh_gallery(),
-                outputs=[gallery_component, tag_filter]
+                outputs=[gallery_component, tag_filter, page_display]
             )
         except TypeError:  # For dummy components in tests
             delete_project_btn.click(
@@ -1240,7 +1268,7 @@ def create_gradio_app(state: AppState):
                 outputs=[project_selector, project_status]
             ).then(
                 fn=lambda: refresh_gallery(),
-                outputs=[gallery_component, tag_filter]
+                outputs=[gallery_component, tag_filter, page_display]
             )
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
@@ -1480,7 +1508,7 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=[gallery_component, tag_filter],
+                outputs=[gallery_component, tag_filter, page_display],
             ).then(
                 fn=update_live_status,
                 inputs=None,
@@ -1496,7 +1524,7 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=[gallery_component, tag_filter],
+                outputs=[gallery_component, tag_filter, page_display],
             ).then(
                 fn=update_live_status,
                 inputs=None,
@@ -1512,7 +1540,7 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=[gallery_component, tag_filter],
+                outputs=[gallery_component, tag_filter, page_display],
             ).then(
                 fn=update_live_status,
                 inputs=None,
@@ -1528,23 +1556,23 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=[gallery_component, tag_filter],
+                outputs=[gallery_component, tag_filter, page_display],
             ).then(
                 fn=update_live_status,
                 inputs=None,
                 outputs=[live_status],
             )
 
-        def configure_quick_generate_btn(include_js):
-            click_chain = quick_generate_btn.click(
+        try:
+            quick_generate_btn.click(
                 fn=quick_generate_image,
                 inputs=[prompt, negative_prompt],
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
-                js=show_loading_js if include_js else None,
+                js=show_loading_js,
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=[gallery_component, tag_filter],
+                outputs=[gallery_component, tag_filter, page_display],
             ).then(
                 fn=update_live_status,
                 inputs=None,
@@ -1560,7 +1588,7 @@ def create_gradio_app(state: AppState):
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
-                outputs=[gallery_component, tag_filter],
+                outputs=[gallery_component, tag_filter, page_display],
             ).then(
                 fn=update_live_status,
                 inputs=None,
@@ -1958,13 +1986,13 @@ def create_gradio_app(state: AppState):
         tag_filter.change(
             fn=update_gallery_filters,
             inputs=[tag_filter, keyword_filter],
-            outputs=[gallery_component, tag_filter]
+            outputs=[gallery_component, tag_filter, page_display]
         )
 
         keyword_filter.change(
             fn=update_gallery_filters,
             inputs=[tag_filter, keyword_filter],
-            outputs=[gallery_component, tag_filter]
+            outputs=[gallery_component, tag_filter, page_display]
         )
 
         if hasattr(gallery_component, "select"):
@@ -1991,6 +2019,32 @@ def create_gradio_app(state: AppState):
                 inputs=selected_path,
                 outputs=action_status,
             )
+
+        prev_page.click(
+            fn=prev_page_fn,
+            outputs=[gallery_component, page_display],
+        )
+
+        next_page.click(
+            fn=next_page_fn,
+            outputs=[gallery_component, page_display],
+        )
+
+        def next_page_fn():
+            nonlocal gallery_page
+            items, _ = load_gallery_items(gallery_filter)
+            total_pages = max(1, (len(items) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)
+            gallery_page = min(gallery_page + 1, total_pages - 1)
+            paged = load_gallery_page(gallery_page)
+            return gr.update(value=paged), f"{gallery_page + 1}/{total_pages}"
+
+        def prev_page_fn():
+            nonlocal gallery_page
+            gallery_page = max(gallery_page - 1, 0)
+            items, _ = load_gallery_items(gallery_filter)
+            total_pages = max(1, (len(items) + ITEMS_PER_PAGE - 1) // ITEMS_PER_PAGE)
+            paged = load_gallery_page(gallery_page)
+            return gr.update(value=paged), f"{gallery_page + 1}/{total_pages}"
 
         def get_monitor_status():
             guardian = get_memory_guardian(state)
@@ -2189,7 +2243,7 @@ def create_gradio_app(state: AppState):
         
         demo.load(
             fn=initialize_ui,
-            outputs=[model_selector, model_info, project_selector, template_list, template_stats, popular_templates, gallery_component, tag_filter, keyword_filter, memory_display, monitor_status]
+            outputs=[model_selector, model_info, project_selector, template_list, template_stats, popular_templates, gallery_component, tag_filter, page_display, keyword_filter, memory_display, monitor_status]
         )
 
         demo.load(
