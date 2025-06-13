@@ -453,3 +453,4 @@ def stop_memory_guardian():
     global _memory_guardian
     if _memory_guardian:
         _memory_guardian.stop_monitoring()
+        _memory_guardian = None
