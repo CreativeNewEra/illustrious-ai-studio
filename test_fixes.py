@@ -41,10 +41,8 @@ def test_recent_prompts_functionality():
         print(f"✅ Loaded {len(loaded_prompts)} prompts")
         
         # Verify order (most recent first)
-        if loaded_prompts[0] == test_prompts[-1]:
-            print("✅ Correct order (most recent first)")
-        else:
-            print("❌ Incorrect order")
+        assert loaded_prompts[0] == test_prompts[-1], "❌ Incorrect order: Most recent prompt is not first"
+        print("✅ Correct order (most recent first)")
         
         # Test clearing
         clear_recent_prompts()
@@ -93,28 +91,50 @@ def test_resolution_parsing():
 
 def test_api_error_handling():
     """Test the improved API error handling."""
+def test_api_error_handling():
+    """Test the improved API error handling."""
     print("\n🧪 Testing API Error Handling")
     print("-" * 40)
-    
+
     try:
-        # Check if the API improvements are in place
         from server.api import create_api_app
         from core.state import AppState
-        
-        # Create a test app state
+        from fastapi.testclient import TestClient
+
+        # Create a test app state and FastAPI app
         state = AppState()
         app = create_api_app(state, auto_load=False)
-        
-        print("✅ API app creation successful")
-        print("✅ Improved error handling is in place")
-        
+        client = TestClient(app)
+
+        # Test missing required fields
+        response = client.post("/generate-image", json={})
+        if response.status_code != 422 and response.status_code != 400:
+            print(f"❌ Expected 400/422 for missing fields, got {response.status_code}")
+            return False
+        else:
+            print("✅ Proper error for missing required fields")
+
+        # Test invalid data types
+        response = client.post("/generate-image", json={"prompt": 12345})
+        if response.status_code != 422 and response.status_code != 400:
+            print(f"❌ Expected 400/422 for invalid data type, got {response.status_code}")
+            return False
+        else:
+            print("✅ Proper error for invalid data type")
+
+        # Test valid request if possible (optional)
+        # response = client.post("/generate-image", json={"prompt": "test prompt"})
+        # if response.status_code == 200:
+        #     print("✅ Valid request succeeded")
+        # else:
+        #     print(f"⚠️ Valid request failed with status {response.status_code}")
+
+        print("✅ API app creation and error handling tested")
         return True
-        
+
     except Exception as e:
         print(f"❌ API error handling test failed: {e}")
         return False
-
-def test_imports():
     """Test that all necessary imports are working."""
     print("\n🧪 Testing Core Imports")
     print("-" * 40)

@@ -2,6 +2,7 @@ import json
 import logging
 import uuid
 from pathlib import Path
+import json
 
 import gradio as gr
 
@@ -150,13 +151,13 @@ def create_gradio_app(state: AppState):
                             variant="secondary",
                             elem_classes=["secondary-button"]
                         )
-                    with gr.Row():
                         regenerate_btn = gr.Button(
                             "🔄 Regenerate Same",
                             variant="secondary",
                             size="sm",
-                            elem_classes=["secondary-button"],
+                            elem_classes=["secondary-button", "regenerate-btn"],
                             visible=False
+                        )
                         )
                 with gr.Column():
                     output_image = gr.Image(
@@ -489,14 +490,6 @@ def create_gradio_app(state: AppState):
                 logger.error(f"Error clearing recent prompts: {e}")
                 return []
 
-        def generate_image_wrapper(prompt_text, negative_prompt, steps, guidance, seed, save_flag):
-            """Wrapper for generate_image that also saves to recent prompts."""
-            # Add to recent prompts if generation is successful
-            if prompt_text and prompt_text.strip():
-                add_to_recent_prompts(prompt_text.strip())
-            
-            # Generate the image
-            return generate_image(state, prompt_text, negative_prompt, steps, guidance, seed, save_flag)
 
         def select_recent_prompt(selected_prompt):
             """Handle selection of a recent prompt."""
