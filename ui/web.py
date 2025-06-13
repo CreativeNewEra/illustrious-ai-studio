@@ -1153,6 +1153,7 @@ def create_gradio_app(state: AppState):
         )
 
         # Example prompts selection handler
+        # Pass the selected example prompt directly to the output. This lambda serves as a placeholder for potential future processing.
         example_prompts.change(
             fn=lambda p: p,
             inputs=[example_prompts],
