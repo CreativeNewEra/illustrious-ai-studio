@@ -306,7 +306,7 @@ def create_gradio_app(state: AppState):
                             )
                             seed = gr.Number(
                                 value=RANDOM_SEED,
-                                label=f"Inspiration Seed ({RANDOM_SEED} for random)",
+                                label="Inspiration Seed (-1 for random)",
                                 elem_classes=["number-input"]
                             )
                             save_gallery = gr.Checkbox(
