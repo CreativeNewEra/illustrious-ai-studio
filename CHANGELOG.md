@@ -5,6 +5,48 @@ All notable changes to the Illustrious AI Studio project will be documented in t
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-06-13
+
+### Added
+- **Recent Prompts System**: 
+  - Dropdown showing last 20 used prompts
+  - Persistent storage across application restarts
+  - Clear history functionality
+  - Automatic saving on successful image generation
+- **Quick Style Buttons**:
+  - One-click style application: Anime, Realistic, Artistic, Fantasy, Cyberpunk
+  - Smart prefix application that doesn't duplicate existing styles
+  - Enhanced prompt workflow for faster iterations
+- **Resolution Selector**:
+  - 7 resolution options from 512x512 to 1024x1024
+  - Portrait and landscape orientations
+  - User-friendly labels with quality indicators (Fast/Balanced/High Quality)
+- **Enhanced UI Features**:
+  - Improved prompt input workflow
+  - Quick access to commonly used settings
+  - Better visual organization of controls
+
+### Fixed
+- **Image Generation API**: 
+  - Resolved "broken pipe" error in `/generate-image` endpoint
+  - Enhanced error handling with proper buffer management
+  - Improved base64 encoding with UTF-8 specification
+  - Better exception handling with detailed error messages
+- **Memory Management**:
+  - Proper buffer cleanup in image processing
+  - Enhanced error recovery mechanisms
+
+### Improved
+- **User Experience**:
+  - Faster prompt iteration with recent prompts
+  - One-click style application
+  - Intuitive resolution selection
+  - Better error feedback and recovery
+- **Code Quality**:
+  - Enhanced error handling throughout the application
+  - Better separation of concerns in UI components
+  - Improved logging and debugging capabilities
+
 ## [1.1.0] - 2025-06-11
 
 ### Added

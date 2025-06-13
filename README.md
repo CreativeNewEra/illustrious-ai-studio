@@ -48,11 +48,15 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **Gradio Web UI** (Port 7860): Interactive web interface with tabs for all features
 - **FastAPI MCP Server** (Port 8000): RESTful API for programmatic access
 
-### 📸 **Features**
+### 📸 **Enhanced User Experience** ✨ **NEW**
+- **Recent Prompts**: Quick access to your last 20 prompts for faster iteration
+- **Quick Style Buttons**: One-click application of popular styles (Anime, Realistic, Artistic, Fantasy, Cyberpunk)
+- **Smart Resolution Selector**: 7 optimized resolution presets with quality indicators
 - **Automatic Gallery**: Generated images saved with metadata
 - **Prompt Enhancement**: LLM improves your image prompts
 - **Session Management**: Persistent chat history
 - **Model Switching**: Change models without restarting
+- **Improved Error Handling**: Better recovery from generation failures
 
 ## �️ Installation
 
@@ -171,7 +175,10 @@ pytest
 
 ## 💻 Web Interface
 
-### 🎨 Text-to-Image Tab
+### 🎨 Text-to-Image Tab ✨ **ENHANCED**
+- **Recent Prompts**: Quick access to your last 20 prompts with dropdown selection
+- **Quick Style Buttons**: One-click style application (Anime, Realistic, Artistic, Fantasy, Cyberpunk)
+- **Resolution Selector**: Choose from 7 optimized resolutions (512x512 to 1024x1024, portrait/landscape)
 - Enter prompts or use "Enhance Prompt" for AI improvement
 - Adjust parameters: steps, guidance scale, seed
 - Images auto-saved to gallery

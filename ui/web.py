@@ -34,7 +34,34 @@ def create_gradio_app(state: AppState):
         with gr.Tab("🎨 Text-to-Image"):
             with gr.Row():
                 with gr.Column():
+                    # Recent prompts functionality
+                    with gr.Row():
+                        recent_prompts = gr.Dropdown(
+                            label="🕐 Recent Prompts",
+                            choices=[],
+                            value=None,
+                            elem_classes=["dropdown"],
+                            interactive=True,
+                            allow_custom_value=False
+                        )
+                        clear_history_btn = gr.Button(
+                            "🗑️ Clear History",
+                            variant="secondary",
+                            size="sm",
+                            elem_classes=["secondary-button"]
+                        )
                     prompt = gr.Textbox(label="Prompt", placeholder="Describe what you want to create...", lines=3)
+                    
+                    # Quick Style Buttons
+                    with gr.Row():
+                        gr.Markdown("**🎨 Quick Styles:**")
+                    with gr.Row():
+                        anime_btn = gr.Button("🌸 Anime", variant="secondary", size="sm")
+                        realistic_btn = gr.Button("📷 Realistic", variant="secondary", size="sm")
+                        artistic_btn = gr.Button("🎭 Artistic", variant="secondary", size="sm")
+                        fantasy_btn = gr.Button("🧙 Fantasy", variant="secondary", size="sm")
+                        cyberpunk_btn = gr.Button("🤖 Cyberpunk", variant="secondary", size="sm")
+                    
                     with gr.Accordion("🎯 Creative Controls", open=False):
                         # Model Selection Section
                         with gr.Group():
@@ -86,6 +113,21 @@ def create_gradio_app(state: AppState):
                                 label="Creative Freedom",
                                 elem_classes=["artistic-slider"]
                             )
+                        with gr.Row():
+                            resolution = gr.Dropdown(
+                                label="🖼️ Image Resolution",
+                                choices=[
+                                    "512x512 (Square - Fast)",
+                                    "768x768 (Square - Balanced)",
+                                    "1024x1024 (Square - High Quality)",
+                                    "768x512 (Landscape)",
+                                    "512x768 (Portrait)",
+                                    "1024x768 (Landscape HD)",
+                                    "768x1024 (Portrait HD)"
+                                ],
+                                value="1024x1024 (Square - High Quality)",
+                                elem_classes=["dropdown"]
+                            )
                         seed = gr.Number(
                             value=-1,
                             label="Inspiration Seed (-1 for random)",
@@ -107,6 +149,14 @@ def create_gradio_app(state: AppState):
                             "✨ Enhance Vision",
                             variant="secondary",
                             elem_classes=["secondary-button"]
+                        )
+                    with gr.Row():
+                        regenerate_btn = gr.Button(
+                            "🔄 Regenerate Same",
+                            variant="secondary",
+                            size="sm",
+                            elem_classes=["secondary-button"],
+                            visible=False
                         )
                 with gr.Column():
                     output_image = gr.Image(
@@ -166,9 +216,13 @@ def create_gradio_app(state: AppState):
                 with gr.Row():
                     with gr.Column():
                         input_image = gr.Image(
-                            label="Upload Artwork",
+                            label="📁 Upload or Drag & Drop Artwork",
                             type="pil",
-                            elem_classes=["gallery-item"]
+                            elem_classes=["gallery-item"],
+                            show_download_button=False,
+                            show_share_button=False,
+                            container=True,
+                            sources=["upload", "clipboard"]
                         )
                         analysis_question = gr.Textbox(
                             label="Artistic Inquiry",
@@ -382,6 +436,74 @@ def create_gradio_app(state: AppState):
                 """
             )
         
+        # Recent prompts management
+        RECENT_PROMPTS_FILE = TEMP_DIR / "recent_prompts.json"
+        MAX_RECENT_PROMPTS = 20
+
+        def load_recent_prompts():
+            """Load recent prompts from file."""
+            try:
+                if RECENT_PROMPTS_FILE.exists():
+                    with open(RECENT_PROMPTS_FILE, 'r', encoding='utf-8') as f:
+                        prompts = json.load(f)
+                        return prompts[:MAX_RECENT_PROMPTS]  # Limit to max prompts
+                return []
+            except Exception as e:
+                logger.error(f"Error loading recent prompts: {e}")
+                return []
+
+        def save_recent_prompts(prompts):
+            """Save recent prompts to file."""
+            try:
+                TEMP_DIR.mkdir(exist_ok=True)
+                with open(RECENT_PROMPTS_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(prompts[:MAX_RECENT_PROMPTS], f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                logger.error(f"Error saving recent prompts: {e}")
+
+        def add_to_recent_prompts(prompt_text):
+            """Add a prompt to recent prompts list."""
+            if not prompt_text or prompt_text.strip() == "":
+                return load_recent_prompts()
+            
+            recent = load_recent_prompts()
+            prompt_text = prompt_text.strip()
+            
+            # Remove if already exists (to move to top)
+            recent = [p for p in recent if p != prompt_text]
+            
+            # Add to beginning
+            recent.insert(0, prompt_text)
+            
+            # Save updated list
+            save_recent_prompts(recent)
+            return recent
+
+        def clear_recent_prompts():
+            """Clear all recent prompts."""
+            try:
+                if RECENT_PROMPTS_FILE.exists():
+                    RECENT_PROMPTS_FILE.unlink()
+                return []
+            except Exception as e:
+                logger.error(f"Error clearing recent prompts: {e}")
+                return []
+
+        def generate_image_wrapper(prompt_text, negative_prompt, steps, guidance, seed, save_flag):
+            """Wrapper for generate_image that also saves to recent prompts."""
+            # Add to recent prompts if generation is successful
+            if prompt_text and prompt_text.strip():
+                add_to_recent_prompts(prompt_text.strip())
+            
+            # Generate the image
+            return generate_image(state, prompt_text, negative_prompt, steps, guidance, seed, save_flag)
+
+        def select_recent_prompt(selected_prompt):
+            """Handle selection of a recent prompt."""
+            if selected_prompt:
+                return selected_prompt
+            return ""
+        
         # Model Selection Functions
         def refresh_model_list():
             """Refresh the available models list."""
@@ -505,10 +627,100 @@ def create_gradio_app(state: AppState):
         
         # Event Handlers
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
+        
+        # Updated generate button to use wrapper and update recent prompts
+        def generate_and_update_history(p, n, st, g, se, save_flag, res):
+            # Parse resolution
+            width, height = parse_resolution(res)
+            
+            # Generate the image with resolution
+            image, status = generate_image(state, p, n, st, g, se, save_flag, width, height)
+            
+            # Store parameters for regenerate functionality if generation was successful
+            if image is not None:
+                state.last_generation_params = {
+                    "prompt": p,
+                    "negative_prompt": n,
+                    "steps": st,
+                    "guidance": g,
+                    "seed": se,
+                    "save_gallery": save_flag,
+                    "resolution": res,
+                    "width": width,
+                    "height": height
+                }
+            
+            # Add to recent prompts if generation was successful and prompt is not empty
+            if p and p.strip() and image is not None:
+                updated_prompts = add_to_recent_prompts(p.strip())
+                regenerate_visible = True
+                return image, status, gr.update(choices=updated_prompts), gr.update(visible=regenerate_visible)
+            else:
+                regenerate_visible = image is not None and state.last_generation_params is not None
+                return image, status, gr.update(), gr.update(visible=regenerate_visible)
+        
+        # Regenerate function
+        def regenerate_image():
+            if state.last_generation_params is None:
+                return None, "❌ No previous generation to repeat", gr.update()
+            
+            params = state.last_generation_params
+            image, status = generate_image(
+                state, 
+                params["prompt"], 
+                params["negative_prompt"], 
+                params["steps"], 
+                params["guidance"], 
+                params["seed"], 
+                params["save_gallery"], 
+                params["width"], 
+                params["height"]
+            )
+            
+            if image is not None and params["prompt"].strip():
+                updated_prompts = add_to_recent_prompts(params["prompt"].strip())
+                return image, status, gr.update(choices=updated_prompts)
+            else:
+                return image, status, gr.update()
+        
         generate_btn.click(
-            fn=lambda p, n, st, g, se, save_flag: generate_image(state, p, n, st, g, se, save_flag),
-            inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery],
-            outputs=[output_image, generation_status],
+            fn=generate_and_update_history,
+            inputs=[prompt, negative_prompt, steps, guidance, seed, save_gallery, resolution],
+            outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
+        )
+        
+        regenerate_btn.click(
+            fn=regenerate_image,
+            inputs=[],
+            outputs=[output_image, generation_status, recent_prompts],
+        )
+        
+        # Recent prompts selection handler
+        recent_prompts.change(
+            fn=select_recent_prompt,
+            inputs=[recent_prompts],
+            outputs=[prompt]
+        )
+        
+        # Clear history handler
+        def clear_history():
+            clear_recent_prompts()
+            return gr.update(choices=[])
+        
+        clear_history_btn.click(
+            fn=clear_history,
+            inputs=[],
+            outputs=[recent_prompts]
+        )
+        
+        # Initialize recent prompts on load
+        def init_recent_prompts():
+            return gr.update(choices=load_recent_prompts())
+        
+        demo.load(
+            fn=init_recent_prompts,
+            inputs=[],
+            outputs=[recent_prompts]
         )
 
         def prepare_download(image):
@@ -778,4 +990,57 @@ def create_gradio_app(state: AppState):
             outputs=[model_selector, model_info, template_list, template_stats, popular_templates]
         )
         
+        # Quick Style Button Handlers
+        def apply_style_prefix(current_prompt, style_prefix):
+            """Apply a style prefix to the current prompt."""
+            if not current_prompt:
+                return style_prefix
+            
+            # Check if style is already applied
+            if current_prompt.startswith(style_prefix):
+                return current_prompt
+            
+            return f"{style_prefix}, {current_prompt}"
+        
+        anime_btn.click(
+            fn=lambda p: apply_style_prefix(p, "anime style, detailed anime art"),
+            inputs=[prompt],
+            outputs=[prompt]
+        )
+        
+        realistic_btn.click(
+            fn=lambda p: apply_style_prefix(p, "photorealistic, high quality photography"),
+            inputs=[prompt],
+            outputs=[prompt]
+        )
+        
+        artistic_btn.click(
+            fn=lambda p: apply_style_prefix(p, "artistic masterpiece, fine art style"),
+            inputs=[prompt],
+            outputs=[prompt]
+        )
+        
+        fantasy_btn.click(
+            fn=lambda p: apply_style_prefix(p, "fantasy art, magical atmosphere"),
+            inputs=[prompt],
+            outputs=[prompt]
+        )
+        
+        cyberpunk_btn.click(
+            fn=lambda p: apply_style_prefix(p, "cyberpunk style, neon lights, futuristic"),
+            inputs=[prompt],
+            outputs=[prompt]
+        )
+        
     return demo
+
+def parse_resolution(resolution_string):
+    """Parse resolution string to width and height."""
+    try:
+        # Extract resolution from strings like "1024x1024 (Square - High Quality)"
+        resolution_part = resolution_string.split(' ')[0]  # Get "1024x1024"
+        width, height = map(int, resolution_part.split('x'))
+        return width, height
+    except (ValueError, IndexError):
+        # Default to 1024x1024 if parsing fails
+        return 1024, 1024
