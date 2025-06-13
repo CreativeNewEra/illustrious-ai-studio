@@ -10,6 +10,11 @@ from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core import sdxl, ollama
 from core.memory import get_model_status, get_memory_stats_markdown, get_memory_stats_wrapper
+from core.memory_guardian import (
+    start_memory_guardian,
+    stop_memory_guardian,
+    get_memory_guardian,
+)
 from core.state import AppState
 from core.prompt_templates import template_manager
 
@@ -432,6 +437,25 @@ def create_gradio_app(state: AppState):
 
             gr.Markdown("### Memory Usage")
             memory_display = gr.Markdown(get_memory_stats_wrapper(state))
+
+            monitor_status = gr.Textbox(
+                value="",
+                label="Memory Guardian Status",
+                interactive=False,
+                lines=1,
+                elem_classes=["status-box"]
+            )
+            with gr.Row():
+                start_guardian_btn = gr.Button(
+                    "🛡️ Start Guardian",
+                    variant="secondary",
+                    elem_classes=["secondary-button"]
+                )
+                stop_guardian_btn = gr.Button(
+                    "⏹️ Stop Guardian",
+                    variant="secondary",
+                    elem_classes=["secondary-button"]
+                )
 
             gr.Markdown("### Model Loader")
             with gr.Row():
@@ -972,6 +996,18 @@ def create_gradio_app(state: AppState):
             fn=lambda: refresh_template_list(),
             outputs=template_list
         )
+
+        def get_monitor_status():
+            guardian = get_memory_guardian(state)
+            return "🟢 Monitoring" if guardian.is_monitoring else "🔴 Stopped"
+
+        def start_guardian_ui():
+            start_memory_guardian(state)
+            return get_monitor_status(), get_memory_stats_markdown(state)
+
+        def stop_guardian_ui():
+            stop_memory_guardian()
+            return get_monitor_status(), get_memory_stats_markdown(state)
         
         def do_switch(sd_path, ollama_name):
             if sd_path:
@@ -986,14 +1022,15 @@ def create_gradio_app(state: AppState):
         switch_btn.click(
             fn=do_switch,
             inputs=[sd_model_input, ollama_model_input],
-            outputs=[status_display, config_display, memory_display],
+            outputs=[status_display, config_display, memory_display, monitor_status],
         )
         refresh_btn.click(
             fn=lambda: (
                 get_model_status(state),
                 get_memory_stats_markdown(state),
+                get_monitor_status(),
             ),
-            outputs=[status_display, memory_display],
+            outputs=[status_display, memory_display, monitor_status],
         )
 
         def load_selected_models(load_s, load_o, load_v):
@@ -1001,13 +1038,27 @@ def create_gradio_app(state: AppState):
                 sdxl.init_sdxl(state)
             if load_o or load_v:
                 ollama.init_ollama(state)
-            return get_model_status(state), get_memory_stats_markdown(state)
+            return (
+                get_model_status(state),
+                get_memory_stats_markdown(state),
+                get_monitor_status(),
+            )
 
         load_selected_btn.click(
             fn=load_selected_models,
             inputs=[sdxl_checkbox, ollama_checkbox, vision_checkbox],
-            outputs=[status_display, memory_display],
+            outputs=[status_display, memory_display, monitor_status],
         )
+
+        start_guardian_btn.click(
+            fn=start_guardian_ui,
+            outputs=[monitor_status, memory_display],
+        )
+        stop_guardian_btn.click(
+            fn=stop_guardian_ui,
+            outputs=[monitor_status, memory_display],
+        )
+
         
         # Initialize model selector and templates on load
         # Skip model initialization if in quick-start mode
@@ -1025,7 +1076,8 @@ def create_gradio_app(state: AppState):
                     "⚡ Quick Start Mode: Models can be loaded manually from the System Info tab",
                     refresh_template_list(),
                     *get_template_statistics(),
-                    get_memory_stats_markdown(state)
+                    get_memory_stats_markdown(state),
+                    get_monitor_status()
                 )
             else:
                 # Normal mode - refresh model list
@@ -1034,12 +1086,13 @@ def create_gradio_app(state: AppState):
                     update_model_info(CONFIG.sd_model),
                     refresh_template_list(),
                     *get_template_statistics(),
-                    get_memory_stats_markdown(state)
+                    get_memory_stats_markdown(state),
+                    get_monitor_status()
                 )
         
         demo.load(
             fn=initialize_ui,
-            outputs=[model_selector, model_info, template_list, template_stats, popular_templates, memory_display]
+            outputs=[model_selector, model_info, template_list, template_stats, popular_templates, memory_display, monitor_status]
         )
         
         # Quick Style Button Handlers
