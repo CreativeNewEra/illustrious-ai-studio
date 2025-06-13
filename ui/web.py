@@ -25,6 +25,7 @@ from core.prompt_analyzer import analyze_prompt
 logger = logging.getLogger(__name__)
 
 THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
+GALLERY_FILTER_FILE = TEMP_DIR / "gallery_filter.json"
 
 def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
@@ -50,6 +51,27 @@ def create_gradio_app(state: AppState):
             logger.error("Error saving theme preference: %s", e)
         return choice
 
+    def load_gallery_filter():
+        """Load gallery search and tag filters from file."""
+        try:
+            if GALLERY_FILTER_FILE.exists():
+                with open(GALLERY_FILTER_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    return data.get("search", ""), data.get("tags", "")
+        except Exception as e:  # pragma: no cover - non-critical
+            logger.error("Error loading gallery filter: %s", e)
+        return "", ""
+
+    def save_gallery_filter(search: str, tags: str):
+        """Persist gallery search and tag filters."""
+        try:
+            TEMP_DIR.mkdir(parents=True, exist_ok=True)
+            with open(GALLERY_FILTER_FILE, "w", encoding="utf-8") as f:
+                json.dump({"search": search, "tags": tags}, f)
+        except Exception as e:  # pragma: no cover - non-critical
+            logger.error("Error saving gallery filter: %s", e)
+        return search, tags
+
     gallery_files: list[Path] = []
 
     def _get_gallery_dir() -> Path:
@@ -57,30 +79,48 @@ def create_gradio_app(state: AppState):
             return PROJECTS_DIR / state.current_project / "gallery"
         return Path(CONFIG.gallery_dir)
 
-    def load_gallery_items():
-        """Return gallery images with captions and track file paths."""
+    def load_gallery_items(search_text: str = "", tag_filters: list[str] | None = None):
+        """Return gallery images with captions filtered by search or tags."""
         nonlocal gallery_files
         gallery_dir = _get_gallery_dir()
         gallery_dir.mkdir(parents=True, exist_ok=True)
         items: list[tuple[str, str]] = []
         gallery_files = []
+        search_lower = search_text.lower()
+        tag_filters = [t.lower() for t in tag_filters or []]
+
         for img_path in sorted(gallery_dir.glob("*.png"), reverse=True):
             caption = ""
             meta_path = img_path.with_suffix(".json")
+            tags = []
             if meta_path.exists():
                 try:
                     with open(meta_path, "r", encoding="utf-8") as f:
                         meta = json.load(f)
                     caption = meta.get("prompt", "")
+                    tags = [t.lower() for t in meta.get("tags", [])]
                 except Exception as e:  # pragma: no cover - non-critical
                     logger.error("Failed to load metadata for %s: %s", img_path, e)
+
+            # Apply search filter
+            if search_lower:
+                target = f"{caption} {' '.join(tags)} {img_path.name}".lower()
+                if search_lower not in target:
+                    continue
+
+            # Apply tag filters (match any)
+            if tag_filters:
+                if not any(t in tags for t in tag_filters):
+                    continue
+
             items.append((str(img_path), caption))
             gallery_files.append(img_path)
         return items
 
-    def refresh_gallery():
-        """Update gallery component value."""
-        return gr.update(value=load_gallery_items())
+    def refresh_gallery(search: str = "", tags: str = ""):
+        """Update gallery component based on search and tag filters."""
+        tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+        return gr.update(value=load_gallery_items(search, tag_list))
 
     def show_metadata(evt: gr.SelectData):
         """Display metadata for selected gallery image."""
@@ -113,13 +153,18 @@ def create_gradio_app(state: AppState):
         """Return the path for clipboard copy via JS."""
         return path
 
+    def update_gallery_filters(search: str, tags: str):
+        """Save filters and refresh the gallery."""
+        save_gallery_filter(search, tags)
+        return refresh_gallery(search, tags)
+
     def list_projects():
         PROJECTS_DIR.mkdir(exist_ok=True)
         return [p.name for p in PROJECTS_DIR.iterdir() if p.is_dir()]
 
-    def set_current_project(name: str):
+    def set_current_project(name: str, search: str, tags: str):
         state.current_project = name or None
-        return refresh_gallery()
+        return refresh_gallery(search, tags)
 
     def create_project(name: str):
         name = name.strip()
@@ -130,6 +175,7 @@ def create_gradio_app(state: AppState):
         return gr.update(choices=list_projects(), value=name), f"Project '{name}' created"
 
     current_theme = load_theme_pref()
+    init_search, init_tags = load_gallery_filter()
     with gr.Blocks(
         title="Illustrious AI Studio",
         theme="default",
@@ -512,6 +558,19 @@ def create_gradio_app(state: AppState):
                         )
 
         with gr.Tab("🖼️ Gallery"):
+            with gr.Row():
+                gallery_search = gr.Textbox(
+                    label="Search Gallery",
+                    value=init_search,
+                    placeholder="Search by prompt or filename",
+                    elem_classes=["textbox"],
+                )
+                gallery_tags = gr.Textbox(
+                    label="Filter Tags",
+                    value=init_tags,
+                    placeholder="comma-separated",
+                    elem_classes=["textbox"],
+                )
             gallery_component = gr.Gallery(
                 label="Gallery",
                 elem_classes=["gallery-section"],
@@ -815,7 +874,7 @@ def create_gradio_app(state: AppState):
         )
         project_selector.change(
             fn=set_current_project,
-            inputs=project_selector,
+            inputs=[project_selector, gallery_search, gallery_tags],
             outputs=gallery_component
         )
 
@@ -824,7 +883,8 @@ def create_gradio_app(state: AppState):
             inputs=new_project,
             outputs=[project_selector, project_status]
         ).then(
-            fn=lambda: refresh_gallery(),
+            fn=lambda s, t: refresh_gallery(s, t),
+            inputs=[gallery_search, gallery_tags],
             outputs=gallery_component
         )
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
@@ -898,7 +958,7 @@ def create_gradio_app(state: AppState):
                 js=show_loading_js,
             ).then(
                 fn=refresh_gallery,
-                inputs=None,
+                inputs=[gallery_search, gallery_tags],
                 outputs=gallery_component,
             ).then(
                 js=hide_loading_js
@@ -910,7 +970,7 @@ def create_gradio_app(state: AppState):
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
             ).then(
                 fn=refresh_gallery,
-                inputs=None,
+                inputs=[gallery_search, gallery_tags],
                 outputs=gallery_component,
             )
 
@@ -922,7 +982,7 @@ def create_gradio_app(state: AppState):
                 js=show_loading_js,
             ).then(
                 fn=refresh_gallery,
-                inputs=None,
+                inputs=[gallery_search, gallery_tags],
                 outputs=gallery_component,
             ).then(
                 js=hide_loading_js
@@ -934,7 +994,7 @@ def create_gradio_app(state: AppState):
                 outputs=[output_image, generation_status, recent_prompts],
             ).then(
                 fn=refresh_gallery,
-                inputs=None,
+                inputs=[gallery_search, gallery_tags],
                 outputs=gallery_component,
             )
         
@@ -1223,6 +1283,17 @@ def create_gradio_app(state: AppState):
                 outputs=action_status,
             )
 
+        gallery_search.change(
+            fn=update_gallery_filters,
+            inputs=[gallery_search, gallery_tags],
+            outputs=gallery_component,
+        )
+        gallery_tags.change(
+            fn=update_gallery_filters,
+            inputs=[gallery_search, gallery_tags],
+            outputs=gallery_component,
+        )
+
         def get_monitor_status():
             guardian = get_memory_guardian(state)
             return "🟢 Monitoring" if guardian.is_monitoring else "🔴 Stopped"
@@ -1331,7 +1402,7 @@ def create_gradio_app(state: AppState):
                     refresh_project_list(),
                     refresh_template_list(),
                     *get_template_statistics(),
-                    refresh_gallery(),
+                    refresh_gallery(init_search, init_tags),
                     get_memory_stats_markdown(state),
                     get_monitor_status()
                 )
@@ -1343,7 +1414,7 @@ def create_gradio_app(state: AppState):
                     refresh_project_list(),
                     refresh_template_list(),
                     *get_template_statistics(),
-                    refresh_gallery(),
+                    refresh_gallery(init_search, init_tags),
                     get_memory_stats_markdown(state),
                     get_monitor_status()
                 )
