@@ -1324,7 +1324,7 @@ def create_gradio_app(state: AppState):
                     "steps": params["steps"],
                     "guidance": params["guidance"],
                     "seed": params["seed"],
-                    "save_to_gallery_flag": params["save_gallery"],
+                    "save_to_gallery_flag": params["save_to_gallery_flag"],
                     "width": params["width"],
                     "height": params["height"],
                     "progress_callback": cb,
