@@ -53,6 +53,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **Quick Style Buttons**: One-click application of popular styles (Anime, Realistic, Artistic, Fantasy, Cyberpunk)
 - **Smart Resolution Selector**: 7 optimized resolution presets with quality indicators
 - **Automatic Gallery**: Generated images saved with metadata
+- **Gallery Viewer Tab**: Browse saved images and metadata
 - **Prompt Enhancement**: LLM improves your image prompts
 - **Session Management**: Chat history automatically saved under your system's
   temporary directory and reloaded at startup
@@ -195,6 +196,10 @@ pytest
 - Upload any image for AI analysis
 - Ask specific questions about images
 - Works with generated images too
+
+### 🖼️ Gallery Tab ✨ **NEW**
+- Browse saved images in a gallery view
+- View metadata, open files, or copy their paths
 
 ### 📝 Prompt Templates Tab ✨ **NEW**
 - **Save Templates**: Save your best prompts for reuse

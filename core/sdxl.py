@@ -56,7 +56,7 @@ def save_to_gallery(image: Image.Image, prompt: str, metadata: dict | None = Non
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{uuid.uuid4().hex[:8]}.png"
     filepath = GALLERY_DIR / filename
-    # Directory creation moved to initialization step
+    GALLERY_DIR.mkdir(parents=True, exist_ok=True)
     image.save(filepath)
     metadata_file = filepath.with_suffix('.json')
     metadata_info = {
