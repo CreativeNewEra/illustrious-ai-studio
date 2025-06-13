@@ -23,7 +23,7 @@ TEMP_DIR = Path(tempfile.gettempdir()) / "illustrious_ai"
 TEMP_DIR.mkdir(exist_ok=True)
 GALLERY_DIR = Path(CONFIG.gallery_dir)
 PROJECTS_DIR = Path("projects")
-PROJECTS_DIR.mkdir(exist_ok=True)
+PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 
