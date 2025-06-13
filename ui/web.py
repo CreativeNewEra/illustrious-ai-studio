@@ -59,7 +59,7 @@ from core.sdxl import (
     get_available_models,
     get_current_model_info,
     test_model_generation, 
-    switch_sdxl_model, 
+    switch_sdxl_model,
     PROJECTS_DIR
 )
 
@@ -70,6 +70,7 @@ from core.state import AppState
 # Chat and language model functionality  
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core import sdxl, ollama
+from core.generation_presets import GENERATION_PRESETS
 
 # Memory and system monitoring
 from core.memory import get_model_status, get_memory_stats_markdown, get_memory_stats_wrapper
@@ -506,7 +507,14 @@ def create_gradio_app(state: AppState):
                                 elem_classes=["status-box"],
                                 visible=False
                             )
-                        
+                        with gr.Row():
+                            preset_selector = gr.Dropdown(
+                                label="🎛️ Generation Preset",
+                                choices=list(GENERATION_PRESETS.keys()),
+                                value="balanced",
+                                elem_classes=["dropdown"]
+                            )
+
                         with gr.Row():
                             steps = gr.Slider(
                                 10, 100,
@@ -1456,7 +1464,20 @@ def create_gradio_app(state: AppState):
                 regenerate_btn,
             ],
         )
-        
+
+        def apply_generation_preset(name: str):
+            preset = GENERATION_PRESETS.get(name, GENERATION_PRESETS.get("balanced"))
+            steps_val = preset.get("steps", 30)
+            guidance_val = preset.get("guidance", 7.5)
+            res_option = get_resolution_option(preset.get("width", 1024), preset.get("height", 1024))
+            return steps_val, guidance_val, res_option
+
+        preset_selector.change(
+            fn=apply_generation_preset,
+            inputs=[preset_selector],
+            outputs=[steps, guidance, resolution],
+        )
+
         # Recent prompts selection handler
         recent_prompts.change(
             fn=select_recent_prompt,
