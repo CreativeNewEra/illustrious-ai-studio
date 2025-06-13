@@ -11,6 +11,7 @@ from core.sdxl import generate_image
 from core.ollama import chat_completion, analyze_image
 from core.state import AppState
 from core.config import CONFIG
+from core.memory_guardian import get_memory_guardian
 
 logger = logging.getLogger(__name__)
 
@@ -132,6 +133,11 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
         if request.ollama_model:
             result["ollama"] = ollama.switch_ollama_model(state, request.ollama_model)
         return {"models": state.model_status, **result}
+
+    @app.get("/memory-report")
+    async def memory_report(state: AppState = Depends(get_state)):
+        guardian = get_memory_guardian(state)
+        return guardian.get_memory_report()
 
     return app
 

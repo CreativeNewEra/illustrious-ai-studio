@@ -278,6 +278,19 @@ if response.status_code == 200:
 
 ---
 
+## 🛡️ Memory Report
+
+### `GET /memory-report`
+
+Retrieve a detailed memory usage report from the Memory Guardian.
+
+**Example:**
+```bash
+curl http://localhost:8000/memory-report
+```
+
+---
+
 ## ⚠️ Error Handling ✨ **ENHANCED**
 
 ### Error Response Format
