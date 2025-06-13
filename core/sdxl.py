@@ -707,3 +707,30 @@ def get_current_model_info(state: AppState) -> Dict[str, str]:
             "status": f"❌ Error: {str(e)}",
             "size": "Unknown"
         }
+
+
+def batch_generate(
+    state: AppState,
+    prompts: List[str],
+    shared_settings: dict,
+    progress: Optional[Callable[[float, str], Any]] = None,
+) -> List[Optional[Image.Image]]:
+    """Generate multiple images with shared settings."""
+    results: List[Optional[Image.Image]] = []
+    total = len(prompts)
+    for i, prm in enumerate(prompts):
+        if progress:
+            progress(i / total, f"Generating {i+1}/{total}")
+        params = dict(shared_settings)
+        params["prompt"] = prm
+        img, _ = generate_image(state, params)
+        results.append(img)
+    return results
+
+
+def create_variations(base_image: Image.Image, num_variations: int = 4) -> List[Image.Image]:
+    """Create simple variations of an existing image."""
+    variations: List[Image.Image] = []
+    for i in range(num_variations):
+        variations.append(base_image.rotate(i * 5))
+    return variations

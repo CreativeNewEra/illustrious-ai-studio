@@ -35,6 +35,14 @@ class PromptAnalyzer:
     DEFAULT_STEPS = 30
     DEFAULT_GUIDANCE = 7.5
 
+    STYLE_ENHANCERS = {
+        "anime": ["vibrant colors", "cel shading"],
+        "realistic": ["photorealistic", "high detail"],
+        "artistic": ["painterly", "brush strokes"],
+        "fantasy": ["magical atmosphere"],
+        "cyberpunk": ["neon lights", "futuristic"],
+    }
+
     def detect_styles(self, prompt: str) -> List[str]:
         prompt_l = prompt.lower()
         styles = []
@@ -70,3 +78,14 @@ class PromptAnalyzer:
 def analyze_prompt(prompt: str) -> Dict[str, str | int | float]:
     """Convenience wrapper to analyze a prompt."""
     return PromptAnalyzer().analyze(prompt)
+
+
+def auto_enhance_prompt(prompt: str) -> str:
+    """Automatically add quality enhancers based on detected style."""
+    analyzer = PromptAnalyzer()
+    styles = analyzer.detect_styles(prompt)
+    style = styles[0] if styles else "general"
+    enhancers = analyzer.STYLE_ENHANCERS.get(style, [])
+    if enhancers:
+        return f"{prompt}, {', '.join(enhancers)}"
+    return prompt
