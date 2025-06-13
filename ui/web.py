@@ -32,7 +32,7 @@ def create_gradio_app(state: AppState):
 
     def save_theme_pref(choice: str):
         try:
-            TEMP_DIR.mkdir(exist_ok=True)
+            TEMP_DIR.mkdir(parents=True, exist_ok=True)
             with open(THEME_PREF_FILE, "w", encoding="utf-8") as f:
                 json.dump({"theme": choice}, f)
         except Exception as e:
