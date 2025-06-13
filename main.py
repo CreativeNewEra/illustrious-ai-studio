@@ -4,6 +4,7 @@ import logging.handlers
 import os
 import signal
 import threading
+import sys
 from pathlib import Path
 
 from ui.web import create_gradio_app
@@ -15,6 +16,11 @@ from core.memory import clear_gpu_memory
 from core.memory_guardian import start_memory_guardian, stop_memory_guardian
 
 import uvicorn
+
+
+def force_exit_after_timeout() -> None:
+    """Force terminate the process if graceful shutdown hangs."""
+    threading.Timer(10.0, lambda: os._exit(1)).start()
 
 def create_parser() -> argparse.ArgumentParser:
     """Return argument parser for the CLI."""
@@ -261,9 +267,10 @@ class IllustriousAIStudio:
             print("DEBUG: Joining API thread...") # DEBUG
             self.api_thread.join(timeout=5)
             print("DEBUG: API thread joined.") # DEBUG
-        
+
         print("DEBUG: Exiting application.") # DEBUG
-        os._exit(0) # Force exit if Gradio doesn't handle it gracefully
+        force_exit_after_timeout()
+        sys.exit(0)  # Allow proper cleanup and exit handlers
 
 if __name__ == "__main__":
     args = IllustriousAIStudio.parse_args()
