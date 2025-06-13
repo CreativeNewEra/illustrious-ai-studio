@@ -260,11 +260,22 @@ def create_gradio_app(state: AppState):
                     with gr.Row():
                         gr.Markdown("**🎨 Quick Styles:**")
                     with gr.Row():
-                        anime_btn = gr.Button("🌸 Anime", variant="secondary", size="sm")
-                        realistic_btn = gr.Button("📷 Realistic", variant="secondary", size="sm")
-                        artistic_btn = gr.Button("🎭 Artistic", variant="secondary", size="sm")
-                        fantasy_btn = gr.Button("🧙 Fantasy", variant="secondary", size="sm")
-                        cyberpunk_btn = gr.Button("🤖 Cyberpunk", variant="secondary", size="sm")
+                        quick_styles = [
+                            {"label": "🌸 Anime", "tooltip": "Applies anime style"},
+                            {"label": "📷 Realistic", "tooltip": "Applies realistic style"},
+                            {"label": "🎭 Artistic", "tooltip": "Applies artistic style"},
+                            {"label": "🧙 Fantasy", "tooltip": "Applies fantasy style"},
+                            {"label": "🤖 Cyberpunk", "tooltip": "Applies cyberpunk style"},
+                        ]
+                        style_buttons = []
+                        for style in quick_styles:
+                            btn = gr.Button(
+                                style["label"],
+                                variant="secondary",
+                                size="sm",
+                                tooltip=style["tooltip"]
+                            )
+                            style_buttons.append(btn)
                     
                     with gr.Accordion("🎯 Creative Controls", open=False):
                         # Model Selection Section
@@ -316,7 +327,8 @@ def create_gradio_app(state: AppState):
                                 label="🖼️ Image Resolution",
                                 choices=RESOLUTION_OPTIONS,
                                 value="1024x1024 (Square - High Quality)",
-                                elem_classes=["dropdown"]
+                                elem_classes=["dropdown"],
+                                tooltip="Select the output image resolution"
                             )
                         with gr.Accordion("Advanced", open=False):
                             negative_prompt = gr.Textbox(
@@ -613,11 +625,13 @@ def create_gradio_app(state: AppState):
                     "📂 Open File",
                     variant="secondary",
                     elem_classes=["secondary-button"],
+                    tooltip="Open the selected image file",
                 )
                 copy_path_btn = gr.Button(
                     "📋 Copy Path",
                     variant="secondary",
                     elem_classes=["secondary-button"],
+                    tooltip="Copy the selected image path",
                 )
             action_status = gr.Textbox(
                 label="Action Status",
