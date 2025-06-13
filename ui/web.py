@@ -295,6 +295,7 @@ def create_gradio_app(state: AppState):
                             )
                             style_buttons.append(btn)
                         # Assign buttons to named variables for event handlers
+                        assert len(style_buttons) == 5, f"Expected 5 style buttons, but got {len(style_buttons)}"
                         anime_btn, realistic_btn, artistic_btn, fantasy_btn, cyberpunk_btn = style_buttons
                     
                     with gr.Accordion("🎯 Creative Controls", open=False):
