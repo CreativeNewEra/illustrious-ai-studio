@@ -15,7 +15,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 from core.memory_guardian import get_memory_guardian, MemoryPressureLevel
 from core.state import AppState
 from core.config import CONFIG
-import torch
+try:
+    import torch
+except Exception:  # pragma: no cover - allow missing torch in tests
+    torch = None  # type: ignore
 
 def create_parser():
     """Create argument parser for memory manager CLI"""
@@ -126,7 +129,7 @@ class MemoryManagerCLI:
         """Clear GPU memory"""
         print("🧹 Clearing GPU memory...")
         try:
-            if torch.cuda.is_available():
+            if torch is not None and torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.synchronize()
                 print("✅ GPU cache cleared")

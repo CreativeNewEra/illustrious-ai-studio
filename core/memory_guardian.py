@@ -8,7 +8,10 @@ from typing import Dict, List, Optional, Callable, Any
 from dataclasses import dataclass
 from enum import Enum
 
-import torch
+try:
+    import torch
+except Exception:  # pragma: no cover - allow missing torch in tests
+    torch = None  # type: ignore
 
 from .config import CONFIG
 from .memory import clear_gpu_memory
@@ -164,7 +167,7 @@ class MemoryGuardian:
     def get_memory_stats(self) -> Optional[MemoryStats]:
         """Get current memory statistics"""
         try:
-            if not (CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available()):
+            if torch is None or not (CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available()):
                 return None
                 
             # GPU memory stats
@@ -351,7 +354,7 @@ class MemoryGuardian:
         """Emergency memory cleanup"""
         try:
             # Force aggressive cleanup
-            if torch.cuda.is_available():
+            if torch is not None and torch.cuda.is_available():
                 torch.cuda.empty_cache()
                 torch.cuda.synchronize()
             
