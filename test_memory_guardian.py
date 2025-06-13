@@ -27,6 +27,8 @@ def test_memory_stats():
     print("-" * 40)
     
     app_state = AppState()
+    assert app_state.ollama_vision_model is None
+    assert app_state.ollama_vision_model is None
     guardian = get_memory_guardian(app_state)
     
     stats = guardian.get_memory_stats()
@@ -47,6 +49,7 @@ def test_memory_requirements_check():
     print("-" * 40)
     
     app_state = AppState()
+    assert app_state.ollama_vision_model is None
     guardian = get_memory_guardian(app_state)
     
     # Test different operation types
@@ -69,6 +72,7 @@ def test_intervention_registration():
     print("-" * 40)
     
     app_state = AppState()
+    assert app_state.ollama_vision_model is None
     guardian = get_memory_guardian(app_state)
     
     # Test callback
@@ -94,6 +98,7 @@ def test_memory_monitoring():
     print("-" * 40)
     
     app_state = AppState()
+    assert app_state.ollama_vision_model is None
     guardian = get_memory_guardian(app_state)
     
     # Start monitoring
@@ -125,6 +130,7 @@ def test_adaptive_settings():
     print("-" * 40)
     
     app_state = AppState()
+    assert app_state.ollama_vision_model is None
     guardian = get_memory_guardian(app_state)
     
     # Import the adaptive settings function
@@ -152,6 +158,7 @@ def test_memory_report():
     print("-" * 40)
     
     app_state = AppState()
+    assert app_state.ollama_vision_model is None
     guardian = get_memory_guardian(app_state)
     
     try:
@@ -178,6 +185,7 @@ def test_configuration():
     print("-" * 40)
     
     app_state = AppState()
+    assert app_state.ollama_vision_model is None
     guardian = get_memory_guardian(app_state)
     
     config = guardian.config

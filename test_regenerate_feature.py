@@ -18,6 +18,7 @@ def test_regenerate_state():
     
     # Create state instance
     state = AppState()
+    assert state.ollama_vision_model is None
     
     # Test 1: Initial state
     print("✅ Test 1: Initial state")

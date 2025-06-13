@@ -102,6 +102,7 @@ def test_api_error_handling():
 
         # Create a test app state and FastAPI app
         state = AppState()
+        assert state.ollama_vision_model is None
         app = create_api_app(state, auto_load=False)
         client = TestClient(app)
 

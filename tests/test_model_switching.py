@@ -6,6 +6,7 @@ from core.config import CONFIG
 def test_switch_sdxl_model_missing(monkeypatch):
     from core.state import AppState
     state = AppState()
+    assert state.ollama_vision_model is None
     from core import sdxl
     monkeypatch.setattr(os.path, "exists", lambda p: False)
     old = CONFIG.sd_model
@@ -18,6 +19,7 @@ def test_switch_sdxl_model_missing(monkeypatch):
 def test_switch_sdxl_model_success(monkeypatch):
     from core.state import AppState
     state = AppState()
+    assert state.ollama_vision_model is None
     from core import sdxl
     monkeypatch.setattr(os.path, "exists", lambda p: True)
 
@@ -35,6 +37,7 @@ def test_switch_sdxl_model_success(monkeypatch):
 def test_switch_ollama_model(monkeypatch):
     from core.state import AppState
     state = AppState()
+    assert state.ollama_vision_model is None
     state.chat_history_store = {"s": [("hi", "there")]} 
     from core import ollama
 

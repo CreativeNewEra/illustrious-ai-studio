@@ -10,6 +10,7 @@ def test_guardian_recreated_after_stop():
     from core.memory_guardian import get_memory_guardian
 
     app_state = AppState()
+    assert app_state.ollama_vision_model is None
     guardian1 = start_memory_guardian(app_state)
     stop_memory_guardian()
     guardian2 = start_memory_guardian(app_state)

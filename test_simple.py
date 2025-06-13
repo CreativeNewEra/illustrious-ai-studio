@@ -64,6 +64,7 @@ def test_llm_only():
     print_header("Testing LLM Only")
     
     state = AppState()
+    assert state.ollama_vision_model is None
     
     # Initialize Ollama
     print_info("Initializing Ollama...")
@@ -96,8 +97,9 @@ def test_image_generation_only():
     
     # Clear CUDA cache
     clear_gpu_memory()
-    
+
     state = AppState()
+    assert state.ollama_vision_model is None
     
     # Initialize SDXL
     print_info("Initializing SDXL...")
@@ -144,6 +146,7 @@ def test_vision_analysis(image_path):
     clear_gpu_memory()
     
     state = AppState()
+    assert state.ollama_vision_model is None
     
     # Initialize Ollama with vision
     print_info("Initializing vision model...")
