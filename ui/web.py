@@ -955,7 +955,7 @@ def create_gradio_app(state: AppState):
             resolution_def = get_resolution_option(width_def, height_def)
             return (
                 "",
-                "blurry, low quality, text, watermark, deformed",
+                defaults.get("negative_prompt", "blurry, low quality, text, watermark, deformed"),
                 steps_def,
                 guidance_def,
                 -1,
