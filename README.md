@@ -99,7 +99,7 @@ recommend at least **16GB** of VRAM for smooth 1024x1024 generation. Lower VRAM
    - ✓ Install all dependencies
    - ✓ Download Illustrious SDXL model (6.6GB)
    - ✓ Configure Ollama models (if installed)
-   - ✓ Create launch scripts (run.sh/run.bat)
+   - ✓ Generate launch scripts (`run.sh` for Linux/Mac and `run.bat` for Windows) after running `python setup.py`
    - ✓ Verify the installation
 
 3. **Start the application**
@@ -107,7 +107,7 @@ recommend at least **16GB** of VRAM for smooth 1024x1024 generation. Lower VRAM
    # Easy launch (Linux/Mac)
    ./run.sh
    
-   # Easy launch (Windows)
+   # Easy launch (Windows) - `run.bat` is created after running `python setup.py`
    run.bat
    
    # Or manually:
