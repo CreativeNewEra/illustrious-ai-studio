@@ -153,11 +153,19 @@ h1 {
 /* Gallery wall */
 .gallery-section {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     padding: 1.5rem;
     background: var(--canvas-color);
     border-radius: 12px;
+    width: 100%;
+}
+
+@media (max-width: 600px) {
+    .gallery-section {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+    }
 }
 
 .gallery-item {

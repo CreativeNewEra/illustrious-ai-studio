@@ -585,7 +585,7 @@ def create_gradio_app(state: AppState):
             gallery_component = gr.Gallery(
                 label="Gallery",
                 elem_classes=["gallery-section"],
-                columns=4,
+                columns=[1, 2, 3, 4],
                 height="auto",
             )
             metadata_display = gr.JSON(label="Metadata")
