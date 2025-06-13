@@ -271,7 +271,8 @@ class IllustriousAIStudio:
             print("DEBUG: API thread joined.") # DEBUG
 
         print("DEBUG: Exiting application.") # DEBUG
-        force_exit_after_timeout()
+        timer = force_exit_after_timeout()
+        timer.cancel()  # Cancel the timer to prevent forced termination
         sys.exit(0)  # Allow proper cleanup and exit handlers
 
 if __name__ == "__main__":
