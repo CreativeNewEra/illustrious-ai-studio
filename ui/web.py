@@ -813,37 +813,41 @@ def create_gradio_app(state: AppState):
                                             elem_classes=["info-box"]
                                         )
                             if state.model_status["multimodal"]:
-                                with gr.Row():
-                                    with gr.Column():
-                                        input_image = gr.Image(
-                                            label="📁 Upload or Drag & Drop Artwork",
-                                            type="pil",
-                                            elem_classes=["gallery-item"],
-                                            show_download_button=False,
-                                            show_share_button=False,
-                                            container=True,
-                                            sources=["upload", "clipboard"]
-                                        )
-                                        analysis_question = gr.Textbox(
-                                            label="Artistic Inquiry",
-                                            value="Describe this artwork in detail",
-                                            lines=2,
-                                            elem_classes=["textbox"]
-                                        )
-                                        analyze_btn = gr.Button(
-                                            "🔍 Analyze Artwork",
-                                            variant="primary",
-                                            elem_classes=["primary-button"]
-                                        )
-                                    with gr.Column(elem_classes=["analysis-container"]):
-                                        analysis_output = gr.Textbox(
-                                            label="Artistic Analysis",
-                                            interactive=False,
-                                            lines=15,
-                                            show_copy_button=True,
-                                            elem_classes=["textbox"]
-                                        )
-                            else:
+                                with gr.Group(elem_classes=["image-analysis-group"]):
+                                    gr.Markdown(
+                                        "### Image Analysis",
+                                        elem_classes=["section-header"]
+                                    )
+                                    with gr.Row():
+                                        with gr.Column():
+                                            input_image = gr.Image(
+                                                label="📁 Upload or Drag & Drop Artwork",
+                                                type="pil",
+                                                elem_classes=["gallery-item"],
+                                                show_download_button=False,
+                                                show_share_button=False,
+                                                container=True,
+                                                sources=["upload", "clipboard"]
+                                            )
+                                            analysis_question = gr.Textbox(
+                                                label="Artistic Inquiry",
+                                                value="Describe this artwork in detail",
+                                                lines=2,
+                                                elem_classes=["textbox"]
+                                            )
+                                            analyze_btn = gr.Button(
+                                                "🔍 Analyze Artwork",
+                                                variant="primary",
+                                                elem_classes=["primary-button"]
+                                            )
+                                        with gr.Column(elem_classes=["analysis-container"]):
+                                            analysis_output = gr.Textbox(
+                                                label="Artistic Analysis",
+                                                interactive=False,
+                                                lines=15,
+                                                show_copy_button=True,
+                                                elem_classes=["textbox"]
+                                            )
                                 gr.Markdown("## ❌ Multimodal Analysis Unavailable")
                                 gr.Markdown("Please ensure you have a multimodal LLM and mmproj model configured.")
                                 
