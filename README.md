@@ -4,7 +4,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 
 ## 🆕 Latest Improvements
 
--### 🚀 **Automated Setup & Model Management**
+### 🚀 **Automated Setup & Model Management**
 - **One-Command Setup**: `python setup.py` handles everything
 - **Automatic Downloads**: Recommended models downloaded and configured
 - **Smart Configuration**: Auto-updating config.yaml with optimal settings
