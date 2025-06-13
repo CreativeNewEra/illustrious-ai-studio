@@ -159,7 +159,10 @@ def generate_image(
             # Ensure we have a PIL Image
             if not isinstance(image, Image.Image):
                 logger.error(f"Expected PIL Image, got {type(image)}")
-                return None, f"❌ Invalid image type returned: {type(image)}"
+                return None, (
+                    f"❌ Invalid image type returned: {type(image)}. "
+                    "Ensure you are using a compatible SDXL pipeline."
+                )
             
             state.latest_generated_image = image
             if progress_callback:
@@ -204,16 +207,27 @@ def generate_image(
                     
             if progress_callback:
                 progress_callback(steps, steps)
-            return None, f"❌ Generation failed: {e}"
+            return None, (
+                f"❌ Generation failed: {e}. "
+                "Check your model path and GPU memory usage. "
+                "See the README's Logging and Debugging section."
+            )
         except Exception as e:
             logger.error("Image generation failed: %s", e)
             if progress_callback:
                 progress_callback(steps, steps)
-            return None, f"❌ Generation failed: {e}"
+            return None, (
+                f"❌ Generation failed: {e}. "
+                "Check your model path and GPU memory usage. "
+                "See the README's Logging and Debugging section."
+            )
     
     if progress_callback:
         progress_callback(steps, steps)
-    return None, "❌ Generation failed after all retries"
+    return None, (
+        "❌ Generation failed after all retries. "
+        "Check GPU memory or model path and review the README's Logging and Debugging section."
+    )
 
 def _estimate_generation_memory(width: int, height: int, steps: int) -> float:
     """Estimate memory requirements for image generation in GB"""
@@ -369,7 +383,10 @@ def test_model_generation(state: AppState, model_path: str) -> Tuple[bool, str, 
                 state.sdxl_pipe = original_pipe
             return True, "✅ Model test successful", image
         else:
-            return False, f"Generation failed: {status}", None
+            return False, (
+                f"Generation failed: {status}. "
+                "Verify the model path and check GPU memory usage."
+            ), None
             
     except Exception as e:
         logger.error("Model test failed: %s", e)

@@ -94,7 +94,13 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
                 buffered.close()  # Properly close the buffer
             except Exception as e:
                 logger.error(f"Error encoding image to base64: {e}")
-                raise HTTPException(status_code=500, detail=f"❌ Failed to encode image: {str(e)}")
+                raise HTTPException(
+                    status_code=500,
+                    detail=(
+                        f"❌ Failed to encode image: {str(e)}. "
+                        "Check disk space and permissions."
+                    ),
+                )
             
             return {"success": True, "image_base64": img_base64, "message": status_msg}
             
@@ -103,12 +109,21 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
             raise
         except Exception as e:
             logger.error(f"Unexpected error in image generation API: {e}")
-            raise HTTPException(status_code=500, detail=f"❌ Generation failed: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    f"❌ Generation failed: {str(e)}. "
+                    "Check your model path or GPU memory usage."
+                ),
+            )
 
     @app.post("/chat")
     async def mcp_chat(request: ChatRequest, state: AppState = Depends(get_state)):
         if state.ollama_model is None:
-            raise HTTPException(status_code=503, detail="Ollama model not available")
+            raise HTTPException(
+                status_code=503,
+                detail="Ollama model not available. Is the Ollama server running?",
+            )
         messages = [{"role": "user", "content": request.message}]
         response = chat_completion(state, messages, request.temperature, request.max_tokens)
         return {"response": response, "session_id": request.session_id}
@@ -116,12 +131,18 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
     @app.post("/analyze-image")
     async def mcp_analyze_image(request: AnalyzeImageRequest, state: AppState = Depends(get_state)):
         if state.ollama_model is None or not state.model_status["multimodal"]:
-            raise HTTPException(status_code=503, detail="Ollama vision model not available")
+            raise HTTPException(
+                status_code=503,
+                detail="Ollama vision model not available. Start the server or check your config.",
+            )
         try:
             image_data = base64.b64decode(request.image_base64)
             image = Image.open(io.BytesIO(image_data))
         except Exception as e:
-            raise HTTPException(status_code=400, detail=f"Invalid image data: {e}")
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid image data: {e}. Ensure the input is valid base64.",
+            )
         analysis = analyze_image(state, image, request.question)
         return {"analysis": analysis}
 

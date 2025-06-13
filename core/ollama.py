@@ -115,7 +115,10 @@ def switch_ollama_model(state: AppState, name: str) -> bool:
 
 def chat_completion(state: AppState, messages: List[dict], temperature: float = 0.7, max_tokens: int = 256) -> str:
     if not state.ollama_model:
-        return "❌ Ollama model not loaded. Please check your Ollama setup."
+        return (
+            "❌ Ollama model not loaded. Please check your Ollama setup. "
+            "See the Installation section of the README."
+        )
     try:
         data = {
             "model": state.ollama_model,
@@ -128,10 +131,16 @@ def chat_completion(state: AppState, messages: List[dict], temperature: float = 
             result = response.json()
             return result.get("message", {}).get("content", "No response generated")
         logger.error("Ollama API error: %s - %s", response.status_code, response.text)
-        return f"❌ Chat completion failed: {response.status_code}"
+        return (
+            f"❌ Chat completion failed: {response.status_code}. "
+            "Ensure the Ollama server is reachable."
+        )
     except Exception as e:
         logger.error("Ollama completion failed: %s", e)
-        return f"❌ Chat completion failed: {e}"
+        return (
+            f"❌ Chat completion failed: {e}. "
+            "Ensure the Ollama server is running."
+        )
 
 
 def generate_prompt(state: AppState, user_input: str) -> str:
@@ -237,7 +246,13 @@ def analyze_image(state: AppState, image: Image.Image, question: str = "Describe
             result = response.json()
             return result.get("message", {}).get("content", "No analysis generated")
         logger.error("Ollama vision API error: %s - %s", response.status_code, response.text)
-        return f"❌ Analysis failed: {response.status_code}"
+        return (
+            f"❌ Analysis failed: {response.status_code}. "
+            "Ensure the Ollama server is reachable."
+        )
     except Exception as e:
         logger.error("Image analysis failed: %s", e)
-        return f"❌ Analysis failed: {e}"
+        return (
+            f"❌ Analysis failed: {e}. "
+            "Ensure the Ollama server is running."
+        )
