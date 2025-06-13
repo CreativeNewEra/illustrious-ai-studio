@@ -272,6 +272,7 @@ def create_gradio_app(state: AppState):
                         placeholder="Describe what you want to create...",
                         lines=3,
                         elem_id="prompt-box",
+                        value="",  # Initialize with empty string instead of None
                     )
                     
                     # Quick Style Buttons
@@ -290,8 +291,7 @@ def create_gradio_app(state: AppState):
                             btn = gr.Button(
                                 style["label"],
                                 variant="secondary",
-                                size="sm",
-                                tooltip=style["tooltip"]
+                                size="sm"
                             )
                             style_buttons.append(btn)
                         # Assign buttons to named variables for event handlers
@@ -348,8 +348,7 @@ def create_gradio_app(state: AppState):
                                 label="🖼️ Image Resolution",
                                 choices=RESOLUTION_OPTIONS,
                                 value="1024x1024 (Square - High Quality)",
-                                elem_classes=["dropdown"],
-                                tooltip="Select the output image resolution"
+                                elem_classes=["dropdown"]
                             )
                         with gr.Accordion("Advanced", open=False):
                             negative_prompt = gr.Textbox(
@@ -424,7 +423,8 @@ def create_gradio_app(state: AppState):
                     chatbot = gr.Chatbot(
                         height=500,
                         show_copy_button=True,
-                        elem_classes=["chatbot"]
+                        elem_classes=["chatbot"],
+                        type="messages"
                     )
                     with gr.Row():
                         msg = gr.Textbox(
@@ -645,14 +645,12 @@ def create_gradio_app(state: AppState):
                 open_file_btn = gr.Button(
                     "📂 Open File",
                     variant="secondary",
-                    elem_classes=["secondary-button"],
-                    tooltip="Open the selected image file",
+                    elem_classes=["secondary-button"]
                 )
                 copy_path_btn = gr.Button(
                     "📋 Copy Path",
                     variant="secondary",
-                    elem_classes=["secondary-button"],
-                    tooltip="Copy the selected image path",
+                    elem_classes=["secondary-button"]
                 )
             action_status = gr.Textbox(
                 label="Action Status",
@@ -970,7 +968,7 @@ def create_gradio_app(state: AppState):
         
         # Event Handlers
         theme_selector.change(
-            fn=lambda m: save_theme_pref(m.lower()),
+            fn=lambda m: save_theme_pref(m.lower()) if m else None,
             inputs=theme_selector,
             outputs=[],
             js="(mode) => { if(mode === 'Dark'){ document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } }"
@@ -1012,44 +1010,146 @@ def create_gradio_app(state: AppState):
         
         # Updated generate button to use wrapper and update recent prompts
         def generate_and_update_history(p, n, st, g, se, save_flag, res, auto_flag, progress=gr.Progress()):
-            if auto_flag:
-                analysis = analyze_prompt(p)
-                st = analysis.get("steps", st)
-                g = analysis.get("guidance", g)
-                width = analysis.get("width", 1024)
-                height = analysis.get("height", 1024)
-            else:
-                width, height = parse_resolution(res)
-            
-            # Generate the image with resolution
-            def cb(step, total):
-                progress(step/total, desc=f"{step}/{total}")
+            # Enhanced UI parameter validation
+            try:
+                # Debug logging to understand what's being passed
+                logger.info(f"UI: Received prompt parameter: {repr(p)} (type: {type(p)})")
+                
+                # More lenient prompt validation - only check for truly empty prompts
+                if p is None:
+                    return (
+                        None, 
+                        "❌ Error: Prompt cannot be None. Please provide a descriptive text prompt.",
+                        gr.update(),
+                        gr.update(visible=False)
+                    )
+                
+                # Convert to string if needed
+                if not isinstance(p, str):
+                    try:
+                        p = str(p)
+                    except Exception as e:
+                        return (
+                            None,
+                            f"❌ Error: Cannot convert prompt to string: {e}",
+                            gr.update(),
+                            gr.update(visible=False)
+                        )
+                
+                # Clean the prompt and check if empty
+                p = p.strip()
+                if not p:
+                    return (
+                        None, 
+                        "❌ Error: Prompt cannot be empty. Please provide a descriptive text prompt.",
+                        gr.update(),
+                        gr.update(visible=False)
+                    )
+                
+                logger.info(f"UI: Cleaned prompt: '{p[:50]}...' (length: {len(p)})")
+                
+                # Validate negative prompt
+                if n is None:
+                    n = ""
+                elif not isinstance(n, str):
+                    logger.warning(f"Invalid negative prompt type: {type(n)}, using empty string")
+                    n = ""
+                n = n.strip()
+                
+                if auto_flag:
+                    analysis = analyze_prompt(p)
+                    st = analysis.get("steps", st) if analysis else st
+                    g = analysis.get("guidance", g) if analysis else g
+                    width = analysis.get("width", 1024) if analysis else 1024
+                    height = analysis.get("height", 1024) if analysis else 1024
+                else:
+                    width, height = parse_resolution(res)
+                
+                # Enhanced parameter validation and type conversion
+                try:
+                    st = int(st) if st is not None else 30
+                    if st <= 0 or st > 200:
+                        logger.warning(f"UI: Steps {st} out of range, using 30")
+                        st = 30
+                except (ValueError, TypeError):
+                    logger.warning(f"UI: Invalid steps '{st}', using 30")
+                    st = 30
+                
+                try:
+                    g = float(g) if g is not None else 7.5
+                    if g <= 0 or g > 50:
+                        logger.warning(f"UI: Guidance {g} out of range, using 7.5")
+                        g = 7.5
+                except (ValueError, TypeError):
+                    logger.warning(f"UI: Invalid guidance '{g}', using 7.5")
+                    g = 7.5
+                
+                try:
+                    width = int(width) if width is not None else 1024
+                    height = int(height) if height is not None else 1024
+                    if width <= 0 or width > 2048 or height <= 0 or height > 2048:
+                        logger.warning(f"UI: Dimensions {width}x{height} out of range, using 1024x1024")
+                        width, height = 1024, 1024
+                except (ValueError, TypeError):
+                    logger.warning(f"UI: Invalid dimensions '{width}x{height}', using 1024x1024")
+                    width, height = 1024, 1024
+                
+                # Validate and sanitize seed parameter
+                try:
+                    if se is None:
+                        se = RANDOM_SEED  # Use random seed
+                    elif se == "" or se == "":
+                        se = RANDOM_SEED  # Empty string means random
+                    else:
+                        se = int(float(se))  # Convert to int, handling potential float strings
+                        # Clamp to valid range
+                        if se < -1 or se >= 2**32:
+                            logger.warning(f"UI: Seed {se} out of range, using random seed")
+                            se = RANDOM_SEED
+                except (ValueError, TypeError) as e:
+                    logger.warning(f"UI: Invalid seed '{se}': {e}, using random seed")
+                    se = RANDOM_SEED
+                
+                logger.info(f"UI: Validated parameters - prompt='{p[:50]}...', steps={st}, guidance={g}, seed={se}, dimensions={width}x{height}")
+                
+                # Generate the image with resolution
+                def cb(step, total):
+                    progress(step/total, desc=f"{step}/{total}")
 
-            image, status = generate_image(state, p, n, st, g, se, save_flag, width, height, progress_callback=cb)
-            progress(1)
-            
-            # Store parameters for regenerate functionality if generation was successful
-            if image is not None:
-                state.last_generation_params = {
-                    "prompt": p,
-                    "negative_prompt": n,
-                    "steps": st,
-                    "guidance": g,
-                    "seed": se,
-                    "save_gallery": save_flag,
-                    "resolution": res,
-                    "width": width,
-                    "height": height
-                }
-            
-            # Add to recent prompts if generation was successful and prompt is not empty
-            if p and p.strip() and image is not None:
-                updated_prompts = add_to_recent_prompts(p.strip())
-                regenerate_visible = True
-                return image, status, gr.update(choices=updated_prompts), gr.update(visible=regenerate_visible)
-            else:
-                regenerate_visible = image is not None and state.last_generation_params is not None
-                return image, status, gr.update(), gr.update(visible=regenerate_visible)
+                image, status = generate_image(state, p, n, st, g, se, save_flag, width, height, progress_callback=cb)
+                progress(1)
+                
+                # Store parameters for regenerate functionality if generation was successful
+                if image is not None:
+                    state.last_generation_params = {
+                        "prompt": p,
+                        "negative_prompt": n,
+                        "steps": st,
+                        "guidance": g,
+                        "seed": se,
+                        "save_gallery": save_flag,
+                        "resolution": res,
+                        "width": width,
+                        "height": height
+                    }
+                
+                # Add to recent prompts if generation was successful and prompt is not empty
+                if p and p.strip() and image is not None:
+                    updated_prompts = add_to_recent_prompts(p.strip())
+                    regenerate_visible = True
+                    return image, status, gr.update(choices=updated_prompts), gr.update(visible=regenerate_visible)
+                else:
+                    regenerate_visible = image is not None and state.last_generation_params is not None
+                    return image, status, gr.update(), gr.update(visible=regenerate_visible)
+                    
+            except Exception as e:
+                logger.error(f"UI parameter validation failed: {e}")
+                return (
+                    None,
+                    f"❌ Error: Parameter validation failed: {str(e)}. Please check your inputs and try again.",
+                    gr.update(),
+                    gr.update(visible=False)
+                )
         
         # Regenerate function
         def regenerate_image(progress=gr.Progress()):
@@ -1135,7 +1235,7 @@ def create_gradio_app(state: AppState):
         # Reset controls handler
         def reset_generation():
             state.last_generation_params = None
-            defaults = CONFIG.generation_defaults
+            defaults = CONFIG.generation_defaults or {}
             steps_def = defaults.get("steps", 30)
             guidance_def = defaults.get("guidance_scale", 7.5)
             width_def = defaults.get("width", 1024)
@@ -1719,11 +1819,15 @@ def create_gradio_app(state: AppState):
 def parse_resolution(resolution_string):
     """Parse resolution string to width and height."""
     try:
+        # Handle None or empty string
+        if not resolution_string:
+            return 1024, 1024
+        
         # Extract resolution from strings like "1024x1024 (Square - High Quality)"
         resolution_part = resolution_string.split(' ')[0]  # Get "1024x1024"
         width, height = map(int, resolution_part.split('x'))
         return width, height
-    except (ValueError, IndexError):
+    except (ValueError, IndexError, AttributeError):
         # Default to 1024x1024 if parsing fails
         return 1024, 1024
 

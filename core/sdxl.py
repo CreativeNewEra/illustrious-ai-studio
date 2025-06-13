@@ -9,7 +9,7 @@ from typing import Optional, Tuple, List, Dict
 
 from PIL import Image
 import torch
-from diffusers import StableDiffusionXLPipeline
+from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import StableDiffusionXLPipeline
 
 from .memory import clear_gpu_memory
 from .memory_guardian import get_memory_guardian
@@ -94,6 +94,104 @@ def generate_image(
     progress_callback: Optional[callable] = None,
 ) -> Tuple[Optional[Image.Image], str]:
     """Generate an image using SDXL with automatic OOM prevention."""
+    # Comprehensive parameter validation and sanitization FIRST
+    try:
+        # Validate and sanitize prompt - this is critical!
+        if prompt is None:
+            return None, "❌ Generation failed: Prompt cannot be None. Please provide a valid text prompt."
+        
+        if not isinstance(prompt, str):
+            try:
+                prompt = str(prompt)
+            except Exception as e:
+                return None, f"❌ Generation failed: Cannot convert prompt to string: {e}"
+        
+        prompt = prompt.strip()
+        if not prompt:
+            return None, "❌ Generation failed: Prompt cannot be empty. Please provide a descriptive text prompt."
+        
+        # Validate and sanitize negative prompt
+        if negative_prompt is None:
+            negative_prompt = ""
+        elif not isinstance(negative_prompt, str):
+            try:
+                negative_prompt = str(negative_prompt)
+            except Exception:
+                logger.warning(f"Invalid negative_prompt '{negative_prompt}', using empty string")
+                negative_prompt = ""
+        negative_prompt = negative_prompt.strip()
+        
+        # Validate and sanitize steps parameter
+        try:
+            if steps is None:
+                steps = 30
+            steps = int(steps)
+            if steps <= 0 or steps > 200:
+                logger.warning(f"Steps {steps} out of valid range (1-200), using 30")
+                steps = 30
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Invalid steps parameter '{steps}': {e}, using 30")
+            steps = 30
+        
+        # Validate and sanitize guidance parameter
+        try:
+            if guidance is None:
+                guidance = 7.5
+            guidance = float(guidance)
+            if guidance <= 0 or guidance > 50:
+                logger.warning(f"Guidance {guidance} out of valid range (0-50), using 7.5")
+                guidance = 7.5
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Invalid guidance parameter '{guidance}': {e}, using 7.5")
+            guidance = 7.5
+        
+        # Validate and sanitize dimensions
+        try:
+            if width is None:
+                width = 1024
+            if height is None:
+                height = 1024
+            width = int(width)
+            height = int(height)
+            if width <= 0 or width > 2048 or height <= 0 or height > 2048:
+                logger.warning(f"Dimensions {width}x{height} out of valid range, using 1024x1024")
+                width, height = 1024, 1024
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Invalid dimensions '{width}x{height}': {e}, using 1024x1024")
+            width, height = 1024, 1024
+        
+        # Validate and sanitize seed parameter
+        try:
+            if seed is None:
+                seed = -1  # Use random seed
+            elif not isinstance(seed, (int, float)):
+                # Try to convert to int, fallback to random if invalid
+                try:
+                    seed = int(seed)
+                except (ValueError, TypeError):
+                    logger.warning(f"Invalid seed value '{seed}', using random seed instead")
+                    seed = -1
+            else:
+                seed = int(seed)  # Ensure it's an integer
+            
+            # Clamp seed to valid range for PyTorch
+            if seed != -1 and (seed < 0 or seed >= 2**32):
+                logger.warning(f"Seed {seed} out of valid range, using random seed instead")
+                seed = -1
+        except Exception as e:
+            logger.warning(f"Error processing seed parameter: {e}, using random seed")
+            seed = -1
+        
+        # Log validated parameters for debugging
+        logger.info(f"Generating image with validated parameters: prompt='{prompt[:50]}...', "
+                   f"negative_prompt='{negative_prompt[:30]}...', steps={steps}, guidance={guidance}, "
+                   f"seed={seed}, dimensions={width}x{height}")
+        
+    except Exception as e:
+        logger.error(f"Parameter validation failed: {e}")
+        return None, f"❌ Generation failed: Parameter validation error: {e}"
+    
+    # Check if model is loaded AFTER parameter validation
     if not state.sdxl_pipe:
         return None, "❌ SDXL model not loaded. Please check your model path."
     
@@ -122,10 +220,15 @@ def generate_image(
         try:
             device = "cuda" if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available() else "cpu"
             generator = torch.Generator(device=device)
-            if seed != -1:
-                generator.manual_seed(seed)
+            
+            # Handle seed generation with proper validation
+            if seed == -1:
+                # Generate random seed
+                actual_seed = generator.initial_seed()
             else:
-                seed = generator.initial_seed()
+                # Use provided seed
+                generator.manual_seed(seed)
+                actual_seed = seed
             
             # Pre-generation memory check
             stats = guardian.get_memory_stats()
@@ -176,7 +279,7 @@ def generate_image(
                         "negative_prompt": negative_prompt,
                         "steps": steps,
                         "guidance": guidance,
-                        "seed": seed,
+                        "seed": actual_seed,
                         "width": width,
                         "height": height,
                         "adapted_settings": (width != 1024 or height != 1024 or steps != 30)
@@ -184,7 +287,7 @@ def generate_image(
                 )
             clear_gpu_memory()
             
-            success_msg = f"✅ Image generated successfully! Seed: {seed}"
+            success_msg = f"✅ Image generated successfully! Seed: {actual_seed}"
             if width != 1024 or height != 1024:
                 success_msg += f" (Resolution: {width}x{height})"
             if steps != 30:

@@ -70,7 +70,36 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
         if state.sdxl_pipe is None:
             raise HTTPException(status_code=503, detail="❌ SDXL model not loaded. Please check your model path.")
         
+        # Enhanced API parameter validation
         try:
+            # Validate prompt at API level
+            if not request.prompt or not request.prompt.strip():
+                raise HTTPException(
+                    status_code=400, 
+                    detail="❌ Prompt cannot be empty. Please provide a valid text prompt."
+                )
+            
+            # Validate parameter ranges at API level
+            if request.steps <= 0 or request.steps > 200:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"❌ Invalid steps value: {request.steps}. Must be between 1 and 200."
+                )
+            
+            if request.guidance <= 0 or request.guidance > 50:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"❌ Invalid guidance value: {request.guidance}. Must be between 0.1 and 50."
+                )
+            
+            if request.seed < -1 or request.seed >= 2**32:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"❌ Invalid seed value: {request.seed}. Must be -1 (random) or between 0 and {2**32-1}."
+                )
+            
+            logger.info(f"API: Generating image with prompt='{request.prompt[:50]}...', steps={request.steps}, guidance={request.guidance}, seed={request.seed}")
+            
             # Generate image with improved error handling
             image, status_msg = generate_image(
                 state,
