@@ -955,6 +955,20 @@ def create_gradio_app(state: AppState):
                                 - `POST /analyze-image` - Analyze images (if multimodal available)
                                 """
                             )
+
+        with gr.Row():
+            live_status = gr.HTML(
+                get_model_status(state).replace("\n", "<br>")
+                + "<br>"
+                + get_memory_stats_markdown(state).replace("\n", "<br>")
+            )
+
+        def update_live_status():
+            return (
+                get_model_status(state).replace("\n", "<br>")
+                + "<br>"
+                + get_memory_stats_markdown(state).replace("\n", "<br>")
+            )
                         
         # Recent prompts management
         RECENT_PROMPTS_FILE = TEMP_DIR / "recent_prompts.json"
@@ -1401,6 +1415,10 @@ def create_gradio_app(state: AppState):
                 inputs=None,
                 outputs=[gallery_component, tag_filter],
             ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
+            ).then(
                 js=hide_loading_js
             )
         except TypeError:
@@ -1412,6 +1430,10 @@ def create_gradio_app(state: AppState):
                 fn=refresh_gallery,
                 inputs=None,
                 outputs=[gallery_component, tag_filter],
+            ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
             )
 
         try:
@@ -1425,6 +1447,10 @@ def create_gradio_app(state: AppState):
                 inputs=None,
                 outputs=[gallery_component, tag_filter],
             ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
+            ).then(
                 js=hide_loading_js
             )
         except TypeError:
@@ -1436,6 +1462,10 @@ def create_gradio_app(state: AppState):
                 fn=refresh_gallery,
                 inputs=None,
                 outputs=[gallery_component, tag_filter],
+            ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
             )
 
         # Reset controls handler
@@ -1576,11 +1606,35 @@ def create_gradio_app(state: AppState):
                 return result_history, empty_msg, get_latest_image(state)
             return result_history, empty_msg, gr.update(value=None)
 
-        send_btn.click(fn=chat_wrapper_with_image_update, inputs=[msg, chatbot], outputs=[chatbot, msg, output_image])
-        msg.submit(fn=chat_wrapper_with_image_update, inputs=[msg, chatbot], outputs=[chatbot, msg, output_image])
+        send_btn.click(
+            fn=chat_wrapper_with_image_update,
+            inputs=[msg, chatbot],
+            outputs=[chatbot, msg, output_image],
+        ).then(
+            fn=update_live_status,
+            inputs=None,
+            outputs=[live_status],
+        )
+        msg.submit(
+            fn=chat_wrapper_with_image_update,
+            inputs=[msg, chatbot],
+            outputs=[chatbot, msg, output_image],
+        ).then(
+            fn=update_live_status,
+            inputs=None,
+            outputs=[live_status],
+        )
         clear_btn.click(lambda: ([], ""), outputs=[chatbot, msg])
         if state.model_status["multimodal"]:
-            analyze_btn.click(fn=lambda img, q: analyze_image(state, img, q), inputs=[input_image, analysis_question], outputs=analysis_output)
+            analyze_btn.click(
+                fn=lambda img, q: analyze_image(state, img, q),
+                inputs=[input_image, analysis_question],
+                outputs=analysis_output,
+            ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
+            )
         
         # Model Selection Event Handlers
         try:
@@ -1877,6 +1931,10 @@ def create_gradio_app(state: AppState):
                 outputs=[status_display, config_display, memory_display, monitor_status],
                 js=show_loading_js,
             ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
+            ).then(
                 js=hide_loading_js
             )
         except TypeError:
@@ -1884,6 +1942,10 @@ def create_gradio_app(state: AppState):
                 fn=do_switch,
                 inputs=[sd_model_input, ollama_model_input],
                 outputs=[status_display, config_display, memory_display, monitor_status],
+            ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
             )
         refresh_btn.click(
             fn=lambda: (
@@ -1892,6 +1954,10 @@ def create_gradio_app(state: AppState):
                 get_monitor_status(),
             ),
             outputs=[status_display, memory_display, monitor_status],
+        ).then(
+            fn=update_live_status,
+            inputs=None,
+            outputs=[live_status],
         )
 
         def load_selected_models(load_s, load_o, load_v):
@@ -1912,6 +1978,10 @@ def create_gradio_app(state: AppState):
                 outputs=[status_display, memory_display, monitor_status],
                 js=show_loading_js,
             ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
+            ).then(
                 js=hide_loading_js
             )
         except TypeError:
@@ -1919,25 +1989,45 @@ def create_gradio_app(state: AppState):
                 fn=load_selected_models,
                 inputs=[sdxl_checkbox, ollama_checkbox, vision_checkbox],
                 outputs=[status_display, memory_display, monitor_status],
+            ).then(
+                fn=update_live_status,
+                inputs=None,
+                outputs=[live_status],
             )
 
         start_guardian_btn.click(
             fn=start_guardian_ui,
             outputs=[monitor_status, memory_display],
+        ).then(
+            fn=update_live_status,
+            inputs=None,
+            outputs=[live_status],
         )
         stop_guardian_btn.click(
             fn=stop_guardian_ui,
             outputs=[monitor_status, memory_display],
+        ).then(
+            fn=update_live_status,
+            inputs=None,
+            outputs=[live_status],
         )
         apply_profile_btn.click(
             fn=set_profile_ui,
             inputs=profile_dropdown,
             outputs=memory_display,
+        ).then(
+            fn=update_live_status,
+            inputs=None,
+            outputs=[live_status],
         )
         apply_thresholds_btn.click(
             fn=set_thresholds_ui,
             inputs=[low_slider, med_slider, high_slider, crit_slider],
             outputs=memory_display,
+        ).then(
+            fn=update_live_status,
+            inputs=None,
+            outputs=[live_status],
         )
 
         refresh_timer.tick(
