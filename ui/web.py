@@ -958,7 +958,7 @@ def create_gradio_app(state: AppState):
                 defaults.get("negative_prompt", "blurry, low quality, text, watermark, deformed"),
                 steps_def,
                 guidance_def,
-                -1,
+                RANDOM_SEED,
                 resolution_def,
                 gr.update(visible=False)
             )
