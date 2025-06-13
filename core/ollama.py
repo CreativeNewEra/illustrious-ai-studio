@@ -1,3 +1,43 @@
+"""
+Illustrious AI Studio - Ollama Integration
+
+This module provides comprehensive integration with Ollama for language model
+functionality including chat, text generation, and multimodal capabilities.
+
+KEY FEATURES:
+- Chat completion with conversation history
+- AI-powered prompt generation for image creation
+- Image analysis and multimodal interactions
+- Model management and switching
+- Persistent conversation storage
+- Tool calling and function integration
+- Error handling and retry logic
+
+CHAT FUNCTIONALITY:
+- Multi-session conversation management
+- Persistent chat history across sessions
+- Configurable response parameters (temperature, max tokens)
+- Context-aware responses with memory
+- Session isolation for concurrent users
+
+MULTIMODAL FEATURES:
+- Image upload and analysis
+- Visual question answering
+- Image description generation
+- Content extraction from images
+- Integration with vision-language models
+
+PROMPT GENERATION:
+- AI-assisted prompt improvement
+- Style and quality enhancement
+- Creative prompt suggestions
+- Technical parameter recommendations
+- Integration with SDXL generation workflow
+
+The module handles Ollama server communication, error recovery,
+and provides a clean interface for all language model operations.
+"""
+
 import base64
 import io
 import json
@@ -15,38 +55,110 @@ from .mcp_tools import call_tool
 
 logger = logging.getLogger(__name__)
 
+# ==================================================================
+# CONSTANTS AND CONFIGURATION
+# ==================================================================
+
+# File for persistent chat history storage
 CHAT_HISTORY_FILE = Path(TEMP_DIR) / "chat_history.json"
 
 
+# ==================================================================
+# CHAT HISTORY MANAGEMENT
+# ==================================================================
+
 def load_chat_history(state: AppState) -> None:
-    """Load chat history from disk into the application state."""
+    """
+    Load persistent chat history from disk into application state.
+    
+    Restores all conversation sessions and their message history
+    from the JSON file storage. This allows conversations to persist
+    across application restarts.
+    
+    Args:
+        state: Application state to populate with chat history
+        
+    Notes:
+        - Handles file corruption gracefully
+        - Creates empty history if file doesn't exist
+        - Converts stored lists back to tuples for consistency
+    """
     try:
         if CHAT_HISTORY_FILE.exists():
             with open(CHAT_HISTORY_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            
+            # Convert loaded data to proper format
             for session_id, history in data.items():
                 state.chat_history_store[session_id] = [tuple(msg) for msg in history]
+                
+            logger.info(f"Loaded chat history for {len(data)} sessions")
+            
     except Exception as e:
         logger.error("Failed to load chat history: %s", e)
+        # Continue with empty history rather than crashing
 
 
 def save_chat_history(state: AppState) -> None:
-    """Persist chat history from the application state to disk."""
+    """
+    Persist current chat history from application state to disk.
+    
+    Saves all conversation sessions to a JSON file for persistence
+    across application restarts. Called periodically and on shutdown.
+    
+    Args:
+        state: Application state containing chat history
+        
+    Notes:
+        - Creates directory if it doesn't exist
+        - Converts tuples to lists for JSON serialization
+        - Uses UTF-8 encoding for international characters
+        - Includes proper error handling
+    """
     try:
+        # Ensure directory exists
         CHAT_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Convert to JSON-serializable format
         serializable = {
             sid: [list(msg) for msg in history]
             for sid, history in state.chat_history_store.items()
         }
+        
+        # Write to file with proper formatting
         with open(CHAT_HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(serializable, f, indent=2, ensure_ascii=False)
+            
+        logger.debug(f"Saved chat history for {len(serializable)} sessions")
+        
     except Exception as e:
         logger.error("Failed to save chat history: %s", e)
 
 
+# ==================================================================
+# OLLAMA MODEL INITIALIZATION AND MANAGEMENT
+# ==================================================================
 
 def init_ollama(state: AppState) -> Optional[str]:
-    """Verify Ollama is accessible and return the selected model name."""
+    """
+    Initialize Ollama connection and verify model availability.
+    
+    Tests connectivity to the Ollama server, verifies that required
+    models are available, and updates the application state with
+    model information.
+    
+    Args:
+        state: Application state to update with Ollama status
+        
+    Returns:
+        Optional[str]: Name of the initialized model, or None if failed
+        
+    Notes:
+        - Checks both language and vision models
+        - Updates model status flags in application state
+        - Provides detailed error reporting for troubleshooting
+        - Handles network timeouts and connection errors
+    """
     try:
         response = requests.get(f"{CONFIG.ollama_base_url}/api/tags", timeout=5)
         if response.status_code != 200:

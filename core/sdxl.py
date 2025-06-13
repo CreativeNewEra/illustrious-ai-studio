@@ -1,3 +1,44 @@
+"""
+Illustrious AI Studio - Stable Diffusion XL (SDXL) Integration
+
+This module provides comprehensive SDXL model management and image generation
+capabilities for the AI Studio. It handles:
+
+CORE FEATURES:
+- SDXL model loading and initialization
+- High-quality image generation with advanced parameters
+- Model switching and management
+- Gallery integration and metadata handling
+- Project-based image organization
+- Memory optimization and cleanup
+- Batch generation support
+
+IMAGE GENERATION:
+- Text-to-image generation with prompts
+- Negative prompting for content exclusion
+- Adjustable generation parameters (steps, guidance, etc.)
+- Multiple resolution presets
+- Seed control for reproducible results
+- Automatic metadata embedding
+
+MODEL MANAGEMENT:
+- Support for multiple SDXL models
+- Hot-swapping between models
+- Model validation and health checks
+- Performance testing and benchmarking
+- Memory usage optimization
+
+GALLERY FEATURES:
+- Automatic image saving with metadata
+- Project-based organization
+- Thumbnail generation
+- Batch operations
+- Export/import functionality
+
+The module is designed to be robust, handling errors gracefully and
+providing detailed logging for troubleshooting model issues.
+"""
+
 import json
 import logging
 import os
@@ -19,34 +60,77 @@ from .config import CONFIG
 logger = logging.getLogger(__name__)
 
 
+# ==================================================================
+# DIRECTORY STRUCTURE AND PATHS
+# ==================================================================
+
+# Temporary directory for processing and cache
 TEMP_DIR = Path(tempfile.gettempdir()) / "illustrious_ai"
 TEMP_DIR.mkdir(exist_ok=True)
+
+# Gallery directory for saved images
 GALLERY_DIR = Path(CONFIG.gallery_dir)
+
+# Projects directory for workspace organization
 PROJECTS_DIR = Path("projects")
 PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# ==================================================================
+# MODEL INITIALIZATION AND MANAGEMENT
+# ==================================================================
 
 def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
-    """Load the Stable Diffusion XL model."""
+    """
+    Initialize and load the Stable Diffusion XL model.
+    
+    This function handles the complete SDXL model loading process:
+    - Validates model file existence and accessibility
+    - Loads the model with appropriate precision settings
+    - Configures GPU acceleration if available
+    - Updates application state with model instance
+    - Handles errors gracefully with detailed logging
+    
+    Args:
+        state: Application state to store the loaded model
+        
+    Returns:
+        Optional[StableDiffusionXLPipeline]: Loaded pipeline instance,
+                                            or None if loading failed
+    
+    Notes:
+        - Model loading can take 1-2 minutes depending on hardware
+        - Requires ~6GB of GPU memory for optimal performance
+        - Falls back to CPU if GPU unavailable (much slower)
+        - Uses float16 precision for memory efficiency
+    """
     try:
+        # Validate model file exists
         if not os.path.exists(CONFIG.sd_model):
-            logger.error("SDXL model not found: %s", CONFIG.sd_model)
+            logger.error("SDXL model file not found: %s", CONFIG.sd_model)
             return None
-        logger.info("Loading Stable Diffusion XL model...")
+            
+        logger.info("Loading Stable Diffusion XL model from: %s", CONFIG.sd_model)
+        
+        # Load model with optimized settings
         pipe = StableDiffusionXLPipeline.from_single_file(
             CONFIG.sd_model,
-            torch_dtype=torch.float16,
-            variant="fp16",
-            use_safetensors=True,
+            torch_dtype=torch.float16,    # Use half precision for memory efficiency
+            variant="fp16",               # Load FP16 variant if available
+            use_safetensors=True,        # Use safetensors format for security
         )
+        
+        # Configure device placement
         if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available():
             pipe.to("cuda")
-            logger.info("SDXL loaded on GPU")
+            logger.info("✅ SDXL model loaded successfully on GPU")
         else:
-            logger.warning("GPU not available, using CPU")
+            logger.warning("⚠️ GPU not available, SDXL will use CPU (significantly slower)")
+            
+        # Update application state
         state.sdxl_pipe = pipe
         state.model_status["sdxl"] = True
+        
         return pipe
     except Exception as e:
         logger.error("Failed to initialize SDXL: %s", e)

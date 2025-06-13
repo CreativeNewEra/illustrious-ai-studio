@@ -1,3 +1,36 @@
+"""
+Illustrious AI Studio - FastAPI Server
+
+This module provides a RESTful API interface for the AI Studio functionality,
+implementing the Model Context Protocol (MCP) for seamless integration with
+external applications and services.
+
+KEY FEATURES:
+- Image generation endpoints with full parameter control
+- Chat completion API with conversation history
+- Image analysis and multimodal interactions  
+- Model management and switching capabilities
+- System status and health monitoring
+- Memory and resource monitoring
+- Batch processing support
+
+API ENDPOINTS:
+- POST /generate-image: Create images with SDXL models
+- POST /chat: Interactive chat with language models
+- POST /analyze-image: Analyze uploaded images
+- GET /models: List available models and status
+- POST /switch-models: Change active models
+- GET /health: System health and status check
+- GET /memory: Memory usage statistics
+
+The API is designed to be:
+- RESTful and standards-compliant
+- Fully documented with OpenAPI/Swagger
+- Compatible with Model Context Protocol
+- Secure with proper error handling
+- Scalable for concurrent requests
+"""
+
 import base64
 import io
 import logging
@@ -6,8 +39,12 @@ from pydantic import BaseModel
 from PIL import Image
 import torch
 
+# ==================================================================
+# CORE FUNCTIONALITY IMPORTS
+# ==================================================================
+
 from core import sdxl, ollama
-from core.sdxl import generate_image
+from core.sdxl import generate_image  
 from core.ollama import chat_completion, analyze_image
 from core.state import AppState
 from core.config import CONFIG
@@ -16,36 +53,66 @@ from core.memory_guardian import get_memory_guardian
 logger = logging.getLogger(__name__)
 
 
+# ==================================================================
+# REQUEST/RESPONSE MODELS
+# ==================================================================
+
 class GenerateImageRequest(BaseModel):
-    prompt: str
-    negative_prompt: str = ""
-    steps: int = 30
-    guidance: float = 7.5
-    seed: int = -1
+    """Request model for image generation endpoint."""
+    prompt: str                    # Text description of desired image
+    negative_prompt: str = ""      # What to avoid in the image  
+    steps: int = 30               # Number of denoising steps (quality vs speed)
+    guidance: float = 7.5         # How closely to follow the prompt
+    seed: int = -1                # Random seed (-1 for random)
 
 
 class ChatRequest(BaseModel):
-    message: str
-    session_id: str = "default"
-    temperature: float = 0.7
-    max_tokens: int = 256
+    """Request model for chat completion endpoint."""
+    message: str                   # User's message/question
+    session_id: str = "default"   # Session identifier for conversation history
+    temperature: float = 0.7      # Response creativity (0.0-1.0)
+    max_tokens: int = 256         # Maximum response length
 
 
 class AnalyzeImageRequest(BaseModel):
-    image_base64: str
-    question: str = "Describe this image in detail"
+    """Request model for image analysis endpoint."""
+    image_base64: str                                # Base64-encoded image data
+    question: str = "Describe this image in detail" # Analysis question/prompt
 
 
 class SwitchModelsRequest(BaseModel):
-    sd_model: str | None = None
-    ollama_model: str | None = None
+    """Request model for model switching endpoint."""
+    sd_model: str | None = None      # New SDXL model to load
+    ollama_model: str | None = None  # New Ollama model to use
 
+
+# ==================================================================
+# FASTAPI APPLICATION FACTORY
+# ==================================================================
 
 def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
-    app = FastAPI(title="Illustrious AI MCP Server", version="1.0.0")
+    """
+    Create and configure the FastAPI application instance.
+    
+    Args:
+        state: Shared application state container
+        auto_load: Whether to initialize models automatically
+        
+    Returns:
+        FastAPI: Configured FastAPI application
+    """
+    # Create FastAPI app with metadata
+    app = FastAPI(
+        title="Illustrious AI MCP Server",
+        version="1.0.0",
+        description="AI Studio API providing image generation, chat, and analysis capabilities"
+    )
+    
+    # Store application state for dependency injection
     app.state.app_state = state
 
     def get_state(request: Request) -> AppState:
+        """Dependency to inject application state into endpoints."""
         return request.app.state.app_state
 
     @app.on_event("startup")

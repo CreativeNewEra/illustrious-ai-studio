@@ -1,3 +1,39 @@
+"""
+Illustrious AI Studio - Web User Interface
+
+This module creates and manages the main Gradio-based web interface for the AI Studio.
+It provides a comprehensive UI for:
+
+CORE FEATURES:
+- Image generation with SDXL models
+- Interactive chat with Ollama language models
+- Image analysis and multimodal interactions
+- Gallery management and organization
+- Project workspace management
+- Model switching and management
+- Memory monitoring and optimization
+
+UI COMPONENTS:
+- Image Generation Tab: Main creation interface with advanced controls
+- Chat Tab: Conversational AI interface with history
+- Gallery Tab: Image browsing, filtering, and management
+- Model Management Tab: Switch models, monitor status, run tests
+- Memory Monitor Tab: Real-time resource monitoring
+- Settings Tab: Configuration and preferences
+
+TECHNICAL FEATURES:
+- Real-time status updates and progress indicators
+- Responsive design with custom CSS styling
+- Theme switching (dark/light modes)
+- Keyboard shortcuts and accessibility features
+- File drag-and-drop support
+- Export/import functionality for projects
+- Advanced filtering and search capabilities
+
+The interface is built using Gradio's component system and includes custom
+JavaScript for enhanced interactivity and user experience.
+"""
+
 import json
 import logging
 import uuid
@@ -9,55 +45,121 @@ import shutil
 
 import gradio as gr
 
-from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl, get_available_models, get_current_model_info, test_model_generation, switch_sdxl_model, PROJECTS_DIR
+# ==================================================================
+# CORE FUNCTIONALITY IMPORTS
+# ==================================================================
+
+# Image generation and model management
+from core.sdxl import (
+    generate_image, 
+    TEMP_DIR, 
+    get_latest_image, 
+    init_sdxl, 
+    get_available_models, 
+    get_current_model_info, 
+    test_model_generation, 
+    switch_sdxl_model, 
+    PROJECTS_DIR
+)
+
+# Configuration and state management
 from core.config import CONFIG
+from core.state import AppState
+
+# Chat and language model functionality  
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core import sdxl, ollama
+
+# Memory and system monitoring
 from core.memory import get_model_status, get_memory_stats_markdown, get_memory_stats_wrapper
 from core.memory_guardian import (
     start_memory_guardian,
-    stop_memory_guardian,
+    stop_memory_guardian, 
     get_memory_guardian,
 )
-from core.state import AppState
+
+# Additional UI utilities
 from core.prompt_templates import template_manager
 from core.prompt_analyzer import analyze_prompt
 from core.gallery_filters import load_gallery_filter, save_gallery_filter
 
+# ==================================================================
+# CONSTANTS AND CONFIGURATION
+# ==================================================================
+
 logger = logging.getLogger(__name__)
 
+# Theme preference storage
 THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
 
 # Special value representing a random seed for image generation
 RANDOM_SEED = -1
 
-# Available image resolutions for the dropdown
+# Available image resolutions for the generation interface
 RESOLUTION_OPTIONS = [
-    "512x512 (Square - Fast)",
-    "768x768 (Square - Balanced)",
-    "1024x1024 (Square - High Quality)",
-    "768x512 (Landscape)",
-    "512x768 (Portrait)",
-    "1024x768 (Landscape HD)",
-    "768x1024 (Portrait HD)",
+    "512x512 (Square - Fast)",        # Quick generation for testing
+    "768x768 (Square - Balanced)",    # Good balance of quality and speed
+    "1024x1024 (Square - High Quality)",  # Full quality square images
+    "768x512 (Landscape)",            # Standard landscape format
+    "512x768 (Portrait)",             # Standard portrait format  
+    "1024x768 (Landscape HD)",        # High definition landscape
+    "768x1024 (Portrait HD)",         # High definition portrait
 ]
 
-# Example prompts for beginners
+# Beginner-friendly example prompts to get users started
 EXAMPLE_PROMPTS = [
     "A serene landscape with mountains at sunset in watercolor style",
-    "Cyberpunk cityscape with neon lights and rainy streets",
+    "Cyberpunk cityscape with neon lights and rainy streets", 
     "Fantasy castle surrounded by floating islands in the sky",
     "Portrait of a futuristic astronaut exploring a new planet",
     "Cute anime character holding an umbrella in the rain",
 ]
 
+
+# ==================================================================
+# MAIN GRADIO APP CREATION FUNCTION
+# ==================================================================
+
 def create_gradio_app(state: AppState):
-    """Build and return the Gradio UI for the application."""
+    """
+    Build and return the complete Gradio web interface.
+    
+    This is the main entry point for creating the web UI. It constructs
+    all tabs, components, and event handlers that make up the interface.
+    
+    Args:
+        state: The shared application state container with model instances
+               and runtime data
+    
+    Returns:
+        gr.Blocks: Configured Gradio application ready for launch
+        
+    The interface includes:
+        - Image Generation: SDXL-powered image creation with advanced controls
+        - Chat: Interactive conversations with Ollama language models  
+        - Gallery: Image browsing, organization, and management
+        - Model Management: Switch models, check status, run diagnostics
+        - Memory Monitor: Real-time system resource monitoring
+        - Settings: Configuration, themes, and preferences
+    """
+    # Load custom CSS styling for enhanced visual design
     css_file = (Path(__file__).parent / "custom.css").read_text()
+    
+    # JavaScript functions for loading indicators and UI enhancements
     show_loading_js = "() => { const el = document.querySelector('.loading-indicator'); if(el){ el.style.display='block'; } }"
     hide_loading_js = "() => { const el = document.querySelector('.loading-indicator'); if(el){ el.style.display='none'; } }"
+    
+    # ==============================================================
+    # THEME MANAGEMENT FUNCTIONS
+    # ==============================================================
+    
     def load_theme_pref():
-        """Return stored theme or None if not set."""
+        """
+        Load user's theme preference from persistent storage.
+        
+        Returns:
+            str: Theme name ('dark' or 'light') or None if not set
+        """
         try:
             if THEME_PREF_FILE.exists():
                 with open(THEME_PREF_FILE, "r", encoding="utf-8") as f:
@@ -68,6 +170,15 @@ def create_gradio_app(state: AppState):
         return None
 
     def save_theme_pref(choice: str):
+        """
+        Save user's theme preference to persistent storage.
+        
+        Args:
+            choice: Theme name to save
+            
+        Returns:
+            str: The saved theme choice
+        """
         try:
             TEMP_DIR.mkdir(parents=True, exist_ok=True)
             with open(THEME_PREF_FILE, "w", encoding="utf-8") as f:
@@ -76,28 +187,58 @@ def create_gradio_app(state: AppState):
             logger.error("Error saving theme preference: %s", e)
         return choice
 
-    gallery_files: list[Path] = []
-    gallery_filter: dict = load_gallery_filter() or {}
+    # ==============================================================
+    # GALLERY MANAGEMENT FUNCTIONS
+    # ==============================================================
+
+    # Gallery state variables
+    gallery_files: list[Path] = []  # Track file paths for gallery items
+    gallery_filter: dict = load_gallery_filter() or {}  # Current filter settings
 
     def _get_gallery_dir() -> Path:
+        """
+        Get the appropriate gallery directory based on current project context.
+        
+        Returns:
+            Path: Gallery directory path (project-specific or global)
+        """
         if state.current_project:
             return PROJECTS_DIR / state.current_project / "gallery"
         return Path(CONFIG.gallery_dir)
 
     def load_gallery_items(filters: dict | None = None):
-        """Return gallery images with captions and track file paths."""
+        """
+        Load and filter gallery images with metadata.
+        
+        Scans the gallery directory for images, loads their metadata,
+        applies filtering criteria, and returns formatted data for display.
+        
+        Args:
+            filters: Optional filter dictionary to limit results
+            
+        Returns:
+            list: Gallery items formatted for Gradio display
+            
+        Side effects:
+            - Updates global gallery_files list
+            - Collects available tags for filtering UI
+        """
         nonlocal gallery_files
         if filters is None:
             filters = gallery_filter
+            
         gallery_dir = _get_gallery_dir()
         gallery_dir.mkdir(parents=True, exist_ok=True)
-        items: list[tuple[str, str]] = []
-        gallery_files = []
-        tag_set: set[str] = set()
+        
+        items: list[tuple[str, str]] = []  # (image_path, caption) pairs
+        gallery_files = []  # Reset file tracking
+        tag_set: set[str] = set()  # Collect unique tags
+        
+        # Scan directory for PNG images (most recent first)
         for img_path in sorted(gallery_dir.glob("*.png"), reverse=True):
             caption = ""
             meta: dict = {}
-            meta_path = img_path.with_suffix(".json")
+            meta_path = img_path.with_suffix(".json")  # Metadata file
             if meta_path.exists():
                 try:
                     with open(meta_path, "r", encoding="utf-8") as f:
