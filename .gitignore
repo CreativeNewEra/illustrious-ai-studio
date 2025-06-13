@@ -83,3 +83,20 @@ logs/
 
 # Conda
 =0.3.0
+
+# Temporary documentation and fix reports
+*_REPORT.md
+*_FIX_SUMMARY.md
+*_IMPLEMENTATION.md
+*_UPDATES.md
+SETUP_COMPLETE.md
+
+# Test artifacts in root (should be in test_outputs/)
+test_*.png
+test_*.jpg
+dragon_*.png
+sample_*.png
+
+# Temporary setup files
+setup_report.json
+setup_env.py
