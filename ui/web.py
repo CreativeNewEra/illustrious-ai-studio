@@ -179,7 +179,12 @@ def create_gradio_app(state: AppState):
                             size="sm",
                             elem_classes=["secondary-button"]
                         )
-                    prompt = gr.Textbox(label="Prompt", placeholder="Describe what you want to create...", lines=3)
+                    prompt = gr.Textbox(
+                        label="Prompt",
+                        placeholder="Describe what you want to create...",
+                        lines=3,
+                        elem_id="prompt-box",
+                    )
                     
                     # Quick Style Buttons
                     with gr.Row():
@@ -277,7 +282,8 @@ def create_gradio_app(state: AppState):
                             "🎨 Create Masterpiece",
                             variant="primary",
                             size="lg",
-                            elem_classes=["primary-button"]
+                            elem_classes=["primary-button"],
+                            elem_id="generate-btn",
                         )
                         enhance_btn = gr.Button(
                             "✨ Enhance Vision",
@@ -968,6 +974,22 @@ def create_gradio_app(state: AppState):
 
         demo.load(
             js=f"() => {{ if('{current_theme}' === 'dark') {{ document.documentElement.classList.add('dark'); }} else {{ document.documentElement.classList.remove('dark'); }} }}"
+        )
+
+        demo.load(
+            js="""
+            () => {
+                const box = document.getElementById('prompt-box');
+                const btn = document.getElementById('generate-btn');
+                if (box && btn) {
+                    box.addEventListener('keydown', (e) => {
+                        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                            btn.click();
+                        }
+                    });
+                }
+            }
+            """
         )
 
         def prepare_download(image):
