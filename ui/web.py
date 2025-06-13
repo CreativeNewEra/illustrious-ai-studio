@@ -5,6 +5,7 @@ from pathlib import Path
 import os
 import subprocess
 import sys
+import shutil
 
 import gradio as gr
 
@@ -177,6 +178,22 @@ def create_gradio_app(state: AppState):
         state.current_project = name
         return gr.update(choices=list_projects(), value=name), f"Project '{name}' created"
 
+    def delete_project(name: str | None):
+        """Delete the selected project directory."""
+        if not name:
+            return gr.update(), "Please select a project to delete"
+        proj_path = PROJECTS_DIR / name
+        if not proj_path.exists():
+            return gr.update(), "Project not found"
+        try:
+            shutil.rmtree(proj_path)
+        except Exception as e:  # pragma: no cover - unexpected errors
+            logger.error("Failed to delete project %s: %s", name, e)
+            return gr.update(), f"Failed to delete project: {e}"
+        if state.current_project == name:
+            state.current_project = None
+        return gr.update(choices=list_projects(), value=None), f"Project '{name}' deleted"
+
     current_theme = load_theme_pref()
     theme_pref_exists = current_theme is not None
     if current_theme is None:
@@ -211,6 +228,7 @@ def create_gradio_app(state: AppState):
                     )
                     new_project = gr.Textbox(label="New Project", scale=2)
                     create_project_btn = gr.Button("Create", variant="secondary", size="sm")
+                    delete_project_btn = gr.Button("🗑️", variant="secondary", size="sm")
                 project_status = gr.Textbox(label="Project Status", interactive=False, elem_classes=["status-box"], lines=1)
         with gr.Tab("🎨 Text-to-Image"):
             with gr.Row():
@@ -921,6 +939,25 @@ def create_gradio_app(state: AppState):
             fn=lambda: refresh_gallery(),
             outputs=[gallery_component, tag_filter]
         )
+        try:
+            delete_project_btn.click(
+                fn=delete_project,
+                inputs=project_selector,
+                outputs=[project_selector, project_status],
+                js="(p)=>confirm('Delete project ' + p + '?') ? p : null"
+            ).then(
+                fn=lambda: refresh_gallery(),
+                outputs=[gallery_component, tag_filter]
+            )
+        except TypeError:  # For dummy components in tests
+            delete_project_btn.click(
+                fn=delete_project,
+                inputs=project_selector,
+                outputs=[project_selector, project_status]
+            ).then(
+                fn=lambda: refresh_gallery(),
+                outputs=[gallery_component, tag_filter]
+            )
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
         # Updated generate button to use wrapper and update recent prompts
