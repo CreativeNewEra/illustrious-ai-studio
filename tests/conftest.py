@@ -37,7 +37,7 @@ def stub_dependencies():
                 pass
             def to(self, device):
                 pass
-            def __call__(self, *args, **kwargs):
+            def generate(self, *args, **kwargs):
                 from PIL import Image
                 return types.SimpleNamespace(images=[Image.new('RGB', (64,64), 'white')])
         diff.StableDiffusionXLPipeline = DummyPipe

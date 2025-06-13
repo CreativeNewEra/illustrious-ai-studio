@@ -302,7 +302,13 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
             response = (
                 f"🎨 I'll create an image with this enhanced prompt:\n\n'{enhanced_prompt}'\n\nGenerating now..."
             )
-            image, status = generate_image(state, enhanced_prompt, save_to_gallery_flag=False)
+            image, status = generate_image(
+                state,
+                {
+                    "prompt": enhanced_prompt,
+                    "save_to_gallery_flag": False,
+                },
+            )
             if image:
                 saved_path = save_to_gallery(
                     state,

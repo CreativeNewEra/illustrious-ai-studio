@@ -44,7 +44,7 @@ def load_app():
 
 # Dummy implementations
 class DummyPipe:
-    def __call__(self, *args, **kwargs):
+    def generate(self, *args, **kwargs):
         return types.SimpleNamespace(images=[Image.new('RGB', (64, 64), 'blue')])
 
 def dummy_chat_completion(messages, temperature=0.7, max_tokens=256):
@@ -60,7 +60,7 @@ def setup_app(monkeypatch):
     app.app_state.ollama_model = 'dummy'
     app.app_state.model_status.update({'sdxl': True, 'ollama': True, 'multimodal': True})
     import server.api as api
-    monkeypatch.setattr(api, 'generate_image', lambda state, *a, **k: (Image.new('RGB',(64,64),'blue'), 'done'))
+    monkeypatch.setattr(api, 'generate_image', lambda state, params: (Image.new('RGB',(64,64),'blue'), 'done'))
     monkeypatch.setattr(api, 'chat_completion', lambda state, *a, **k: dummy_chat_completion(*a, **k))
     monkeypatch.setattr(api, 'analyze_image', lambda state, img, q='': dummy_analyze_image(img, q))
     monkeypatch.setattr(app, 'clear_gpu_memory', lambda: None)
