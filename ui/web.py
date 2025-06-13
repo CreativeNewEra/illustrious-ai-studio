@@ -1450,16 +1450,7 @@ def parse_resolution(resolution_string):
 
 def get_resolution_option(width: int, height: int) -> str:
     """Return dropdown option matching the given width and height."""
-    options = [
-        "512x512 (Square - Fast)",
-        "768x768 (Square - Balanced)",
-        "1024x1024 (Square - High Quality)",
-        "768x512 (Landscape)",
-        "512x768 (Portrait)",
-        "1024x768 (Landscape HD)",
-        "768x1024 (Portrait HD)"
-    ]
-    for opt in options:
+    for opt in RESOLUTION_OPTIONS:
         w, h = parse_resolution(opt)
         if w == width and h == height:
             return opt
