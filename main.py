@@ -252,7 +252,7 @@ class IllustriousAIStudio:
 
     # ------------------------------------------------------------------
     def _shutdown_handler(self, signum, frame) -> None: # Renamed to avoid conflict if imported elsewhere
-        print(f"DEBUG: Shutdown initiated by signal {signum}.") # DEBUG
+        self.logger.info(f"Shutdown initiated by signal {signum}")
         # Gradio's launch() should handle SIGINT/SIGTERM to close itself.
         # This custom handler is for additional cleanup.
         
@@ -266,11 +266,11 @@ class IllustriousAIStudio:
         clear_gpu_memory()
         
         if self.api_thread and self.api_thread.is_alive():
-            print("DEBUG: Joining API thread...") # DEBUG
+            self.logger.debug("Joining API thread...")
             self.api_thread.join(timeout=5)
-            print("DEBUG: API thread joined.") # DEBUG
+            self.logger.debug("API thread joined")
 
-        print("DEBUG: Exiting application.") # DEBUG
+        self.logger.info("Application exiting")
         timer = force_exit_after_timeout()
         timer.cancel()  # Cancel the timer to prevent forced termination
         sys.exit(0)  # Allow proper cleanup and exit handlers
