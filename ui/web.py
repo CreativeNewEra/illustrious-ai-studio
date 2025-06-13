@@ -51,12 +51,13 @@ import gradio as gr
 
 # Image generation and model management
 from core.sdxl import (
-    generate_image, 
-    TEMP_DIR, 
-    get_latest_image, 
-    init_sdxl, 
-    get_available_models, 
-    get_current_model_info, 
+    generate_image,
+    generate_image_async,
+    TEMP_DIR,
+    get_latest_image,
+    init_sdxl,
+    get_available_models,
+    get_current_model_info,
     test_model_generation, 
     switch_sdxl_model, 
     PROJECTS_DIR
@@ -1150,7 +1151,7 @@ def create_gradio_app(state: AppState):
         enhance_btn.click(fn=lambda p: generate_prompt(state, p), inputs=prompt, outputs=prompt)
         
         # Updated generate button to use wrapper and update recent prompts
-        def generate_and_update_history(p, n, st, g, se, save_flag, res, auto_flag, progress=gr.Progress()):
+        async def generate_and_update_history(p, n, st, g, se, save_flag, res, auto_flag, progress=gr.Progress()):
             # Enhanced UI parameter validation
             try:
                 # Debug logging to understand what's being passed
@@ -1268,7 +1269,7 @@ def create_gradio_app(state: AppState):
                     "height": height,
                     "progress_callback": cb,
                 }
-                image, status = generate_image(state, params)
+                image, status = await generate_image_async(state, params)
                 progress(1)
                 
                 # Store parameters for regenerate functionality if generation was successful
@@ -1304,7 +1305,7 @@ def create_gradio_app(state: AppState):
                 )
         
         # Regenerate function
-        def regenerate_image(progress=gr.Progress()):
+        async def regenerate_image(progress=gr.Progress()):
             if state.last_generation_params is None:
                 return (
                     None,
@@ -1316,7 +1317,7 @@ def create_gradio_app(state: AppState):
             def cb(step, total):
                 progress(step/total, desc=f"{step}/{total}")
 
-            image, status = generate_image(
+            image, status = await generate_image_async(
                 state,
                 {
                     "prompt": params["prompt"],

@@ -47,6 +47,7 @@ import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple, List, Dict, TypedDict, Protocol, Callable, Any
+import asyncio
 
 from PIL import Image
 import torch
@@ -475,6 +476,11 @@ def generate_image(state: AppState, params: GenerationParams) -> Tuple[Optional[
         "❌ Generation failed after all retries. "
         "Check GPU memory or model path and review the README's Logging and Debugging section."
     )
+
+
+async def generate_image_async(state: AppState, params: GenerationParams) -> Tuple[Optional[Image.Image], str]:
+    """Asynchronous wrapper for ``generate_image`` running in a thread."""
+    return await asyncio.to_thread(generate_image, state, params)
 
 def _estimate_generation_memory(width: int, height: int, steps: int) -> float:
     """Estimate memory requirements for image generation in GB"""
