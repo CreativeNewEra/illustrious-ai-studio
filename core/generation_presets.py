@@ -1,5 +1,6 @@
 """Preset configurations for image generation."""
 
+DEFAULT_PRESET = "balanced"
 GENERATION_PRESETS = {
     "draft": {
         "steps": 15,
