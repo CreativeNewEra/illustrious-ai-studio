@@ -26,3 +26,18 @@ def get_model_status(state: AppState) -> str:
     status_text += f"• Backend: {CONFIG.gpu_backend}\n"
     status_text += f"• GPU: {'✅ Available' if torch.cuda.is_available() else '❌ Not available'}"
     return status_text
+
+
+def get_memory_stats_markdown(state: AppState) -> str:
+    """Return formatted Markdown for current memory usage."""
+    from .memory_guardian import get_memory_guardian  # Lazy import to avoid circular dependency
+    guardian = get_memory_guardian(state)
+    stats = guardian.get_memory_stats()
+    if not stats:
+        return "🚫 GPU not available"
+
+    text = "🧠 **Memory Usage:**\n"
+    text += f"• GPU: {stats.gpu_reserved_gb:.1f}/{stats.gpu_total_gb:.1f} GB ({stats.gpu_usage_percent:.1f}%)\n"
+    text += f"• RAM: {stats.system_ram_usage_percent:.1f}% used\n"
+    text += f"• Pressure: {stats.pressure_level.value}"
+    return text

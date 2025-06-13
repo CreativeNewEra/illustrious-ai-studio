@@ -9,7 +9,7 @@ from core.sdxl import generate_image, TEMP_DIR, get_latest_image, init_sdxl, get
 from core.config import CONFIG
 from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
 from core import sdxl, ollama
-from core.memory import get_model_status
+from core.memory import get_model_status, get_memory_stats_markdown
 from core.state import AppState
 from core.prompt_templates import template_manager
 
@@ -430,6 +430,9 @@ def create_gradio_app(state: AppState):
                 elem_classes=["secondary-button"]
             )
 
+            gr.Markdown("### Memory Usage")
+            memory_display = gr.Markdown(get_memory_stats_wrapper(state))
+
             gr.Markdown("### Model Loader")
             with gr.Row():
                 sdxl_checkbox = gr.Checkbox(label="SDXL")
@@ -580,7 +583,8 @@ def create_gradio_app(state: AppState):
                 return (
                     gr.update(visible=True, value="❌ No model selected"),
                     gr.update(),  # model_info
-                    gr.update()   # status_display
+                    gr.update(),   # status_display
+                    get_memory_stats_markdown(state)
                 )
             
             try:
@@ -589,7 +593,8 @@ def create_gradio_app(state: AppState):
                     return (
                         gr.update(visible=True, value="ℹ️ Model already loaded"),
                         update_model_info(selected_path),
-                        get_model_status(state)
+                        get_model_status(state),
+                        get_memory_stats_markdown(state)
                     )
                 
                 # Attempt to switch model
@@ -603,7 +608,8 @@ def create_gradio_app(state: AppState):
                 return (
                     gr.update(visible=True, value=status_msg),
                     update_model_info(selected_path),
-                    get_model_status(state)
+                    get_model_status(state),
+                    get_memory_stats_markdown(state)
                 )
                 
             except Exception as e:
@@ -611,7 +617,8 @@ def create_gradio_app(state: AppState):
                 return (
                     gr.update(visible=True, value=f"❌ Switch failed: {str(e)}"),
                     update_model_info(selected_path),
-                    get_model_status(state)
+                    get_model_status(state),
+                    get_memory_stats_markdown(state)
                 )
         
         def test_selected_model(selected_path):
@@ -787,7 +794,7 @@ def create_gradio_app(state: AppState):
         ).then(
             fn=switch_model,
             inputs=model_selector,
-            outputs=[model_switch_status, model_info, status_display]
+            outputs=[model_switch_status, model_info, status_display, memory_display]
         )
         
         test_model_btn.click(
@@ -971,21 +978,35 @@ def create_gradio_app(state: AppState):
                 sdxl.switch_sdxl_model(state, sd_path)
             if ollama_name:
                 ollama.switch_ollama_model(state, ollama_name)
-            return get_model_status(state), json.dumps(CONFIG.as_dict(), indent=2)
-        switch_btn.click(fn=do_switch, inputs=[sd_model_input, ollama_model_input], outputs=[status_display, config_display])
-        refresh_btn.click(fn=lambda: get_model_status(state), outputs=status_display)
+            return (
+                get_model_status(state),
+                json.dumps(CONFIG.as_dict(), indent=2),
+                get_memory_stats_markdown(state),
+            )
+        switch_btn.click(
+            fn=do_switch,
+            inputs=[sd_model_input, ollama_model_input],
+            outputs=[status_display, config_display, memory_display],
+        )
+        refresh_btn.click(
+            fn=lambda: (
+                get_model_status(state),
+                get_memory_stats_markdown(state),
+            ),
+            outputs=[status_display, memory_display],
+        )
 
         def load_selected_models(load_s, load_o, load_v):
             if load_s:
                 sdxl.init_sdxl(state)
             if load_o or load_v:
                 ollama.init_ollama(state)
-            return get_model_status(state)
+            return get_model_status(state), get_memory_stats_markdown(state)
 
         load_selected_btn.click(
             fn=load_selected_models,
             inputs=[sdxl_checkbox, ollama_checkbox, vision_checkbox],
-            outputs=status_display,
+            outputs=[status_display, memory_display],
         )
         
         # Initialize model selector and templates on load
@@ -1003,7 +1024,8 @@ def create_gradio_app(state: AppState):
                     gr.update(choices=[("⚡ Quick Start Mode - Models Not Loaded", "")], value=""),
                     "⚡ Quick Start Mode: Models can be loaded manually from the System Info tab",
                     refresh_template_list(),
-                    *get_template_statistics()
+                    *get_template_statistics(),
+                    get_memory_stats_markdown(state)
                 )
             else:
                 # Normal mode - refresh model list
@@ -1011,12 +1033,13 @@ def create_gradio_app(state: AppState):
                     refresh_model_list(),
                     update_model_info(CONFIG.sd_model),
                     refresh_template_list(),
-                    *get_template_statistics()
+                    *get_template_statistics(),
+                    get_memory_stats_markdown(state)
                 )
         
         demo.load(
             fn=initialize_ui,
-            outputs=[model_selector, model_info, template_list, template_stats, popular_templates]
+            outputs=[model_selector, model_info, template_list, template_stats, popular_templates, memory_display]
         )
         
         # Quick Style Button Handlers
