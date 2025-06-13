@@ -226,12 +226,6 @@ def create_gradio_app(state: AppState):
                                 visible=False
                             )
                         
-                        negative_prompt = gr.Textbox(
-                            label="Elements to Avoid",
-                            value="blurry, low quality, text, watermark, deformed",
-                            lines=2,
-                            elem_classes=["textbox"]
-                        )
                         with gr.Row():
                             steps = gr.Slider(
                                 10, 100,
@@ -262,21 +256,28 @@ def create_gradio_app(state: AppState):
                                 value="1024x1024 (Square - High Quality)",
                                 elem_classes=["dropdown"]
                             )
-                        seed = gr.Number(
-                            value=-1,
-                            label="Inspiration Seed (-1 for random)",
-                            elem_classes=["number-input"]
-                        )
-                        save_gallery = gr.Checkbox(
-                            value=True,
-                            label="Add to Gallery Collection",
-                            elem_classes=["checkbox-input"]
-                        )
-                        auto_best = gr.Checkbox(
-                            value=False,
-                            label="Auto-Best",
-                            elem_classes=["checkbox-input"]
-                        )
+                        with gr.Accordion("Advanced", open=False):
+                            negative_prompt = gr.Textbox(
+                                label="Elements to Avoid",
+                                value="blurry, low quality, text, watermark, deformed",
+                                lines=2,
+                                elem_classes=["textbox"]
+                            )
+                            seed = gr.Number(
+                                value=-1,
+                                label="Inspiration Seed (-1 for random)",
+                                elem_classes=["number-input"]
+                            )
+                            save_gallery = gr.Checkbox(
+                                value=True,
+                                label="Add to Gallery Collection",
+                                elem_classes=["checkbox-input"]
+                            )
+                            auto_best = gr.Checkbox(
+                                value=False,
+                                label="Auto-Best",
+                                elem_classes=["checkbox-input"]
+                            )
                     with gr.Row():
                         generate_btn = gr.Button(
                             "🎨 Create Masterpiece",
