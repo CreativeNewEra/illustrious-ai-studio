@@ -264,6 +264,11 @@ curl -X POST http://localhost:8000/analyze-image \
   }'
 ```
 
+### Memory Report
+```bash
+curl http://localhost:8000/memory-report
+```
+
 ## ⚙️ Configuration
 
 ### config.yaml
