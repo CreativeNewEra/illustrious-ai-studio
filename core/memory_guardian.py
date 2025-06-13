@@ -93,6 +93,35 @@ class MemoryGuardian:
         
         # Load from CONFIG if available
         memory_config = getattr(CONFIG, 'memory_guardian', {})
+
+        # Update threshold values if provided
+        thresholds_cfg = memory_config.get("thresholds", {}) or {}
+
+        def _percent(val: float) -> float:
+            val = float(val)
+            return val / 100.0 if val > 1 else val
+
+        if "low" in thresholds_cfg:
+            self.thresholds.low_threshold = _percent(thresholds_cfg["low"])
+        if "medium" in thresholds_cfg:
+            self.thresholds.medium_threshold = _percent(thresholds_cfg["medium"])
+        if "high" in thresholds_cfg:
+            self.thresholds.high_threshold = _percent(thresholds_cfg["high"])
+        if "critical" in thresholds_cfg:
+            self.thresholds.critical_threshold = _percent(thresholds_cfg["critical"])
+
+        safety_cfg = memory_config.get("safety_margins", {}) or {}
+        if "generation_reserve" in safety_cfg:
+            self.thresholds.generation_reserve_gb = float(safety_cfg["generation_reserve"])
+        if "llm_reserve" in safety_cfg:
+            self.thresholds.llm_reserve_gb = float(safety_cfg["llm_reserve"])
+
+        monitor_cfg = memory_config.get("monitoring", {}) or {}
+        if "normal_interval" in monitor_cfg:
+            self.thresholds.monitoring_interval = float(monitor_cfg["normal_interval"])
+        if "aggressive_interval" in monitor_cfg:
+            self.thresholds.aggressive_interval = float(monitor_cfg["aggressive_interval"])
+
         return {**default_config, **memory_config}
     
     def _register_default_interventions(self):
