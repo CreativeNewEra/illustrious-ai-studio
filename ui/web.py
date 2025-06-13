@@ -30,6 +30,7 @@ def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     css_file = (Path(__file__).parent / "custom.css").read_text()
     def load_theme_pref():
+        """Return stored theme or None if not set."""
         try:
             if THEME_PREF_FILE.exists():
                 with open(THEME_PREF_FILE, "r", encoding="utf-8") as f:
@@ -37,7 +38,7 @@ def create_gradio_app(state: AppState):
                     return data.get("theme", "light")
         except Exception as e:
             logger.error("Error loading theme preference: %s", e)
-        return "light"
+        return None
 
     def save_theme_pref(choice: str):
         try:
@@ -128,6 +129,9 @@ def create_gradio_app(state: AppState):
         return gr.update(choices=list_projects(), value=name), f"Project '{name}' created"
 
     current_theme = load_theme_pref()
+    theme_pref_exists = current_theme is not None
+    if current_theme is None:
+        current_theme = "light"
     with gr.Blocks(
         title="Illustrious AI Studio",
         theme="default",
@@ -146,6 +150,7 @@ def create_gradio_app(state: AppState):
                     value="Dark" if current_theme == "dark" else "Light",
                     label="Theme",
                     interactive=True,
+                    elem_id="theme-selector",
                 )
                 with gr.Row():
                     project_selector = gr.Dropdown(
@@ -936,7 +941,25 @@ def create_gradio_app(state: AppState):
         )
 
         demo.load(
-            js=f"() => {{ if('{current_theme}' === 'dark') {{ document.documentElement.classList.add('dark'); }} else {{ document.documentElement.classList.remove('dark'); }} }}"
+            js=f"""
+() => {{
+  const hasPref = {str(theme_pref_exists).lower()};
+  let mode;
+  if(hasPref) {{
+    mode = '{current_theme}';
+  }} else {{
+    const darkPref = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    mode = darkPref ? 'dark' : 'light';
+    const input = document.querySelector('#theme-selector input[value="' + (mode === 'dark' ? 'Dark' : 'Light') + '"]');
+    if(input) {{ input.click(); }}
+  }}
+  if(mode === 'dark') {{
+    document.documentElement.classList.add('dark');
+  }} else {{
+    document.documentElement.classList.remove('dark');
+  }}
+}}
+"""
         )
 
         def prepare_download(image):
