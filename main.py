@@ -268,8 +268,4 @@ class IllustriousAIStudio:
 if __name__ == "__main__":
     args = IllustriousAIStudio.parse_args()
     studio = IllustriousAIStudio(args)
-    # Set up signal handlers early in the main thread for the main process
-    # These might be overridden by Gradio, so also setting them before launch.
-    signal.signal(signal.SIGINT, studio._shutdown_handler)
-    signal.signal(signal.SIGTERM, studio._shutdown_handler)
     studio.run()

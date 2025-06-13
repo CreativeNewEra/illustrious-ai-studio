@@ -158,7 +158,6 @@ def create_gradio_app(state: AppState):
                             elem_classes=["secondary-button", "regenerate-btn"],
                             visible=False
                         )
-                        )
                 with gr.Column():
                     output_image = gr.Image(
                         label="Your Masterpiece",
