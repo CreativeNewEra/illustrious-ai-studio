@@ -165,17 +165,20 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
                     detail=f"❌ Invalid seed value: {request.seed}. Must be -1 (random) or between 0 and {2**32-1}."
                 )
             
-            logger.info(f"API: Generating image with prompt='{request.prompt[:50]}...', steps={request.steps}, guidance={request.guidance}, seed={request.seed}")
-            
-            # Generate image with improved error handling
-            image, status_msg = generate_image(
-                state,
-                request.prompt,
-                request.negative_prompt,
-                request.steps,
-                request.guidance,
-                request.seed,
+            logger.info(
+                f"API: Generating image with prompt='{request.prompt[:50]}...', steps={request.steps}, guidance={request.guidance}, seed={request.seed}"
             )
+
+            params = {
+                "prompt": request.prompt,
+                "negative_prompt": request.negative_prompt,
+                "steps": request.steps,
+                "guidance": request.guidance,
+                "seed": request.seed,
+            }
+
+            # Generate image with improved error handling
+            image, status_msg = generate_image(state, params)
             
             if image is None:
                 code = 507 if "out of memory" in status_msg.lower() else 500

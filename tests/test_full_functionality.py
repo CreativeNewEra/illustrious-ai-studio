@@ -128,11 +128,13 @@ class FunctionalityTester:
         try:
             image, status = generate_image(
                 self.state,
-                prompt,
-                negative_prompt="blurry, low quality, text, watermark",
-                steps=30,
-                guidance=7.5,
-                seed=42  # Fixed seed for reproducibility
+                {
+                    "prompt": prompt,
+                    "negative_prompt": "blurry, low quality, text, watermark",
+                    "steps": 30,
+                    "guidance": 7.5,
+                    "seed": 42,
+                },
             )
             
             if image:

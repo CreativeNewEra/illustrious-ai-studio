@@ -1257,7 +1257,18 @@ def create_gradio_app(state: AppState):
                 def cb(step, total):
                     progress(step/total, desc=f"{step}/{total}")
 
-                image, status = generate_image(state, p, n, st, g, se, save_flag, width, height, progress_callback=cb)
+                params = {
+                    "prompt": p,
+                    "negative_prompt": n,
+                    "steps": st,
+                    "guidance": g,
+                    "seed": se,
+                    "save_to_gallery_flag": save_flag,
+                    "width": width,
+                    "height": height,
+                    "progress_callback": cb,
+                }
+                image, status = generate_image(state, params)
                 progress(1)
                 
                 # Store parameters for regenerate functionality if generation was successful
@@ -1307,15 +1318,17 @@ def create_gradio_app(state: AppState):
 
             image, status = generate_image(
                 state,
-                params["prompt"],
-                params["negative_prompt"],
-                params["steps"],
-                params["guidance"],
-                params["seed"],
-                params["save_gallery"],
-                params["width"],
-                params["height"],
-                progress_callback=cb
+                {
+                    "prompt": params["prompt"],
+                    "negative_prompt": params["negative_prompt"],
+                    "steps": params["steps"],
+                    "guidance": params["guidance"],
+                    "seed": params["seed"],
+                    "save_to_gallery_flag": params["save_to_gallery_flag"],
+                    "width": params["width"],
+                    "height": params["height"],
+                    "progress_callback": cb,
+                },
             )
             progress(1)
             

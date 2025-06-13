@@ -40,7 +40,7 @@ def load_app():
     return importlib.import_module('app')
 
 class DummyPipe:
-    def __call__(self, *args, **kwargs):
+    def generate(self, *args, **kwargs):
         return types.SimpleNamespace(images=[Image.new('RGB', (64, 64), color='white')])
 
 # Ensure clear_gpu_memory is patched to avoid torch calls
@@ -53,7 +53,7 @@ def patch_clear_cuda(monkeypatch):
 def test_generate_image_no_model(monkeypatch):
     app = load_app()
     app.app_state.sdxl_pipe = None
-    image, status = app.generate_image(app.app_state, 'test')
+    image, status = app.generate_image(app.app_state, {"prompt": 'test'})
     assert image is None
     assert 'model not loaded' in status.lower()
 
@@ -61,6 +61,9 @@ def test_generate_image_no_model(monkeypatch):
 def test_generate_image_success(monkeypatch):
     app = load_app()
     app.app_state.sdxl_pipe = DummyPipe()
-    img, status = app.generate_image(app.app_state, 'test prompt', save_to_gallery_flag=False)
+    img, status = app.generate_image(
+        app.app_state,
+        {"prompt": 'test prompt', "save_to_gallery_flag": False}
+    )
     assert isinstance(img, Image.Image)
     assert 'successfully' in status.lower()

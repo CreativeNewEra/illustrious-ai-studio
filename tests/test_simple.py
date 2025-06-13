@@ -12,12 +12,17 @@ from pathlib import Path
 from PIL import Image
 import torch
 from colorama import init, Fore, Style
+import shutil
+import pytest
 
 # Set environment variables BEFORE importing our modules
 os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 os.environ['OLLAMA_KEEP_ALIVE'] = '0'  # Unload models immediately after use
 
 init(autoreset=True)
+
+if shutil.which('ollama') is None:
+    pytest.skip("Ollama not installed", allow_module_level=True)
 
 # Import our modules
 from core.state import AppState
@@ -112,11 +117,13 @@ def test_image_generation_only():
         
         image, status = generate_image(
             state,
-            prompt,
-            negative_prompt="blurry, low quality",
-            steps=20,  # Fewer steps for faster generation
-            guidance=7.5,
-            seed=42
+            {
+                "prompt": prompt,
+                "negative_prompt": "blurry, low quality",
+                "steps": 20,
+                "guidance": 7.5,
+                "seed": 42,
+            },
         )
         
         if image:

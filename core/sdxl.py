@@ -46,7 +46,7 @@ import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, List, Dict
+from typing import Optional, Tuple, List, Dict, TypedDict, Protocol, Callable, Any
 
 from PIL import Image
 import torch
@@ -58,6 +58,68 @@ from .state import AppState
 from .config import CONFIG
 
 logger = logging.getLogger(__name__)
+
+
+class GenerationParams(TypedDict, total=False):
+    """Parameters for image generation."""
+    prompt: str
+    negative_prompt: str
+    steps: int
+    guidance: float
+    seed: int
+    save_to_gallery_flag: bool
+    width: int
+    height: int
+    progress_callback: Optional[Callable[[int, int], Any]]
+
+
+class ModelProtocol(Protocol):
+    """Protocol describing the expected SDXL pipeline interface."""
+
+    def generate(
+        self,
+        prompt: str,
+        negative_prompt: str = "",
+        num_inference_steps: int = 30,
+        guidance_scale: float = 7.5,
+        generator: Optional[torch.Generator] = None,
+        width: int = 1024,
+        height: int = 1024,
+        callback: Optional[Callable[[int, int, Any], Any]] = None,
+        callback_steps: int = 1,
+    ) -> Any:
+        ...
+
+
+class DiffusersPipelineAdapter:
+    """Adapter to expose a StableDiffusionXLPipeline with a generate method."""
+
+    def __init__(self, pipe: StableDiffusionXLPipeline):
+        self.pipe = pipe
+
+    def generate(
+        self,
+        prompt: str,
+        negative_prompt: str = "",
+        num_inference_steps: int = 30,
+        guidance_scale: float = 7.5,
+        generator: Optional[torch.Generator] = None,
+        width: int = 1024,
+        height: int = 1024,
+        callback: Optional[Callable[[int, int, Any], Any]] = None,
+        callback_steps: int = 1,
+    ) -> Any:
+        return self.pipe(
+            prompt,
+            negative_prompt=negative_prompt,
+            num_inference_steps=num_inference_steps,
+            guidance_scale=guidance_scale,
+            generator=generator,
+            width=width,
+            height=height,
+            callback=callback,
+            callback_steps=callback_steps,
+        )
 
 
 # ==================================================================
@@ -127,10 +189,10 @@ def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
         else:
             logger.warning("⚠️ GPU not available, SDXL will use CPU (significantly slower)")
             
-        # Update application state
-        state.sdxl_pipe = pipe
+        # Update application state with adapter implementing ModelProtocol
+        state.sdxl_pipe = DiffusersPipelineAdapter(pipe)
         state.model_status["sdxl"] = True
-        
+
         return pipe
     except Exception as e:
         logger.error("Failed to initialize SDXL: %s", e)
@@ -165,19 +227,17 @@ def save_to_gallery(state: AppState, image: Image.Image, prompt: str, metadata: 
     return str(filepath)
 
 
-def generate_image(
-    state: AppState,
-    prompt: str,
-    negative_prompt: str = "",
-    steps: int = 30,
-    guidance: float = 7.5,
-    seed: int = -1,
-    save_to_gallery_flag: bool = True,
-    width: int = 1024,
-    height: int = 1024,
-    progress_callback: Optional[callable] = None,
-) -> Tuple[Optional[Image.Image], str]:
+def generate_image(state: AppState, params: GenerationParams) -> Tuple[Optional[Image.Image], str]:
     """Generate an image using SDXL with automatic OOM prevention."""
+    prompt = params.get("prompt", "")
+    negative_prompt = params.get("negative_prompt", "")
+    steps = params.get("steps", 30)
+    guidance = params.get("guidance", 7.5)
+    seed = params.get("seed", -1)
+    save_to_gallery_flag = params.get("save_to_gallery_flag", True)
+    width = params.get("width", 1024)
+    height = params.get("height", 1024)
+    progress_callback = params.get("progress_callback")
     # Comprehensive parameter validation and sanitization FIRST
     try:
         # Validate and sanitize prompt - this is critical!
@@ -323,7 +383,7 @@ def generate_image(
                 if progress_callback:
                     progress_callback(step + 1, steps)
 
-            result = state.sdxl_pipe(
+            result = state.sdxl_pipe.generate(
                 prompt,
                 negative_prompt=negative_prompt,
                 num_inference_steps=steps,
@@ -554,13 +614,15 @@ def test_model_generation(state: AppState, model_path: str) -> Tuple[bool, str, 
         # Generate test image
         test_prompt = "a red apple on a white background, simple, clean"
         image, status = generate_image(
-            state=state,
-            prompt=test_prompt,
-            negative_prompt="blurry, complex",
-            steps=10,  # Quick test
-            guidance=7.5,
-            seed=42,  # Fixed seed for consistency
-            save_to_gallery_flag=False  # Don't save test images
+            state,
+            {
+                "prompt": test_prompt,
+                "negative_prompt": "blurry, complex",
+                "steps": 10,
+                "guidance": 7.5,
+                "seed": 42,
+                "save_to_gallery_flag": False,
+            },
         )
         
         if image is not None:

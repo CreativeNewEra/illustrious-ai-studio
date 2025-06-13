@@ -22,6 +22,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Tuple, Any, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .sdxl import ModelProtocol
+else:
+    ModelProtocol = Any
 from PIL import Image
 
 # Import pipeline type only for type checking to avoid runtime import issues
@@ -62,7 +67,7 @@ class AppState:
     # AI MODEL INSTANCES
     # ==============================================================
     
-    sdxl_pipe: Optional["StableDiffusionXLPipeline"] = None
+    sdxl_pipe: Optional[ModelProtocol] = None
     """
     Loaded Stable Diffusion XL pipeline instance.
     
