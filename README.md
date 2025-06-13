@@ -293,6 +293,8 @@ generation_defaults:
   height: 1024
 gallery_dir: "/tmp/illustrious_ai/gallery"
 ```
+These defaults are optimized for GPUs with **16GB or more VRAM**. If you have a lower-memory card (8–12GB), reduce `width`, `height`, and `steps` in your `config.yaml` – for example `512x512` at 15 steps.
+
 Model paths can also be set via environment variables, e.g. `SD_MODEL` for the SDXL model or `MCP_CONFIG` for MCP servers. Use `GALLERY_DIR` to customize where generated images are saved.
 
 ## 🎯 Performance Tips
