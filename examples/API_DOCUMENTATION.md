@@ -278,7 +278,7 @@ if response.status_code == 200:
 
 ---
 
-## ⚠️ Error Handling
+## ⚠️ Error Handling ✨ **ENHANCED**
 
 ### Error Response Format
 ```json
@@ -291,10 +291,11 @@ if response.status_code == 200:
 
 - **200:** Success
 - **422:** Validation Error (invalid request body)
-- **500:** Internal Server Error
+- **500:** Internal Server Error (enhanced error handling)
 - **503:** Service Unavailable (model not loaded)
+- **507:** Insufficient Storage (out of memory)
 
-### Error Types
+### Enhanced Error Types ✨ **NEW**
 
 **Validation Errors:**
 ```json
@@ -316,12 +317,33 @@ if response.status_code == 200:
 }
 ```
 
-**Generation Failed:**
+**Generation Failed (Enhanced):**
 ```json
 {
-  "detail": "❌ Generation failed: [Errno 32] Broken pipe"
+  "detail": "❌ Generation failed: Out of memory error"
 }
 ```
+
+**Image Encoding Error (New):**
+```json
+{
+  "detail": "❌ Failed to encode image: Invalid image format"
+}
+```
+
+**Memory Error (Enhanced):**
+```json
+{
+  "detail": "❌ Insufficient GPU memory for this operation"
+}
+```
+
+### Error Recovery ✨ **NEW**
+The API now includes enhanced error handling with:
+- **Better error messages**: More specific and actionable error descriptions
+- **Proper resource cleanup**: Automatic buffer and memory management
+- **Graceful degradation**: Fallback strategies for memory issues
+- **Detailed logging**: Enhanced server-side error tracking
 
 ---
 

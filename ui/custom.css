@@ -158,10 +158,34 @@ h1 {
     background: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease;
+    border: 2px dashed transparent;
 }
 
 .gallery-item:hover {
     transform: translateY(-4px);
+    border-color: var(--primary-color);
+}
+
+.gallery-item[data-drag_over="true"] {
+    border-color: var(--accent-color);
+    background-color: rgba(39, 174, 96, 0.1);
+    transform: scale(1.02);
+}
+
+/* Regenerate button styling */
+.regenerate-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.regenerate-btn:hover {
+    background: #229954;
+    transform: translateY(-1px);
 }
 
 /* Loading animations */

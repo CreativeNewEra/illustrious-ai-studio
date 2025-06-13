@@ -242,3 +242,16 @@ Core packages:
 - Pillow, Requests, PyYAML
 
 See `requirements.txt` for full list.
+
+### Recent Updates (2025-06-13) ✨ **NEW**
+```bash
+# Test the latest fixes
+python test_fixes.py
+
+# The application now includes:
+# - Enhanced error handling for image generation
+# - Recent prompts system with persistence
+# - Quick style buttons for faster workflow
+# - Resolution selector with 7 optimized options
+# - Improved API reliability and error recovery
+```

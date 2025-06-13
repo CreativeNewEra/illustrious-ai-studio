@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Any
 from PIL import Image
 from diffusers import StableDiffusionXLPipeline
 
@@ -16,3 +16,4 @@ class AppState:
     )
     chat_history_store: Dict[str, List[Tuple[str, str]]] = field(default_factory=dict)
     latest_generated_image: Optional[Image.Image] = None
+    last_generation_params: Optional[Dict[str, Any]] = None

@@ -67,22 +67,42 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
     @app.post("/generate-image")
     async def mcp_generate_image(request: GenerateImageRequest, state: AppState = Depends(get_state)):
         if state.sdxl_pipe is None:
-            raise HTTPException(status_code=503, detail="SDXL model not available")
-        image, status_msg = generate_image(
-            state,
-            request.prompt,
-            request.negative_prompt,
-            request.steps,
-            request.guidance,
-            request.seed,
-        )
-        if image is None:
-            code = 507 if "out of memory" in status_msg.lower() else 500
-            raise HTTPException(status_code=code, detail=status_msg)
-        buffered = io.BytesIO()
-        image.save(buffered, format="PNG")
-        img_base64 = base64.b64encode(buffered.getvalue()).decode()
-        return {"success": True, "image_base64": img_base64, "message": status_msg}
+            raise HTTPException(status_code=503, detail="❌ SDXL model not loaded. Please check your model path.")
+        
+        try:
+            # Generate image with improved error handling
+            image, status_msg = generate_image(
+                state,
+                request.prompt,
+                request.negative_prompt,
+                request.steps,
+                request.guidance,
+                request.seed,
+            )
+            
+            if image is None:
+                code = 507 if "out of memory" in status_msg.lower() else 500
+                raise HTTPException(status_code=code, detail=status_msg)
+            
+            # Convert image to base64 with proper error handling
+            try:
+                buffered = io.BytesIO()
+                image.save(buffered, format="PNG")
+                buffered.seek(0)  # Reset buffer position
+                img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                buffered.close()  # Properly close the buffer
+            except Exception as e:
+                logger.error(f"Error encoding image to base64: {e}")
+                raise HTTPException(status_code=500, detail=f"❌ Failed to encode image: {str(e)}")
+            
+            return {"success": True, "image_base64": img_base64, "message": status_msg}
+            
+        except HTTPException:
+            # Re-raise HTTP exceptions
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error in image generation API: {e}")
+            raise HTTPException(status_code=500, detail=f"❌ Generation failed: {str(e)}")
 
     @app.post("/chat")
     async def mcp_chat(request: ChatRequest, state: AppState = Depends(get_state)):
