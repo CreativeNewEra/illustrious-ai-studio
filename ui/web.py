@@ -42,6 +42,15 @@ RESOLUTION_OPTIONS = [
     "768x1024 (Portrait HD)",
 ]
 
+# Example prompts for beginners
+EXAMPLE_PROMPTS = [
+    "A serene landscape with mountains at sunset in watercolor style",
+    "Cyberpunk cityscape with neon lights and rainy streets",
+    "Fantasy castle surrounded by floating islands in the sky",
+    "Portrait of a futuristic astronaut exploring a new planet",
+    "Cute anime character holding an umbrella in the rain",
+]
+
 def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     css_file = (Path(__file__).parent / "custom.css").read_text()
@@ -249,6 +258,15 @@ def create_gradio_app(state: AppState):
                             size="sm",
                             elem_classes=["secondary-button"]
                         )
+                    with gr.Row():
+                        example_prompts = gr.Dropdown(
+                            label="🎲 Example Prompts",
+                            choices=EXAMPLE_PROMPTS,
+                            value=None,
+                            elem_classes=["dropdown"],
+                            interactive=True,
+                            allow_custom_value=False
+                        )
                     prompt = gr.Textbox(
                         label="Prompt",
                         placeholder="Describe what you want to create...",
@@ -276,6 +294,8 @@ def create_gradio_app(state: AppState):
                                 tooltip=style["tooltip"]
                             )
                             style_buttons.append(btn)
+                        # Assign buttons to named variables for event handlers
+                        anime_btn, realistic_btn, artistic_btn, fantasy_btn, cyberpunk_btn = style_buttons
                     
                     with gr.Accordion("🎯 Creative Controls", open=False):
                         # Model Selection Section
@@ -1129,6 +1149,13 @@ def create_gradio_app(state: AppState):
         recent_prompts.change(
             fn=select_recent_prompt,
             inputs=[recent_prompts],
+            outputs=[prompt]
+        )
+
+        # Example prompts selection handler
+        example_prompts.change(
+            fn=lambda p: p,
+            inputs=[example_prompts],
             outputs=[prompt]
         )
         
