@@ -162,8 +162,7 @@ def generate_image(
                 return None, f"❌ Invalid image type returned: {type(image)}"
             
             state.latest_generated_image = image
-            if progress_callback:
-                progress_callback(steps, steps)
+            _report_final_progress()
             if save_to_gallery_flag:
                 save_to_gallery(
                     state,
