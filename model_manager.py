@@ -7,6 +7,7 @@ Handles model switching and memory management for optimal performance
 import subprocess
 import time
 import torch
+import os
 from colorama import init, Fore, Style
 from pathlib import Path
 
@@ -99,13 +100,16 @@ class ModelManager:
         self.print_success("Ollama models unloaded")
         
     def set_ollama_memory_limit(self):
-        """Configure Ollama to use less GPU memory"""
+        """Configure Ollama to use less GPU memory.
+
+        This sets ``OLLAMA_GPU_MEMORY`` for the current process only.
+        """
         self.print_info("Configuring Ollama memory settings...")
-        
+
         # Set environment variable for Ollama GPU memory
         # This limits Ollama to 4GB of VRAM
-        subprocess.run(['export', 'OLLAMA_GPU_MEMORY=4096'], shell=True)
-        
+        os.environ['OLLAMA_GPU_MEMORY'] = '4096'
+
         self.print_success("Ollama memory limit set to 4GB")
         
     def switch_to_image_mode(self):
