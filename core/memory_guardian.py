@@ -92,7 +92,7 @@ class MemoryGuardian:
         }
         
         # Load from CONFIG if available
-        memory_config = getattr(CONFIG, 'memory_guardian', {}) or {}
+        memory_config = getattr(CONFIG, 'memory_guardian', {})
 
         # Update threshold values if provided
         thresholds_cfg = memory_config.get("thresholds", {}) or {}
