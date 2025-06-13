@@ -59,7 +59,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 - **Model Switching**: Change models without restarting
 - **Improved Error Handling**: Better recovery from generation failures
 
-## �️ Installation
+## 🛠️ Installation
 
 ### Prerequisites
 - **Conda/Miniconda/Anaconda** ([Installation Guide](https://docs.conda.io/en/latest/miniconda.html))
@@ -403,11 +403,11 @@ illustrious-ai-studio/
 3. Test with `python test_simple.py`
 4. Submit a pull request
 
-## � License
+## 📄 License
 
 This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
 
-## � Acknowledgments
+## 🙏 Acknowledgments
 
 - **Stable Diffusion XL** by Stability AI
 - **Ollama** for local LLM deployment
