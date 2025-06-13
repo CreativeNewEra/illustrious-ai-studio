@@ -15,7 +15,6 @@ def test_save_to_gallery_creates_directory(tmp_path, monkeypatch):
     assert not gallery_dir.exists()
 
     monkeypatch.setattr(sdxl, "GALLERY_DIR", gallery_dir)
-    monkeypatch.setattr(sdxl.CONFIG, "gallery_dir", str(gallery_dir))
 
     img = Image.new("RGB", (10, 10), color="red")
     saved_path = sdxl.save_to_gallery(img, "test prompt")
