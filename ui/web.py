@@ -1535,12 +1535,12 @@ def create_gradio_app(state: AppState):
                 outputs=[live_status],
             )
 
-        try:
-            quick_generate_btn.click(
+        def configure_quick_generate_btn(include_js):
+            click_chain = quick_generate_btn.click(
                 fn=quick_generate_image,
                 inputs=[prompt, negative_prompt],
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
-                js=show_loading_js,
+                js=show_loading_js if include_js else None,
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
