@@ -491,7 +491,7 @@ async def generate_with_notifications(
     if progress:
         progress(0.1, desc="Initializing model…")
     if state.sdxl_pipe is None:
-        init_sdxl(state)
+        await asyncio.to_thread(init_sdxl, state)
 
     # Processing prompt
     if progress:
