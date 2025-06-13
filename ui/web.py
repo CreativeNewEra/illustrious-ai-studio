@@ -30,6 +30,17 @@ THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
 # Special value representing a random seed for image generation
 RANDOM_SEED = -1
 
+# Available image resolutions for the dropdown
+RESOLUTION_OPTIONS = [
+    "512x512 (Square - Fast)",
+    "768x768 (Square - Balanced)",
+    "1024x1024 (Square - High Quality)",
+    "768x512 (Landscape)",
+    "512x768 (Portrait)",
+    "1024x768 (Landscape HD)",
+    "768x1024 (Portrait HD)",
+]
+
 def create_gradio_app(state: AppState):
     """Build and return the Gradio UI for the application."""
     css_file = (Path(__file__).parent / "custom.css").read_text()
@@ -285,15 +296,7 @@ def create_gradio_app(state: AppState):
                         with gr.Row():
                             resolution = gr.Dropdown(
                                 label="🖼️ Image Resolution",
-                                choices=[
-                                    "512x512 (Square - Fast)",
-                                    "768x768 (Square - Balanced)",
-                                    "1024x1024 (Square - High Quality)",
-                                    "768x512 (Landscape)",
-                                    "512x768 (Portrait)",
-                                    "1024x768 (Landscape HD)",
-                                    "768x1024 (Portrait HD)"
-                                ],
+                                choices=RESOLUTION_OPTIONS,
                                 value="1024x1024 (Square - High Quality)",
                                 elem_classes=["dropdown"]
                             )
