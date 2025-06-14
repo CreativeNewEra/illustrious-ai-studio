@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Tuple, Any, TYPE_CHECKING
+from collections import defaultdict, deque
 import threading
 from contextlib import contextmanager
 
@@ -117,7 +118,9 @@ class AppState:
     # CONVERSATION AND INTERACTION STATE
     # ==============================================================
     
-    chat_history_store: Dict[str, List[Tuple[str, str]]] = field(default_factory=dict)
+    chat_history_store: Dict[str, deque] = field(
+        default_factory=lambda: defaultdict(lambda: deque(maxlen=100))
+    )
     """
     Storage for chat conversation history organized by session.
     
@@ -187,6 +190,4 @@ class AppState:
     def update_chat_history(self, session_id: str, message: tuple) -> None:
         """Thread-safe update of chat history for a session."""
         with self._lock:
-            if session_id not in self.chat_history_store:
-                self.chat_history_store[session_id] = []
             self.chat_history_store[session_id].append(message)

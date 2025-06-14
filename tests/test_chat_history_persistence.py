@@ -35,5 +35,5 @@ def test_history_saved_and_loaded(tmp_path, monkeypatch):
     assert new_state.ollama_vision_model is None
     monkeypatch.setattr(ollama, "CHAT_HISTORY_FILE", hist_file)
     ollama.load_chat_history(new_state)
-    assert new_state.chat_history_store["s1"] == [("hi", "ai")]
+    assert list(new_state.chat_history_store["s1"]) == [("hi", "ai")]
 
