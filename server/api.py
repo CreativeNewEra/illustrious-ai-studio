@@ -34,6 +34,7 @@ The API is designed to be:
 import base64
 import io
 import logging
+import uuid
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -51,6 +52,7 @@ from core.ollama import chat_completion, analyze_image
 from core.state import AppState
 from core.config import CONFIG
 from core.memory_guardian import get_memory_guardian
+from .logging_utils import request_id_var
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +119,26 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
         allow_headers=["*"],
         max_age=3600,
     )
-    
+
     # Store application state for dependency injection
     app.state.app_state = state
+
+    @app.middleware("http")
+    async def add_request_id(request: Request, call_next):
+        """Attach a unique request ID to each request and log context."""
+        request_id = str(uuid.uuid4())
+        request.state.request_id = request_id
+        if hasattr(logger, "contextvars"):
+            with logger.contextvars.bind(request_id=request_id):
+                response = await call_next(request)
+        else:
+            token = request_id_var.set(request_id)
+            try:
+                response = await call_next(request)
+            finally:
+                request_id_var.reset(token)
+        response.headers["X-Request-ID"] = request_id
+        return response
 
     def get_state(request: Request) -> AppState:
         """Dependency to inject application state into endpoints."""

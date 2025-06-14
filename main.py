@@ -27,6 +27,7 @@ from pathlib import Path
 # UI and server components
 from ui.web import create_gradio_app
 from server.api import create_api_app
+from server.logging_utils import RequestIdFilter
 
 # Core functionality
 from core.sdxl import init_sdxl
@@ -206,16 +207,22 @@ class IllustriousAIStudio:
         
         # Set up rotating file handler (10MB max, 5 backup files)
         file_handler = logging.handlers.RotatingFileHandler(
-            log_dir / "illustrious_ai_studio.log", 
-            maxBytes=10 * 1024 * 1024, 
+            log_dir / "illustrious_ai_studio.log",
+            maxBytes=10 * 1024 * 1024,
             backupCount=5
         )
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(request_id)s - %(message)s"
+        )
         file_handler.setFormatter(formatter)
+        file_handler.addFilter(RequestIdFilter())
         
         # Set up console handler with simpler format
         console_handler = logging.StreamHandler()
-        console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        console_handler.setFormatter(
+            logging.Formatter("%(levelname)s: %(message)s [%(request_id)s]")
+        )
+        console_handler.addFilter(RequestIdFilter())
 
         # Configure root logger and add handlers
         root = logging.getLogger()
