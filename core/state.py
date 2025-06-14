@@ -26,6 +26,8 @@ from collections import defaultdict, deque
 import threading
 from contextlib import contextmanager
 
+from .metrics import Metrics
+
 if TYPE_CHECKING:
     from .sdxl import ModelProtocol
 else:
@@ -174,6 +176,9 @@ class AppState:
 
     simple_mode: bool = True
     """Flag to indicate if the UI should run in beginner-friendly simple mode."""
+
+    metrics: Metrics = field(default_factory=Metrics)
+    """Runtime metrics for performance monitoring."""
 
     # ==============================================================
     # INTERNAL SYNCHRONIZATION

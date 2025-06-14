@@ -46,6 +46,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
+import time
 
 from PIL import Image
 import requests
@@ -195,6 +196,7 @@ def init_ollama(state: AppState) -> Optional[str]:
         - Provides detailed error reporting for troubleshooting
         - Handles network timeouts and connection errors
     """
+    start_time = time.perf_counter()
     try:
         response = call_with_circuit_breaker(
             breaker,
@@ -243,7 +245,8 @@ def init_ollama(state: AppState) -> Optional[str]:
             else:
                 state.model_status["multimodal"] = False
                 logger.warning("Vision model not found or not configured")
-            
+
+            state.metrics.record_ollama_load(time.perf_counter() - start_time)
             return target_model
         logger.error("Failed to test Ollama model: %s", test_response.text)
     except CircuitBreakerOpen:
