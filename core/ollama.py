@@ -269,6 +269,44 @@ def generate_prompt(state: AppState, user_input: str) -> str:
     return enhanced if not enhanced.startswith("❌") else user_input
 
 
+def generate_creative_prompt(state: AppState, user_input: str, style: str = "enhance") -> str:
+    """Generate creative prompts with different styles."""
+
+    style_prompts = {
+        "enhance": (
+            "Transform this idea into a detailed, visually stunning prompt. "
+            "Add artistic details, lighting, atmosphere, and quality tags. "
+            "Be creative but keep the core concept."
+        ),
+        "dreamy": (
+            "Make this idea ethereal and dreamlike. Add soft, magical elements, "
+            "pastel colors, and a sense of wonder. Make it feel like a beautiful dream."
+        ),
+        "epic": (
+            "Transform this into an epic, dramatic scene. Add grand scale, "
+            "dramatic lighting, and a sense of awe and adventure."
+        ),
+        "fun": (
+            "Make this playful and fun! Add bright colors, whimsical elements, "
+            "and a sense of joy and humor."
+        ),
+        "artistic": (
+            "Transform this into a fine art piece. Reference art movements, "
+            "painting techniques, and artistic styles."
+        ),
+    }
+
+    system_prompt = style_prompts.get(style, style_prompts["enhance"])
+
+    messages = [
+        {"role": "system", "content": f"You are a creative AI artist. {system_prompt}"},
+        {"role": "user", "content": f"Create a prompt for: {user_input}"},
+    ]
+
+    enhanced = chat_completion(state, messages, temperature=0.9, max_tokens=150)
+    return enhanced if not enhanced.startswith("❌") else user_input
+
+
 def _execute_tool_command(command: str) -> str:
     """Parse and execute a /tool command."""
     parts = command.strip().split()
