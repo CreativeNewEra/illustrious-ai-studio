@@ -35,6 +35,7 @@ import base64
 import io
 import logging
 from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from PIL import Image
 import torch
@@ -106,6 +107,14 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
         title="Illustrious AI MCP Server",
         version="1.0.0",
         description="AI Studio API providing image generation, chat, and analysis capabilities"
+    )
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["http://localhost:7860"],
+        allow_credentials=True,
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+        max_age=3600,
     )
     
     # Store application state for dependency injection

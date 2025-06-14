@@ -49,6 +49,7 @@ A powerful local AI application that combines **Stable Diffusion XL (SDXL)** ima
 ### 🌐 **Dual Interface**
 - **Gradio Web UI** (Port 7860): Interactive web interface with tabs for all features
 - **FastAPI MCP Server** (Port 8000): RESTful API for programmatic access
+  with CORS enabled for the Web UI at `http://localhost:7860`
 
 ### 📸 **Enhanced User Experience** ✨ **NEW**
 - **Recent Prompts**: Quick access to your last 20 prompts for faster iteration
