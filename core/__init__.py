@@ -1,5 +1,6 @@
 from .prompt_analyzer import (
     PromptAnalyzer,
+    CreativePromptEnhancer,
     analyze_prompt,
     auto_enhance_prompt,
 )
