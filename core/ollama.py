@@ -423,7 +423,7 @@ def analyze_image(state: AppState, image: Image.Image, question: str = "Describe
 
     try:
         width, height = image.size
-        if width * height > 4096 * 4096:
+        if width * height > MAX_IMAGE_PIXELS:
             return "❌ Image exceeds 16MP limit."
         if width > 1920 or height > 1920:
             image = image.copy()
