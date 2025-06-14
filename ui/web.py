@@ -749,7 +749,8 @@ def create_gradio_app(state: AppState):
 
                         state.last_generation_params = params
 
-                        if 'image_generator' not in state:
+                        # Lazily create the ImageGenerator once per state
+                        if not hasattr(state, "image_generator"):
                             state.image_generator = ImageGenerator(state)
 
                         image, status = state.image_generator.generate(params)
