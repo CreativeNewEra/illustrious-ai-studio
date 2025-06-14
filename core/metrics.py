@@ -11,15 +11,21 @@ class Metrics:
     generation_durations: List[float] = field(default_factory=list)
     sdxl_load_times: List[float] = field(default_factory=list)
     ollama_load_times: List[float] = field(default_factory=list)
+    _generation_lock: threading.Lock = field(default_factory=threading.Lock, init=False)
+    _sdxl_lock: threading.Lock = field(default_factory=threading.Lock, init=False)
+    _ollama_lock: threading.Lock = field(default_factory=threading.Lock, init=False)
 
     def record_generation(self, duration: float) -> None:
-        self.generation_durations.append(duration)
+        with self._generation_lock:
+            self.generation_durations.append(duration)
 
     def record_sdxl_load(self, duration: float) -> None:
-        self.sdxl_load_times.append(duration)
+        with self._sdxl_lock:
+            self.sdxl_load_times.append(duration)
 
     def record_ollama_load(self, duration: float) -> None:
-        self.ollama_load_times.append(duration)
+        with self._ollama_lock:
+            self.ollama_load_times.append(duration)
 
     def p95_generation_time(self) -> float:
         if not self.generation_durations:
