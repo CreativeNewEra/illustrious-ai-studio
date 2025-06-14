@@ -87,11 +87,12 @@ def load_chat_history(state: AppState) -> None:
         if CHAT_HISTORY_FILE.exists():
             with open(CHAT_HISTORY_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            
+
             # Convert loaded data to proper format
-            for session_id, history in data.items():
-                state.chat_history_store[session_id] = [tuple(msg) for msg in history]
-                
+            with state.atomic_operation():
+                for session_id, history in data.items():
+                    state.chat_history_store[session_id] = [tuple(msg) for msg in history]
+
             logger.info(f"Loaded chat history for {len(data)} sessions")
             
     except Exception as e:
@@ -118,17 +119,17 @@ def save_chat_history(state: AppState) -> None:
     try:
         # Ensure directory exists
         CHAT_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Convert to JSON-serializable format
-        serializable = {
-            sid: [list(msg) for msg in history]
-            for sid, history in state.chat_history_store.items()
-        }
-        
+
+        with state.atomic_operation():
+            serializable = {
+                sid: [list(msg) for msg in history]
+                for sid, history in state.chat_history_store.items()
+            }
+
         # Write to file with proper formatting
         with open(CHAT_HISTORY_FILE, "w", encoding="utf-8") as f:
             json.dump(serializable, f, indent=2, ensure_ascii=False)
-            
+
         logger.debug(f"Saved chat history for {len(serializable)} sessions")
         
     except Exception as e:
@@ -327,8 +328,9 @@ def _execute_tool_command(command: str) -> str:
 def handle_chat(state: AppState, message: str, session_id: str = "default", chat_history: Optional[list] = None) -> Tuple[list, str]:
     if not message.strip():
         return chat_history or [], ""
-    if session_id not in state.chat_history_store:
-        state.chat_history_store[session_id] = []
+    with state.atomic_operation():
+        if session_id not in state.chat_history_store:
+            state.chat_history_store[session_id] = []
     if message.startswith("/tool"):
         response = _execute_tool_command(message[len("/tool"):])
     elif message.lower().startswith("#generate") or "generate image" in message.lower():
@@ -363,7 +365,8 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
             "You are a helpful AI assistant specializing in creative tasks and image generation. Be friendly and informative."
         )
         messages = [{"role": "system", "content": system_prompt}]
-        recent_history = state.chat_history_store[session_id][-10:]
+        with state.atomic_operation():
+            recent_history = state.chat_history_store[session_id][-10:]
         for msg in recent_history:
             messages.extend([
                 {"role": "user", "content": msg[0]},
@@ -375,7 +378,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
             parts = response.split("</think>")
             if len(parts) > 1:
                 response = parts[-1].strip()
-    state.chat_history_store[session_id].append((message, response))
+    state.update_chat_history(session_id, (message, response))
     save_chat_history(state)
     if chat_history is None:
         chat_history = []
