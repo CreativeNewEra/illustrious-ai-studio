@@ -298,6 +298,7 @@ def chat_completion(state: AppState, messages: List[dict], temperature: float = 
             "Ensure the Ollama server is reachable."
         )
     except CircuitBreakerOpen:
+        logger.warning("CircuitBreakerOpen exception occurred during chat completion.")
         return "❌ Service temporarily unavailable. Please try again later."
     except Exception as e:
         logger.error("Ollama completion failed: %s", e)
