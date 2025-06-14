@@ -191,6 +191,10 @@ class ImageGenerator:
                 return image, f"✅ Image generated successfully! Seed: {actual_seed}"
             except RuntimeError as e:
                 if "out of memory" in str(e).lower() and attempt < max_retries - 1:
+                    logger.warning(
+                        "Out of memory detected during attempt %d. Exception: %s. Retrying with reduced settings: width=%d, height=%d, steps=%d",
+                        attempt + 1, str(e), width, height, steps
+                    )
                     clear_gpu_memory()
                     width, height, steps = _reduce_settings_for_retry(width, height, steps, attempt)
                     continue
