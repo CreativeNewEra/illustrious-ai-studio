@@ -27,6 +27,7 @@ import threading
 from contextlib import contextmanager
 
 from .metrics import Metrics
+from .degradation import DegradationStrategy
 
 if TYPE_CHECKING:
     from .sdxl import ModelProtocol
@@ -179,6 +180,9 @@ class AppState:
 
     metrics: Metrics = field(default_factory=Metrics)
     """Runtime metrics for performance monitoring."""
+
+    degradation_strategy: DegradationStrategy = field(default_factory=DegradationStrategy)
+    """Strategy for adaptive degradation when OOM occurs."""
 
     # ==============================================================
     # INTERNAL SYNCHRONIZATION

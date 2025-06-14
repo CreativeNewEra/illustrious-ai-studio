@@ -128,6 +128,8 @@ class ImageGenerator:
 
         width, height, steps = self.check_resources(width, height, steps)
 
+        strategy = getattr(self.state, "degradation_strategy", None)
+
         clear_gpu_memory()
         if callback:
             callback(0, steps)
@@ -187,6 +189,8 @@ class ImageGenerator:
                             "height": height,
                         },
                     )
+                if strategy:
+                    strategy.restore()
                 clear_gpu_memory()
                 return image, f"✅ Image generated successfully! Seed: {actual_seed}"
             except RuntimeError as e:
@@ -196,6 +200,8 @@ class ImageGenerator:
                         attempt + 1, str(e), width, height, steps
                     )
                     clear_gpu_memory()
+                    if strategy:
+                        width, height, steps = strategy.degrade(width, height, steps)
                     width, height, steps = _reduce_settings_for_retry(width, height, steps, attempt)
                     continue
                 if callback:

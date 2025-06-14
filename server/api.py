@@ -300,7 +300,9 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
 
     @app.get("/metrics")
     async def get_metrics(state: AppState = Depends(get_state)):
-        return state.metrics.to_dict()
+        data = state.metrics.to_dict()
+        data["degradation_level"] = state.degradation_strategy.level
+        return data
 
     return app
 
