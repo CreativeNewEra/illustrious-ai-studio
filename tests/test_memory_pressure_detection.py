@@ -35,7 +35,7 @@ def test_pressure_reduction_detection(monkeypatch):
     reduced_stats = make_stats(MemoryPressureLevel.MEDIUM)
 
     monkeypatch.setattr(guardian, "get_memory_stats", lambda: reduced_stats)
-    monkeypatch.setattr("time.sleep", lambda _: None)
+    monkeypatch.setattr("core.memory_guardian.time", "sleep", lambda _: None)
 
     guardian._handle_memory_pressure(start_stats)
     assert guardian.oom_prevented_count == 1
