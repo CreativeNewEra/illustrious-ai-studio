@@ -400,7 +400,7 @@ def generate_image(state: AppState, params: GenerationParams) -> Tuple[Optional[
                 if progress_callback:
                     try:
                         progress_callback(step + 1, steps)
-                    except Exception as e:
+                    except (TypeError, ValueError, RuntimeError) as e:
                         logger.warning(f"Progress callback failed: {e}")
 
             result = state.sdxl_pipe.generate(
