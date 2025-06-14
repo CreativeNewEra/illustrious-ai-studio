@@ -27,9 +27,17 @@ logger = logging.getLogger(__name__)
 
 class MemoryPressureLevel(Enum):
     LOW = "low"           # < 70% usage
-    MEDIUM = "medium"     # 70-85% usage  
+    MEDIUM = "medium"     # 70-85% usage
     HIGH = "high"         # 85-95% usage
     CRITICAL = "critical" # > 95% usage
+
+# Ordering of pressure levels for comparison
+PRESSURE_ORDER = {
+    MemoryPressureLevel.LOW: 0,
+    MemoryPressureLevel.MEDIUM: 1,
+    MemoryPressureLevel.HIGH: 2,
+    MemoryPressureLevel.CRITICAL: 3,
+}
 
 @dataclass
 class MemoryStats:
@@ -311,9 +319,16 @@ class MemoryGuardian:
             # Check if pressure was relieved
             time.sleep(1)  # Give time for cleanup to take effect
             new_stats = self.get_memory_stats()
-            if new_stats and new_stats.pressure_level.value < stats.pressure_level.value:
+            if (
+                new_stats
+                and PRESSURE_ORDER[new_stats.pressure_level] < PRESSURE_ORDER[stats.pressure_level]
+            ):
                 self.oom_prevented_count += 1
-                logger.info(f"Memory pressure reduced from {stats.pressure_level.value} to {new_stats.pressure_level.value}")
+                logger.info(
+                    "Memory pressure reduced from %s to %s",
+                    stats.pressure_level.value,
+                    new_stats.pressure_level.value,
+                )
     
     # ======================== Intervention Strategies ========================
     
