@@ -8,5 +8,5 @@ class RequestIdFilter(Filter):
     """Logging filter to inject the request ID into log records."""
 
     def filter(self, record: LogRecord) -> bool:
-        record.request_id = request_id_var.get("-")
+        record.request_id = request_id_var.get()
         return True
