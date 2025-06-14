@@ -494,5 +494,4 @@ def start_memory_guardian(app_state):
 
 def stop_memory_guardian(app_state):
     """Stop monitoring using the AppState's memory guardian."""
-    if hasattr(app_state, "memory_guardian"):
-        app_state.memory_guardian.stop_monitoring()
+    app_state.memory_guardian.stop_monitoring()
