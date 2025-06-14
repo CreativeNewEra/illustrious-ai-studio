@@ -181,6 +181,12 @@ class AppState:
 
     _lock: threading.RLock = field(default_factory=threading.RLock, repr=False)
 
+    # ==============================================================
+    # INTERNAL MEMORY GUARDIAN
+    # ==============================================================
+
+    _memory_guardian: Optional["MemoryGuardian"] = field(default=None, init=False, repr=False)
+
     @contextmanager
     def atomic_operation(self):
         """Context manager for thread-safe state mutations."""
@@ -191,3 +197,15 @@ class AppState:
         """Thread-safe update of chat history for a session."""
         with self._lock:
             self.chat_history_store[session_id].append(message)
+
+    # ------------------------------------------------------------------
+    # Memory guardian management
+    # ------------------------------------------------------------------
+
+    @property
+    def memory_guardian(self):
+        """Lazy-initialize and return the MemoryGuardian instance."""
+        if self._memory_guardian is None:
+            from .memory_guardian import MemoryGuardian
+            self._memory_guardian = MemoryGuardian(self)
+        return self._memory_guardian

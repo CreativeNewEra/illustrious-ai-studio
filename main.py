@@ -524,7 +524,7 @@ class IllustriousAIStudio:
         
         # Step 1: Stop Memory Guardian
         self.logger.info("🛡️ Stopping Memory Guardian...")
-        stop_memory_guardian()
+        stop_memory_guardian(self.app_state)
         
         # Step 2: Stop API server if running
         if self.api_server and hasattr(self.api_server, 'should_exit'):

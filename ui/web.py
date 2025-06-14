@@ -2549,7 +2549,7 @@ def create_gradio_app(state: AppState):
             return get_monitor_status(), get_memory_stats_markdown(state)
 
         def stop_guardian_ui():
-            stop_memory_guardian()
+            stop_memory_guardian(state)
             return get_monitor_status(), get_memory_stats_markdown(state)
 
         def set_profile_ui(profile):
