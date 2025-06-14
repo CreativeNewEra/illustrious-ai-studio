@@ -128,15 +128,11 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
         """Attach a unique request ID to each request and log context."""
         request_id = str(uuid.uuid4())
         request.state.request_id = request_id
-        if hasattr(logger, "contextvars"):
-            with logger.contextvars.bind(request_id=request_id):
-                response = await call_next(request)
-        else:
-            token = request_id_var.set(request_id)
-            try:
-                response = await call_next(request)
-            finally:
-                request_id_var.reset(token)
+        token = request_id_var.set(request_id)
+        try:
+            response = await call_next(request)
+        finally:
+            request_id_var.reset(token)
         response.headers["X-Request-ID"] = request_id
         return response
 
