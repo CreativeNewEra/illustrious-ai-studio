@@ -66,6 +66,7 @@ from core.sdxl import (
     PROJECTS_DIR,
     save_to_gallery,
 )
+from core.image_generator import ImageGenerator
 
 # Configuration and state management
 from core.config import CONFIG
@@ -748,8 +749,10 @@ def create_gradio_app(state: AppState):
 
                         state.last_generation_params = params
 
-                        image, status = generate_image(state, params)
+                        if 'image_generator' not in state:
+                            state.image_generator = ImageGenerator(state)
 
+                        image, status = state.image_generator.generate(params)
                         if image:
                             success_messages = [
                                 "🎉 Wow! Look what you created!",
@@ -794,7 +797,8 @@ def create_gradio_app(state: AppState):
                         original_prompt = variation_params.get("prompt", "")
                         variation_params["prompt"] = f"{random.choice(variation_modifiers)} {original_prompt}"
                         variation_params["seed"] = -1
-                        new_image, status = generate_image(state, variation_params)
+                        gen = ImageGenerator(state)
+                        new_image, status = gen.generate(variation_params)
                         if new_image:
                             return new_image, "🔄 Created a fresh variation!"
                         return image, "❌ Variation failed, keeping original"
@@ -856,7 +860,8 @@ def create_gradio_app(state: AppState):
                                 "height": 768,
                                 "save_to_gallery_flag": True,
                             }
-                            image, _ = generate_image(state, params)
+                            gen = ImageGenerator(state)
+                            image, _ = gen.generate(params)
                             if image:
                                 results.append((image, style))
                         if results:
