@@ -607,6 +607,16 @@ def create_gradio_app(state: AppState):
                     Transform your imagination into stunning artwork with the power of AI
                 """)
                 status_display = gr.Markdown(get_model_status(state))
+                # Create a hardware info display component that:
+                # 1. Shows detected GPU and memory
+                # 2. Displays current optimization profile (e.g., "Optimized for RTX 3060 (12GB)")
+                # 3. Has a button to "Re-detect Hardware"
+                # 4. Shows warnings if hardware is limited
+                # 5. Includes tooltips explaining what each optimization does
+                # Format as a gr.Markdown component with nice emoji indicators:
+                #  - ✅ for good capabilities
+                #  - ⚠️ for limitations
+                #  - 🚀 for performance tips
                 theme_selector = gr.Radio(
                     ["Light", "Dark"],
                     value="Dark" if current_theme == "dark" else "Light",
