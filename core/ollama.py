@@ -45,6 +45,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from collections import deque
+from concurrent.futures import ThreadPoolExecutor
 
 from PIL import Image
 import requests
@@ -55,6 +56,9 @@ from .config import CONFIG
 from .mcp_tools import call_tool
 
 logger = logging.getLogger(__name__)
+
+# Single thread pool for background disk writes
+executor = ThreadPoolExecutor(max_workers=1)
 
 # ==================================================================
 # CONSTANTS AND CONFIGURATION
@@ -137,6 +141,29 @@ def save_chat_history(state: AppState) -> None:
         
     except Exception as e:
         logger.error("Failed to save chat history: %s", e)
+
+
+def save_chat_history_async(state: AppState) -> None:
+    """Persist chat history to disk using a background thread."""
+
+    def _write():
+        try:
+            CHAT_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+            with state.atomic_operation():
+                serializable = {
+                    sid: [list(msg) for msg in list(history)]
+                    for sid, history in state.chat_history_store.items()
+                }
+            with open(CHAT_HISTORY_FILE, "w", encoding="utf-8") as f:
+                json.dump(serializable, f, indent=2, ensure_ascii=False)
+            logger.debug(
+                f"Saved chat history for {len(serializable)} sessions"
+            )
+        except Exception as e:  # pragma: no cover - log and continue
+            logger.error("Failed to save chat history: %s", e)
+
+    future = executor.submit(_write)
+    future.result()
 
 
 # ==================================================================
@@ -223,7 +250,7 @@ def switch_ollama_model(state: AppState, name: str) -> bool:
     state.model_status["ollama"] = False
     state.model_status["multimodal"] = False
     state.chat_history_store.clear()
-    save_chat_history(state)
+    save_chat_history_async(state)
     CONFIG.ollama_model = name
     logger.info("Switching Ollama model to %s", name)
     return init_ollama(state) is not None
@@ -381,7 +408,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
             if len(parts) > 1:
                 response = parts[-1].strip()
     state.update_chat_history(session_id, (message, response))
-    save_chat_history(state)
+    save_chat_history_async(state)
     if chat_history is None:
         chat_history = []
     chat_history.append([message, response])
