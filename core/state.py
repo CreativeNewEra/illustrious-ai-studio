@@ -178,6 +178,12 @@ class AppState:
     simple_mode: bool = True
     """Flag to indicate if the UI should run in beginner-friendly simple mode."""
 
+    hardware_profile: Optional["HardwareProfile"] = None
+    """Detected hardware capabilities and recommended settings"""
+
+    auto_settings_applied: bool = False
+    """Whether automatic hardware optimization has been applied"""
+
     metrics: Metrics = field(default_factory=Metrics)
     """Runtime metrics for performance monitoring."""
 
@@ -218,3 +224,16 @@ class AppState:
             from .memory_guardian import MemoryGuardian
             self._memory_guardian = MemoryGuardian(self)
         return self._memory_guardian
+
+    # ------------------------------------------------------------------
+    def apply_auto_settings(self) -> None:
+        """Detect hardware and apply optimal settings if not already done"""
+        if self.auto_settings_applied:
+            return
+        from .config import CONFIG
+        from .hardware_profiler import HardwareProfiler
+
+        profiler = HardwareProfiler()
+        self.hardware_profile = profiler.detect_hardware()
+        CONFIG.apply_hardware_profile()
+        self.auto_settings_applied = True

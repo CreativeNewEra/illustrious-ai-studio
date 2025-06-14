@@ -35,6 +35,7 @@ from core.ollama import init_ollama
 from core.state import AppState
 from core.memory import clear_gpu_memory
 from core.memory_guardian import start_memory_guardian, stop_memory_guardian
+from core.hardware_profiler import HardwareProfiler
 
 # Web server
 import uvicorn
@@ -144,6 +145,25 @@ class IllustriousAIStudio:
         self._configure_environment()
         self.logger = self._setup_logging(args.log_level)
         self.app_state = AppState()
+
+        profiler = HardwareProfiler()
+        profile = profiler.detect_hardware()
+        from core.config import CONFIG
+        CONFIG.apply_hardware_profile()
+        self.app_state.hardware_profile = profile
+        self.logger.info(
+            "🖥️ Detected: %s (%0.0fGB VRAM, %0.0fGB RAM)",
+            profiler.gpu_name or "CPU",
+            profile.vram_gb,
+            profile.ram_gb,
+        )
+        self.logger.info(
+            "✅ Applied '%s' profile: %dx%d, %d steps",
+            profile.profile_name,
+            profile.recommended_resolution[0],
+            profile.recommended_resolution[1],
+            profile.recommended_steps,
+        )
         self.api_server: uvicorn.Server | None = None
         self.api_thread: threading.Thread | None = None
         # Signal handling is set up in run() to ensure proper timing with Gradio

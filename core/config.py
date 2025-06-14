@@ -25,8 +25,10 @@ import os
 from pathlib import Path
 import tempfile
 import warnings
+import logging
 import yaml
 from pydantic import BaseModel, validator
+from .hardware_profiler import HardwareProfiler
 
 # ==================================================================
 # CONSTANTS AND PATHS
@@ -114,6 +116,40 @@ class SDXLConfig(BaseModel):
 
     def as_dict(self) -> dict:
         return self.dict()
+
+    def apply_hardware_profile(self) -> "SDXLConfig":
+        """Detect hardware and apply optimal settings automatically."""
+        logger = logging.getLogger(__name__)
+        profiler = HardwareProfiler()
+        profile = profiler.detect_hardware()
+
+        self.cuda_settings = {
+            "device": "cuda:0" if profile.vram_gb > 0 else "cpu",
+            "dtype": "float16",
+            "enable_tf32": profile.enable_tf32,
+            "memory_fraction": 0.95,
+        }
+
+        gen = self.generation_defaults or {}
+        gen.update(
+            {
+                "steps": profile.recommended_steps,
+                "width": profile.recommended_resolution[0],
+                "height": profile.recommended_resolution[1],
+                "batch_size": profile.recommended_batch_size,
+            }
+        )
+        self.generation_defaults = gen
+
+        logger.info(
+            "Applied '%s' hardware profile: %dx%d, %d steps",
+            profile.profile_name,
+            profile.recommended_resolution[0],
+            profile.recommended_resolution[1],
+            profile.recommended_steps,
+        )
+
+        return self
 
 # ==================================================================
 # CONFIGURATION LOADING AND MANAGEMENT
