@@ -2395,21 +2395,56 @@ def parse_resolution(resolution_string):
         return 1024, 1024
 
     try:
-        parts = resolution_string.split()
-        if not parts:
-            logger.warning("Empty resolution string, using default 1024x1024")
+        # Handle None, empty string, or whitespace-only strings
+        if not resolution_string or not resolution_string.strip():
+            logger.warning("Empty or None resolution string, using default 1024x1024")
             return 1024, 1024
-        resolution_part = parts[0]
-        if "x" not in resolution_part:
+            
+        parts = resolution_string.strip().split()
+        if not parts or len(parts) == 0:
+            logger.warning("No parts found in resolution string, using default 1024x1024")
+            return 1024, 1024
+            
+        # Safely access the first part
+        resolution_part = parts[0] if len(parts) > 0 else ""
+        if not resolution_part or "x" not in resolution_part:
             logger.warning(f"Invalid resolution format: {resolution_string}, using default 1024x1024")
             return 1024, 1024
-        width_str, height_str = resolution_part.split("x", 1)
+            
+        # Split width and height with additional validation
+        resolution_components = resolution_part.split("x")
+        if len(resolution_components) != 2:
+            logger.warning(f"Invalid resolution components: {resolution_part}, using default 1024x1024")
+            return 1024, 1024
+            
+        # Additional safety check - this should be redundant but ensures robustness
+        if len(resolution_components) < 2:
+            logger.warning(f"Insufficient resolution components after split: {resolution_components}, using default 1024x1024")
+            return 1024, 1024
+            
+        width_str, height_str = resolution_components[0].strip(), resolution_components[1].strip()
+        
+        # Validate that we have non-empty strings
+        if not width_str or not height_str:
+            logger.warning(f"Empty width or height in resolution: {resolution_part}, using default 1024x1024")
+            return 1024, 1024
+            
         width, height = int(width_str), int(height_str)
+        
         if width <= 0 or height <= 0:
-            raise ValueError("resolution must be positive")
+            logger.warning(f"Invalid dimensions {width}x{height}, using default 1024x1024")
+            return 1024, 1024
+            
+        # Clamp to reasonable ranges
+        width = max(256, min(width, 2048))
+        height = max(256, min(height, 2048))
+        
         return width, height
+    except (ValueError, TypeError, AttributeError, IndexError) as e:
+        logger.error(f"Error parsing resolution '{resolution_string}': {e}, using default 1024x1024")
+        return 1024, 1024
     except Exception as e:
-        logger.error(f"Unexpected error parsing resolution '{resolution_string}': {e}")
+        logger.error(f"Unexpected error parsing resolution '{resolution_string}': {e}, using default 1024x1024")
         return 1024, 1024
 
 

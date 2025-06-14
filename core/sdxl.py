@@ -396,13 +396,38 @@ def generate_image(state: AppState, params: GenerationParams) -> Tuple[Optional[
                 callback_steps=1,
             )
             
-            # Extract image from result - handle StableDiffusionXLPipelineOutput
-            if hasattr(result, 'images') and result.images and len(result.images) > 0:
-                image = result.images[0]
-            elif isinstance(result, (list, tuple)) and len(result) > 0:
-                image = result[0]
-            else:
+            # Extract image from result - handle StableDiffusionXLPipelineOutput with robust validation
+            image = None
+            
+            # Case 1: Result has 'images' attribute (StableDiffusionXLPipelineOutput)
+            if hasattr(result, 'images'):
+                if result.images and isinstance(result.images, (list, tuple)) and len(result.images) > 0:
+                    image = result.images[0]
+                else:
+                    logger.error("Result has 'images' attribute but images list is empty or invalid")
+                    return None, "❌ Generation failed: Pipeline returned empty images list"
+            
+            # Case 2: Result is a list or tuple directly
+            elif isinstance(result, (list, tuple)):
+                if len(result) > 0:
+                    image = result[0]
+                else:
+                    logger.error("Result is empty list/tuple")
+                    return None, "❌ Generation failed: Pipeline returned empty result list"
+            
+            # Case 3: Result is the image directly
+            elif result is not None:
                 image = result
+            
+            # Case 4: No valid result
+            else:
+                logger.error("Pipeline returned None or invalid result")
+                return None, "❌ Generation failed: Pipeline returned no result"
+            
+            # Final validation that we actually got an image
+            if image is None:
+                logger.error("Failed to extract image from pipeline result")
+                return None, "❌ Generation failed: Could not extract image from pipeline result"
             
             # Ensure we have a PIL Image
             if not isinstance(image, Image.Image):
@@ -487,29 +512,36 @@ async def generate_with_notifications(
     state: AppState, params: GenerationParams, progress
 ) -> Tuple[Optional[Image.Image], str]:
     """Generate an image while emitting high level progress notifications."""
+    # Safe progress checking - avoid triggering __len__ on Gradio progress objects
+    def safe_progress_update(value, desc=""):
+        try:
+            if progress is not None and hasattr(progress, '__call__'):
+                progress(value, desc=desc)
+        except Exception as e:
+            logger.warning(f"Progress update failed: {e}")
+    
     # Initializing
-    if progress:
-        progress(0.1, desc="Initializing model…")
+    safe_progress_update(0.1, "Initializing model…")
     if state.sdxl_pipe is None:
         await asyncio.to_thread(init_sdxl, state)
 
     # Processing prompt
-    if progress:
-        progress(0.3, desc="Processing prompt…")
+    safe_progress_update(0.3, "Processing prompt…")
 
     # Prepare progress callback for generation phase
-    if progress:
-        progress(0.6, desc="Generating image…")
+    safe_progress_update(0.6, "Generating image…")
 
-        def cb(step: int, total: int):
-            progress(0.6 + (step / total) * 0.4, desc=f"{step}/{total}")
+    def cb(step: int, total: int):
+        safe_progress_update(0.6 + (step / total) * 0.4, f"{step}/{total}")
+    
+    # Only add progress callback if we have a valid progress object
+    if progress is not None:
         params["progress_callback"] = cb
 
     # Run the actual generation
     image, status = await generate_image_async(state, params)
 
-    if progress:
-        progress(1.0, desc="Complete!")
+    safe_progress_update(1.0, "Complete!")
 
     return image, status
 
