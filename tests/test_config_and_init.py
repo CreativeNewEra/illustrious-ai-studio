@@ -32,8 +32,8 @@ def test_init_sdxl_missing_model(tmp_path, monkeypatch):
     state = AppState()
     assert state.ollama_vision_model is None
     assert state.ollama_vision_model is None
-    monkeypatch.setattr(sdxl.CONFIG, "sd_model", str(tmp_path / "missing.safetensors"))
-    result = sdxl.init_sdxl(state)
+    custom_cfg = config.SDXLConfig(sd_model=str(tmp_path / "missing.safetensors"))
+    result = sdxl.init_sdxl(state, custom_cfg)
     assert result is None
     assert state.sdxl_pipe is None
     assert state.model_status["sdxl"] is False
