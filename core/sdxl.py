@@ -143,7 +143,9 @@ PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 # MODEL INITIALIZATION AND MANAGEMENT
 # ==================================================================
 
-def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
+def init_sdxl(
+    state: AppState, config: SDXLConfig | None = None
+) -> Optional[StableDiffusionXLPipeline]:
     """
     Initialize and load the Stable Diffusion XL model.
     
@@ -167,25 +169,26 @@ def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
         - Falls back to CPU if GPU unavailable (much slower)
         - Uses float16 precision for memory efficiency
     """
+    cfg = config or CONFIG
     pipe = None
     try:
         # Validate model file exists
-        if not os.path.exists(CONFIG.sd_model):
-            logger.error("SDXL model file not found: %s", CONFIG.sd_model)
+        if not os.path.exists(cfg.sd_model):
+            logger.error("SDXL model file not found: %s", cfg.sd_model)
             return None
-            
-        logger.info("Loading Stable Diffusion XL model from: %s", CONFIG.sd_model)
+
+        logger.info("Loading Stable Diffusion XL model from: %s", cfg.sd_model)
         
         # Load model with optimized settings
         pipe = StableDiffusionXLPipeline.from_single_file(
-            CONFIG.sd_model,
+            cfg.sd_model,
             torch_dtype=torch.float16,    # Use half precision for memory efficiency
             variant="fp16",               # Load FP16 variant if available
             use_safetensors=True,        # Use safetensors format for security
         )
         
         # Configure device placement
-        if CONFIG.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available():
+        if cfg.gpu_backend in ("cuda", "rocm") and torch.cuda.is_available():
             pipe.to("cuda")
             logger.info("✅ SDXL model loaded successfully on GPU")
         else:
