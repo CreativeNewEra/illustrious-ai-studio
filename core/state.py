@@ -22,6 +22,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Tuple, Any, TYPE_CHECKING
+import threading
+from contextlib import contextmanager
 
 if TYPE_CHECKING:
     from .sdxl import ModelProtocol
@@ -169,3 +171,22 @@ class AppState:
 
     simple_mode: bool = True
     """Flag to indicate if the UI should run in beginner-friendly simple mode."""
+
+    # ==============================================================
+    # INTERNAL SYNCHRONIZATION
+    # ==============================================================
+
+    _lock: threading.RLock = field(default_factory=threading.RLock, repr=False)
+
+    @contextmanager
+    def atomic_operation(self):
+        """Context manager for thread-safe state mutations."""
+        with self._lock:
+            yield self
+
+    def update_chat_history(self, session_id: str, message: tuple) -> None:
+        """Thread-safe update of chat history for a session."""
+        with self._lock:
+            if session_id not in self.chat_history_store:
+                self.chat_history_store[session_id] = []
+            self.chat_history_store[session_id].append(message)

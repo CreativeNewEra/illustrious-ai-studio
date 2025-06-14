@@ -167,6 +167,7 @@ def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
         - Falls back to CPU if GPU unavailable (much slower)
         - Uses float16 precision for memory efficiency
     """
+    pipe = None
     try:
         # Validate model file exists
         if not os.path.exists(CONFIG.sd_model):
@@ -196,15 +197,30 @@ def init_sdxl(state: AppState) -> Optional[StableDiffusionXLPipeline]:
 
         return pipe
     except Exception as e:
+        if pipe is not None:
+            del pipe
+            clear_gpu_memory()
         logger.error("Failed to initialize SDXL: %s", e)
         state.model_status["sdxl"] = False
         return None
 
 
 def _get_active_gallery_dir(state: AppState) -> Path:
-    """Return gallery directory for the current project or default gallery."""
+    """Return gallery directory with security checks."""
     if state.current_project:
-        return PROJECTS_DIR / state.current_project / "gallery"
+        safe_project = "".join(
+            c for c in state.current_project if c.isalnum() or c in ("-", "_")
+        )
+        safe_project = safe_project[:50]
+        project_dir = PROJECTS_DIR / safe_project / "gallery"
+        try:
+            project_dir.resolve().relative_to(PROJECTS_DIR.resolve())
+        except ValueError:
+            logger.error(
+                "Path traversal attempt with project: %s", state.current_project
+            )
+            return GALLERY_DIR
+        return project_dir
     return GALLERY_DIR
 
 
