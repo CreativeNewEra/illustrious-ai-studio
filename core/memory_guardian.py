@@ -480,25 +480,19 @@ class MemoryGuardian:
         
         return has_memory
 
-# Global instance
-_memory_guardian = None
+def get_memory_guardian(app_state) -> MemoryGuardian:
+    """Retrieve the memory guardian tied to the given AppState."""
+    return app_state.memory_guardian
 
-def get_memory_guardian(app_state=None) -> MemoryGuardian:
-    """Get the global memory guardian instance"""
-    global _memory_guardian
-    if _memory_guardian is None:
-        _memory_guardian = MemoryGuardian(app_state)
-    return _memory_guardian
 
-def start_memory_guardian(app_state=None):
-    """Start the global memory guardian"""
-    guardian = get_memory_guardian(app_state)
+def start_memory_guardian(app_state):
+    """Start monitoring using the AppState's memory guardian."""
+    guardian = app_state.memory_guardian
     guardian.start_monitoring()
     return guardian
 
-def stop_memory_guardian():
-    """Stop the global memory guardian"""
-    global _memory_guardian
-    if _memory_guardian:
-        _memory_guardian.stop_monitoring()
-        _memory_guardian = None
+
+def stop_memory_guardian(app_state):
+    """Stop monitoring using the AppState's memory guardian."""
+    if hasattr(app_state, "memory_guardian"):
+        app_state.memory_guardian.stop_monitoring()
