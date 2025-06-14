@@ -749,9 +749,10 @@ def create_gradio_app(state: AppState):
 
                         state.last_generation_params = params
 
-                        gen = ImageGenerator(state)
-                        image, status = gen.generate(params)
+                        if 'image_generator' not in state:
+                            state.image_generator = ImageGenerator(state)
 
+                        image, status = state.image_generator.generate(params)
                         if image:
                             success_messages = [
                                 "🎉 Wow! Look what you created!",
