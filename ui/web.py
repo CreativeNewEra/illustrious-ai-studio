@@ -151,7 +151,7 @@ def create_gradio_app(state: AppState):
         - Memory Monitor: Real-time system resource monitoring
         - Settings: Configuration, themes, and preferences
     """
-    # Load custom CSS styling for enhanced visual design
+    # Load enhanced CSS styling for modern visual design
     css_file = (Path(__file__).parent / "custom.css").read_text()
     
     # JavaScript functions for loading indicators and UI enhancements

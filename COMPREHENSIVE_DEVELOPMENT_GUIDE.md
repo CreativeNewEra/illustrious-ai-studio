@@ -190,6 +190,7 @@ class SDXLConfig(BaseModel):
 ```
 
 **Key Features:**
+
 - Environment variable overrides
 - YAML file-based configuration
 - Runtime configuration updates
@@ -211,6 +212,7 @@ class AppState:
 ```
 
 **Thread-safe state management** for:
+
 - Model instances
 - Generation history
 - Chat conversations
@@ -234,6 +236,7 @@ class MemoryGuardian:
 ```
 
 **Prevents OOM crashes** through:
+
 - Real-time GPU memory monitoring
 - Automatic model unloading under pressure
 - Graceful degradation of generation parameters
@@ -260,6 +263,7 @@ def init_sdxl(config: SDXLConfig) -> StableDiffusionXLPipeline:
 ```
 
 **Features:**
+
 - Multiple model support
 - Memory-efficient loading
 - Dynamic parameter adjustment
@@ -283,6 +287,7 @@ class OllamaClient:
 ```
 
 **Capabilities:**
+
 - Multi-model chat support
 - Vision model integration
 - Prompt enhancement
@@ -349,6 +354,7 @@ python main.py --lazy-load --log-level DEBUG --optimize-memory --open-browser
 ```
 
 **Available VS Code Tasks:**
+
 - `🚀 Start AI Studio (Quick)` - Fast startup, load models on demand
 - `⏳ Start AI Studio (Lazy Load)` - UI first, then models
 - `🔧 Start AI Studio (Development)` - Full debug mode
@@ -361,25 +367,31 @@ python main.py --lazy-load --log-level DEBUG --optimize-memory --open-browser
 ### Development Modes
 
 #### 1. **Quick Start Mode** (Fastest Development)
+
 ```bash
 python main.py --quick-start --open-browser
 ```
+
 - Starts UI immediately
 - Models load on first use
 - Best for UI development
 
 #### 2. **Lazy Load Mode** (Balanced)
+
 ```bash
 python main.py --lazy-load --open-browser
 ```
+
 - UI starts first
 - Models load in background
 - Best for general development
 
 #### 3. **Development Mode** (Full Debug)
+
 ```bash
 python main.py --lazy-load --log-level DEBUG --open-browser
 ```
+
 - Full logging enabled
 - Memory optimization active
 - Best for debugging
@@ -435,6 +447,7 @@ def generate_image(prompt: str) -> Image.Image:
 ```
 
 **Log Levels:**
+
 - `DEBUG` - Detailed development info
 - `INFO` - General operational messages
 - `WARNING` - Important but non-critical issues
@@ -710,17 +723,20 @@ def complex_algorithm(data: List[int]) -> int:
 ### Review Criteria
 
 **Code Quality:**
+
 - ✅ Type hints used appropriately
 - ✅ Error handling implemented
 - ✅ No obvious performance issues
 - ✅ Code is readable and maintainable
 
 **Testing:**
+
 - ✅ Unit tests for new functionality
 - ✅ Integration tests if applicable
 - ✅ No regression in existing tests
 
 **Documentation:**
+
 - ✅ Docstrings for public functions
 - ✅ README updated if needed
 - ✅ Comments for complex logic
@@ -892,12 +908,14 @@ print(prof.key_averages().table(sort_by="cuda_time_total"))
 ## 📚 Additional Resources
 
 ### Documentation Links
+
 - [Quick Start Guide](QUICK_START_GUIDE.md) - Get running quickly
 - [Troubleshooting Guide](TROUBLESHOOTING_GUIDE.md) - Common issues
 - [API Documentation](examples/API_DOCUMENTATION.md) - REST API reference
 - [Developer Guide](DEVELOPER_GUIDE.md) - Technical deep dive
 
 ### External Resources
+
 - [PyTorch Documentation](https://pytorch.org/docs/)
 - [Diffusers Library](https://huggingface.co/docs/diffusers/)
 - [Gradio Documentation](https://gradio.app/docs/)
@@ -906,7 +924,7 @@ print(prof.key_averages().table(sort_by="cuda_time_total"))
 
 ---
 
-## 🎉 Welcome to the Team!
+## 🎉 Welcome to the Team
 
 You're now equipped with everything needed to contribute effectively to Illustrious AI Studio. Whether you're fixing bugs, adding features, or improving documentation, your contributions help make this project better for everyone.
 

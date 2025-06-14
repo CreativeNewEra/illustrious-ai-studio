@@ -1,5 +1,47 @@
-/* Art Studio Theme */
-:root {
+/* Enhanced Illustrious AI Studio CSS - Gradio Override Edition */
+
+/* Force our styles with higher specificity */
+.gradio-container.custom-theme,
+.gradio-container.custom-theme *,
+#root.custom-theme,
+#root.custom-theme * {
+    /* Enhanced CSS Custom Properties */
+    --primary-50: #fff7ed;
+    --primary-100: #ffedd5;
+    --primary-200: #fed7aa;
+    --primary-300: #fdba74;
+    --primary-400: #fb923c;
+    --primary-500: #d35400;  /* Art Studio orange */
+    --primary-600: #c0441c;
+    --primary-700: #a5371b;
+    --primary-800: #9a3412;
+    --primary-900: #7c2d12;
+    
+    /* Secondary Color Palette - Art Studio Theme */
+    --secondary-50: #fdf4ff;
+    --secondary-100: #fae8ff;
+    --secondary-200: #f5d0fe;
+    --secondary-300: #f0abfc;
+    --secondary-400: #e879f9;
+    --secondary-500: #8e44ad;  /* Art Studio purple */
+    --secondary-600: #7c3a9c;
+    --secondary-700: #6a308b;
+    --secondary-800: #86198f;
+    --secondary-900: #701a75;
+    
+    /* Accent Colors - Art Studio Theme */
+    --accent-50: #ecfdf5;
+    --accent-100: #d1fae5;
+    --accent-200: #a7f3d0;
+    --accent-300: #6ee7b7;
+    --accent-400: #34d399;
+    --accent-500: #27ae60;  /* Art Studio green */
+    --accent-600: #239955;
+    --accent-700: #1f824a;
+    --accent-800: #065f46;
+    --accent-900: #064e3b;
+    
+    /* Legacy Art Studio variables for compatibility */
     --primary-color: #d35400;
     --secondary-color: #8e44ad;
     --background-color: #f6f3e9;
@@ -7,213 +49,413 @@
     --text-color: #2c3e50;
     --accent-color: #27ae60;
 }
-:root.dark {
-    --primary-color: #d35400;
-    --secondary-color: #8e44ad;
-    --background-color: #1e1e1e;
-    --canvas-color: #2c2c2c;
-    --text-color: #f0f0f0;
-    --accent-color: #27ae60;
+
+/* Force background styling */
+.gradio-container {
+    background: linear-gradient(135deg, #f6f3e9 0%, #f3f4f6 100%) !important;
+    min-height: 100vh !important;
+    font-family: ui-sans-serif, system-ui, sans-serif !important;
 }
 
-/* Main container styling */
-.main-container {
-    background-color: var(--background-color);
-    background-image: url('data:image/png;base64,data:image/png;base64,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');
-    color: var(--text-color);
-    padding: 2rem;
+/* Dark theme overrides */
+.dark .gradio-container,
+.dark {
+    --background-color: #1e1e1e !important;
+    --canvas-color: #2c2c2c !important;
+    --text-color: #f0f0f0 !important;
+    background: linear-gradient(135deg, #1e1e1e 0%, #1f2937 100%) !important;
 }
 
-/* Header styling */
-h1 {
-    font-family: 'Playfair Display', serif;
-    color: var(--text-color);
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 1.5rem;
+/* Force header styling */
+.gradio-container h1,
+.gradio-container .markdown h1 {
+    font-size: 2.25rem !important;
+    font-weight: 700 !important;
+    background: linear-gradient(135deg, #d35400, #8e44ad) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    text-align: center !important;
+    margin-bottom: 2rem !important;
+    color: transparent !important;
 }
 
-/* Tabs styling */
-.tab-nav {
-    background: var(--canvas-color);
-    border-radius: 8px 8px 0 0;
-    padding: 0.5rem;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+/* Force button styling with maximum specificity */
+.gradio-container button,
+.gradio-container .btn,
+.gradio-container input[type="button"],
+.gradio-container input[type="submit"],
+button[data-testid],
+button.primary,
+button.secondary {
+    background: linear-gradient(135deg, #d35400, #c0441c) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
-.tab-nav button {
-    font-family: 'Crimson Text', serif;
-    font-size: 1.1rem;
-    padding: 0.75rem 1.5rem;
-    margin: 0 0.25rem;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+/* Button hover effects */
+.gradio-container button:hover,
+.gradio-container .btn:hover,
+button[data-testid]:hover {
+    background: linear-gradient(135deg, #c0441c, #a5371b) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
 }
 
-/* Button styling */
-.primary-button {
-    background: var(--primary-color);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+/* Secondary button styling */
+.gradio-container button.secondary,
+.gradio-container button[variant="secondary"],
+button[data-testid*="secondary"] {
+    background: linear-gradient(135deg, #8e44ad, #7c3a9c) !important;
 }
 
-.primary-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+.gradio-container button.secondary:hover,
+button[data-testid*="secondary"]:hover {
+    background: linear-gradient(135deg, #7c3a9c, #6a308b) !important;
 }
 
-.secondary-button {
-    background: var(--secondary-color);
-    color: white;
-    border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.3s ease;
+/* Force input styling */
+.gradio-container input[type="text"],
+.gradio-container textarea,
+.gradio-container select,
+.gradio-container input:not([type="button"]):not([type="submit"]) {
+    background: white !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 0.875rem !important;
+    transition: all 0.3s ease !important;
+    outline: none !important;
 }
 
-/* Input styling */
-.textbox {
-    background: var(--canvas-color);
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    padding: 1rem;
-    font-family: 'Source Sans Pro', sans-serif;
-    transition: border-color 0.3s ease;
+.gradio-container input:focus,
+.gradio-container textarea:focus,
+.gradio-container select:focus {
+    border-color: #d35400 !important;
+    box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1) !important;
 }
 
-.textbox:focus {
-    border-color: var(--primary-color);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(211, 84, 0, 0.1);
+/* Force card/container styling */
+.gradio-container .block,
+.gradio-container .form,
+.gradio-container .panel,
+.gradio-container [data-testid="block"] {
+    background: white !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
+    border: 1px solid #e5e7eb !important;
+    padding: 1.5rem !important;
+    margin: 0.5rem 0 !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 
-/* Image display area */
-.image-display {
-    background: var(--canvas-color);
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    position: relative;
+/* Card hover effects */
+.gradio-container .block:hover,
+.gradio-container .panel:hover,
+.gradio-container [data-testid="block"]:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
 }
 
-.image-display::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border: 1px solid #e1e1e1;
-    border-radius: 12px;
-    pointer-events: none;
+/* Add gradient accent to cards */
+.gradio-container .block::before,
+.gradio-container .panel::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 4px !important;
+    background: linear-gradient(90deg, #d35400, #8e44ad, #27ae60) !important;
+    opacity: 0 !important;
+    transition: opacity 0.3s ease !important;
 }
 
-/* Chat interface */
-.chatbot {
-    background: var(--canvas-color);
-    border-radius: 12px;
-    padding: 1rem;
-    height: 500px;
-    overflow-y: auto;
+.gradio-container .block:hover::before,
+.gradio-container .panel:hover::before {
+    opacity: 1 !important;
 }
 
-.message {
-    background: #f8f9fa;
-    border-radius: 8px;
-    padding: 1rem;
-    margin: 0.5rem 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+/* Force gallery styling */
+.gradio-container .gallery,
+.gradio-container [data-testid="gallery"] {
+    background: white !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
+    padding: 1.5rem !important;
+    margin: 1.5rem 0 !important;
 }
 
-/* Artistic accents */
-.artistic-border {
-    border: 2px solid var(--primary-color);
-    border-radius: 12px;
-    position: relative;
+.gradio-container .gallery img,
+.gradio-container [data-testid="gallery"] img {
+    border-radius: 0.5rem !important;
+    transition: transform 0.3s ease !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
 }
 
-.artistic-border::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    right: -8px;
-    bottom: -8px;
-    border: 2px dashed var(--accent-color);
-    border-radius: 16px;
-    opacity: 0.5;
-    pointer-events: none;
+.gradio-container .gallery img:hover,
+.gradio-container [data-testid="gallery"] img:hover {
+    transform: scale(1.05) !important;
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1) !important;
 }
 
-/* Gallery wall */
-.gallery-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    padding: 1.5rem;
-    background: var(--canvas-color);
-    border-radius: 12px;
-    width: 100%;
+/* Force chat styling */
+.gradio-container .chatbot,
+.gradio-container [data-testid="chatbot"] {
+    background: white !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
+    overflow: hidden !important;
 }
 
-@media (max-width: 600px) {
-    .gallery-section {
-        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-        gap: 1rem;
+/* Force tab styling */
+.gradio-container .tab-nav,
+.gradio-container .tabs {
+    background: #f3f4f6 !important;
+    border-radius: 0.5rem !important;
+    padding: 0.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.gradio-container .tab-nav button,
+.gradio-container .tabs button {
+    background: transparent !important;
+    color: #6b7280 !important;
+    border: none !important;
+    padding: 0.75rem 1.5rem !important;
+    border-radius: 0.375rem !important;
+    transition: all 0.3s ease !important;
+    font-weight: 500 !important;
+}
+
+.gradio-container .tab-nav button.selected,
+.gradio-container .tab-nav button:hover,
+.gradio-container .tabs button.selected,
+.gradio-container .tabs button:hover {
+    background: white !important;
+    color: #2c3e50 !important;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important;
+}
+
+/* Force image display styling */
+.gradio-container .image-container,
+.gradio-container [data-testid="image"] {
+    background: white !important;
+    border-radius: 0.75rem !important;
+    padding: 1rem !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+    border: 1px solid #e5e7eb !important;
+}
+
+/* Force slider styling */
+.gradio-container input[type="range"] {
+    background: #e5e7eb !important;
+    border-radius: 0.5rem !important;
+    height: 0.5rem !important;
+}
+
+.gradio-container input[type="range"]::-webkit-slider-thumb {
+    background: #d35400 !important;
+    border-radius: 50% !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    border: none !important;
+    cursor: pointer !important;
+}
+
+/* Force dropdown styling */
+.gradio-container .dropdown,
+.gradio-container select {
+    background: white !important;
+    border: 2px solid #e5e7eb !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem 1rem !important;
+}
+
+/* Dark theme specific overrides */
+.dark .gradio-container .block,
+.dark .gradio-container .panel,
+.dark .gradio-container [data-testid="block"] {
+    background: #2c2c2c !important;
+    border-color: #374151 !important;
+    color: #f0f0f0 !important;
+}
+
+.dark .gradio-container input,
+.dark .gradio-container textarea,
+.dark .gradio-container select {
+    background: #2c2c2c !important;
+    border-color: #374151 !important;
+    color: #f0f0f0 !important;
+}
+
+.dark .gradio-container .gallery,
+.dark .gradio-container .chatbot,
+.dark .gradio-container .image-container {
+    background: #2c2c2c !important;
+    border-color: #374151 !important;
+}
+
+/* Remove Gradio default styling that conflicts */
+.gradio-container .prose,
+.gradio-container .prose * {
+    color: inherit !important;
+    max-width: none !important;
+}
+
+/* Force proper spacing */
+.gradio-container > * {
+    margin: 1rem 0 !important;
+}
+
+.gradio-container .row {
+    gap: 1rem !important;
+    margin: 1rem 0 !important;
+}
+
+.gradio-container .column {
+    gap: 1rem !important;
+}
+
+/* Add artistic background pattern */
+.gradio-container::before {
+    content: '' !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background-image: 
+        radial-gradient(circle at 25% 25%, rgba(211, 84, 0, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 75% 75%, rgba(142, 68, 173, 0.03) 0%, transparent 50%) !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+/* Ensure text is readable */
+.gradio-container,
+.gradio-container * {
+    color: #2c3e50 !important;
+}
+
+.dark .gradio-container,
+.dark .gradio-container * {
+    color: #f0f0f0 !important;
+}
+
+/* Force labels to be visible */
+.gradio-container label {
+    color: #2c3e50 !important;
+    font-weight: 500 !important;
+    margin-bottom: 0.5rem !important;
+    display: block !important;
+}
+
+.dark .gradio-container label {
+    color: #f0f0f0 !important;
+}
+
+/* Loading indicators */
+.gradio-container .loading {
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.gradio-container .loading::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent) !important;
+    animation: shimmer 1.5s infinite !important;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Status indicators with proper colors */
+.gradio-container .status-box {
+    padding: 0.75rem !important;
+    border-radius: 0.5rem !important;
+    border: 1px solid #e5e7eb !important;
+    background: #f9fafb !important;
+    color: #374151 !important;
+}
+
+.dark .gradio-container .status-box {
+    background: #1f2937 !important;
+    border-color: #374151 !important;
+    color: #d1d5db !important;
+}
+
+/* Make sure our styles win over everything */
+.gradio-container .btn-primary,
+.gradio-container .primary-button,
+button[data-testid*="generate"],
+button[data-testid*="primary"] {
+    background: linear-gradient(135deg, #d35400, #c0441c) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 0.5rem !important;
+    padding: 0.75rem 1.5rem !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1) !important;
+    transition: all 0.3s ease !important;
+}
+
+.gradio-container .btn-primary:hover,
+.gradio-container .primary-button:hover,
+button[data-testid*="generate"]:hover,
+button[data-testid*="primary"]:hover {
+    background: linear-gradient(135deg, #c0441c, #a5371b) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1) !important;
+}
+
+/* Force visibility and proper rendering */
+.gradio-container * {
+    box-sizing: border-box !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .gradio-container {
+        padding: 1rem !important;
+    }
+    
+    .gradio-container .block,
+    .gradio-container .panel {
+        padding: 1rem !important;
+        margin: 0.5rem 0 !important;
+    }
+    
+    .gradio-container button {
+        padding: 0.5rem 1rem !important;
+        font-size: 0.875rem !important;
+    }
+    
+    .gradio-container h1 {
+        font-size: 1.5rem !important;
     }
 }
 
-.gallery-item {
-    position: relative;
-    padding: 0.5rem;
-    background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease;
-    border: 2px dashed transparent;
-}
-
-.gallery-item:hover {
-    transform: translateY(-4px);
-    border-color: var(--primary-color);
-}
-
-.gallery-item[data-drag_over="true"] {
-    border-color: var(--accent-color);
-    background-color: rgba(39, 174, 96, 0.1);
-    transform: scale(1.02);
-}
-
-/* Regenerate button styling */
-.regenerate-btn {
-    background: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-size: 0.9rem;
-    transition: all 0.3s ease;
-}
-
-.regenerate-btn:hover {
-    background: #229954;
-    transform: translateY(-1px);
-}
-
-/* Loading animations */
-@keyframes brush-stroke {
-    0% { width: 0; }
-    100% { width: 100%; }
-}
-
-.loading-indicator {
-    height: 4px;
-    background: var(--primary-color);
-    border-radius: 2px;
-    animation: brush-stroke 2s ease-in-out infinite;
+/* Final override to ensure our styles are applied */
+.gradio-container {
+    --primary: #d35400 !important;
+    --secondary: #8e44ad !important;
+    --accent: #27ae60 !important;
 }
