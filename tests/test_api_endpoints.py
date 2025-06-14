@@ -6,7 +6,6 @@ import types
 import importlib
 import sys
 import pytest
-import base64
 
 def load_app():
     import os
