@@ -22,6 +22,8 @@ application state and FastAPI app instance.
 # ==================================================================
 
 from server.api import create_api_app, GenerateImageRequest, ChatRequest, AnalyzeImageRequest, run_mcp_server  # noqa: F401
+# These imports are exposed for external use as part of the module's convenience layer.
+# They allow external scripts and integrations to access core API functionality directly.
 from ui.web import create_gradio_app  # noqa: F401
 from core.state import AppState
 
