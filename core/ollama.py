@@ -332,7 +332,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
     if not message.strip():
         return chat_history or [], ""
     with state.atomic_operation():
-        state.chat_history_store[session_id]  # ensure deque exists
+        state.chat_history_store[session_id]
     if message.startswith("/tool"):
         response = _execute_tool_command(message[len("/tool"):])
     elif message.lower().startswith("#generate") or "generate image" in message.lower():
