@@ -13,6 +13,8 @@ def test_analyze_anime_portrait():
     assert res["orientation"] == "portrait"
     assert res["width"] == 768
     assert res["height"] == 1024
+    assert res["steps"] == 35
+    assert res["guidance"] == 8.0
 
 
 def test_analyze_realistic_landscape():
@@ -21,9 +23,13 @@ def test_analyze_realistic_landscape():
     assert res["orientation"] == "landscape"
     assert res["width"] == 1024
     assert res["height"] == 768
+    assert res["steps"] == 30
+    assert res["guidance"] == 6.5
 
 
 def test_analyze_general_square():
     res = analyze_prompt("abstract shapes")
     assert res["orientation"] == "square"
+    assert res["steps"] == 30
+    assert res["guidance"] == 7.5
 
