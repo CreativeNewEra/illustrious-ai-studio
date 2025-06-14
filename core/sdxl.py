@@ -398,7 +398,10 @@ def generate_image(state: AppState, params: GenerationParams) -> Tuple[Optional[
             
             def _progress_cb(step: int, t, latents):
                 if progress_callback:
-                    progress_callback(step + 1, steps)
+                    try:
+                        progress_callback(step + 1, steps)
+                    except Exception as e:
+                        logger.warning(f"Progress callback failed: {e}")
 
             result = state.sdxl_pipe.generate(
                 prompt,
