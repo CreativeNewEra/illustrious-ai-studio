@@ -45,7 +45,8 @@ import torch
 # ==================================================================
 
 from core import sdxl, ollama
-from core.sdxl import generate_image  
+from core.sdxl import generate_image
+from core.image_generator import ImageGenerator
 from core.ollama import chat_completion, analyze_image
 from core.state import AppState
 from core.config import CONFIG
@@ -187,7 +188,8 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
             }
 
             # Generate image with improved error handling
-            image, status_msg = generate_image(state, params)
+            generator = ImageGenerator(state)
+            image, status_msg = generator.generate(params)
             
             if image is None:
                 code = 507 if "out of memory" in status_msg.lower() else 500
