@@ -43,6 +43,8 @@ import subprocess
 import sys
 import shutil
 import random
+from datetime import datetime
+from typing import List, Tuple, Optional
 
 import gradio as gr
 
@@ -59,9 +61,10 @@ from core.sdxl import (
     init_sdxl,
     get_available_models,
     get_current_model_info,
-    test_model_generation, 
+    test_model_generation,
     switch_sdxl_model,
-    PROJECTS_DIR
+    PROJECTS_DIR,
+    save_to_gallery,
 )
 
 # Configuration and state management
@@ -83,7 +86,7 @@ from core.memory_guardian import (
 
 # Additional UI utilities
 from core.prompt_templates import template_manager
-from core.prompt_analyzer import analyze_prompt
+from core.prompt_analyzer import analyze_prompt, PromptAnalyzer, auto_enhance_prompt
 from core.gallery_filters import load_gallery_filter, save_gallery_filter
 
 # ==================================================================
@@ -118,11 +121,159 @@ RESOLUTION_OPTIONS = [
 # Beginner-friendly example prompts to get users started
 EXAMPLE_PROMPTS = [
     "A serene landscape with mountains at sunset in watercolor style",
-    "Cyberpunk cityscape with neon lights and rainy streets", 
+    "Cyberpunk cityscape with neon lights and rainy streets",
     "Fantasy castle surrounded by floating islands in the sky",
     "Portrait of a futuristic astronaut exploring a new planet",
     "Cute anime character holding an umbrella in the rain",
 ]
+
+
+# ------------------------------------------------------------------
+# Creative prompt helper for simple mode
+# ------------------------------------------------------------------
+
+class CreativePromptEnhancer:
+    """Make prompt creation magical and fun!"""
+
+    CREATIVE_MODES = {
+        "🎨 Dreamy": {
+            "prefix": "ethereal dreamlike",
+            "suffix": "soft focus, pastel colors, floating, surreal atmosphere",
+            "guidance": 8.5,
+            "steps": 35,
+        },
+        "🌈 Vibrant Pop": {
+            "prefix": "bold colorful pop art style",
+            "suffix": (
+                "bright vivid colors, high contrast, energetic, dynamic composition"
+            ),
+            "guidance": 7.0,
+            "steps": 25,
+        },
+        "🌌 Epic Fantasy": {
+            "prefix": "epic fantasy masterpiece",
+            "suffix": (
+                "magical lighting, dramatic atmosphere, intricate details, award winning"
+            ),
+            "guidance": 9.0,
+            "steps": 40,
+        },
+        "📸 Instant Photo": {
+            "prefix": "polaroid photo",
+            "suffix": "vintage film aesthetic, nostalgic mood, authentic feel",
+            "guidance": 6.0,
+            "steps": 20,
+        },
+        "🎮 Game Art": {
+            "prefix": "video game concept art",
+            "suffix": "digital painting, professional game art, detailed design",
+            "guidance": 7.5,
+            "steps": 30,
+        },
+    }
+
+    SURPRISE_ELEMENTS = {
+        "adjectives": [
+            "whimsical",
+            "majestic",
+            "tiny",
+            "glowing",
+            "ancient",
+            "futuristic",
+            "mystical",
+            "cheerful",
+            "mysterious",
+            "elegant",
+            "cozy",
+            "epic",
+        ],
+        "creatures": [
+            "dragon",
+            "unicorn",
+            "phoenix",
+            "griffin",
+            "fairy",
+            "robot",
+            "alien",
+            "spirit",
+            "owl",
+            "fox",
+            "butterfly",
+            "whale",
+        ],
+        "actions": [
+            "dancing",
+            "reading",
+            "flying",
+            "sleeping",
+            "painting",
+            "exploring",
+            "singing",
+            "meditating",
+            "playing music",
+            "having tea",
+        ],
+        "locations": [
+            "enchanted forest",
+            "crystal cave",
+            "cloud city",
+            "underwater palace",
+            "space station",
+            "magical library",
+            "floating island",
+            "cozy cottage",
+        ],
+        "styles": [
+            "Studio Ghibli style",
+            "oil painting",
+            "watercolor",
+            "digital art",
+            "stained glass",
+            "origami art",
+            "chalk art",
+            "neon art",
+        ],
+        "lighting": [
+            "golden hour",
+            "moonlight",
+            "bioluminescent",
+            "candlelight",
+            "northern lights",
+            "sunset",
+            "foggy",
+            "starlight",
+        ],
+        "moods": [
+            "peaceful",
+            "adventurous",
+            "whimsical",
+            "mysterious",
+            "joyful",
+            "contemplative",
+            "energetic",
+            "dreamy",
+            "cozy",
+            "epic",
+        ],
+    }
+
+    def get_surprise_prompt(self, base_idea: str = "") -> str:
+        """Generate a surprise prompt with random creative elements."""
+        if base_idea:
+            templates = [
+                f"{base_idea} but make it {random.choice(self.SURPRISE_ELEMENTS['adjectives'])} and {random.choice(self.SURPRISE_ELEMENTS['moods'])}",
+                f"a {random.choice(self.SURPRISE_ELEMENTS['adjectives'])} {base_idea} in {random.choice(self.SURPRISE_ELEMENTS['locations'])}",
+                f"{base_idea} with {random.choice(self.SURPRISE_ELEMENTS['lighting'])} lighting, {random.choice(self.SURPRISE_ELEMENTS['styles'])}",
+            ]
+            return random.choice(templates)
+        return (
+            f"a {random.choice(self.SURPRISE_ELEMENTS['adjectives'])} "
+            f"{random.choice(self.SURPRISE_ELEMENTS['creatures'])} "
+            f"{random.choice(self.SURPRISE_ELEMENTS['actions'])} in "
+            f"{random.choice(self.SURPRISE_ELEMENTS['locations'])}, "
+            f"{random.choice(self.SURPRISE_ELEMENTS['lighting'])} lighting, "
+            f"{random.choice(self.SURPRISE_ELEMENTS['styles'])}"
+        )
 
 
 # ==================================================================
@@ -153,6 +304,41 @@ def create_gradio_app(state: AppState):
     """
     # Load enhanced CSS styling for modern visual design
     css_file = (Path(__file__).parent / "custom.css").read_text()
+
+    custom_css = """
+    .primary-btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        color: white !important;
+        font-size: 1.2em !important;
+        padding: 12px 24px !important;
+        transition: transform 0.2s !important;
+    }
+    .primary-btn:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2) !important;
+    }
+    .emoji-btn {
+        font-size: 1.5em !important;
+        padding: 8px 16px !important;
+        margin: 4px !important;
+        cursor: pointer !important;
+        transition: all 0.2s !important;
+    }
+    .emoji-btn:hover {
+        transform: scale(1.1) !important;
+        background: rgba(102, 126, 234, 0.1) !important;
+    }
+    .inspiration-card {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding: 20px;
+        border-radius: 12px;
+        margin: 10px 0;
+    }
+    """
+    css_file += "\n" + custom_css
+
+    enhancer = CreativePromptEnhancer()
     
     # JavaScript functions for loading indicators and UI enhancements
     show_loading_js = "() => { const el = document.querySelector('.loading-indicator'); if(el){ el.style.display='block'; } }"
@@ -447,6 +633,237 @@ def create_gradio_app(state: AppState):
         open_modal_fn, first_run_modal = show_first_run_modal()
 
         with gr.Tabs():
+            if state.simple_mode:
+                with gr.Tab("✨ Easy Create"):
+                    with gr.Row():
+                        with gr.Column(scale=3):
+                            gr.Markdown("## What would you like to create today?")
+                            user_idea = gr.Textbox(
+                                label="Your idea",
+                                placeholder="Try: 'a happy cat', 'sunset beach', 'magical forest'...",
+                                lines=2,
+                                elem_classes=["primary-input"],
+                            )
+                            with gr.Group():
+                                gr.Markdown("### 🎨 Choose your vibe:")
+                                creative_mode = gr.Radio(
+                                    choices=list(CreativePromptEnhancer.CREATIVE_MODES.keys()) + ["🎲 Surprise Me!"],
+                                    label="",
+                                    value="🎨 Dreamy",
+                                    elem_classes=["emoji-radio"],
+                                )
+                            with gr.Group(elem_classes=["inspiration-card"]):
+                                gr.Markdown("### 💡 Need inspiration?")
+                                inspiration_buttons = []
+                                with gr.Row():
+                                    for idea in ["cute animal", "magical place", "cool character"]:
+                                        btn = gr.Button(f"✨ {idea}", size="sm", elem_classes=["emoji-btn"])
+                                        inspiration_buttons.append((btn, idea))
+                                with gr.Row():
+                                    for idea in ["beautiful landscape", "fantasy creature", "cozy scene"]:
+                                        btn = gr.Button(f"✨ {idea}", size="sm", elem_classes=["emoji-btn"])
+                                        inspiration_buttons.append((btn, idea))
+                                random_prompt_btn = gr.Button(
+                                    "🎲 Give me a random idea!",
+                                    size="sm",
+                                    elem_classes=["emoji-btn"],
+                                )
+                            generate_btn = gr.Button(
+                                "✨ Create Magic! ✨",
+                                variant="primary",
+                                size="lg",
+                                elem_classes=["primary-btn"],
+                            )
+                            with gr.Accordion("🔧 Advanced Options", open=False):
+                                with gr.Row():
+                                    custom_steps = gr.Slider(
+                                        minimum=10,
+                                        maximum=50,
+                                        value=25,
+                                        step=5,
+                                        label="Quality (Higher = Better, but slower)",
+                                    )
+                                    custom_seed = gr.Number(value=-1, label="Seed (-1 for random)")
+                        with gr.Column(scale=2):
+                            output_image_simple = gr.Image(label="Your Creation", elem_classes=["output-image"])
+                            status_text = gr.Markdown(value="### Ready to create something amazing! 🚀", elem_classes=["status-text"])
+                            with gr.Row():
+                                remix_btn = gr.Button("🔄 Create Variation", size="sm")
+                                enhance_btn = gr.Button("✨ Enhance This", size="sm")
+                                save_favorite_btn = gr.Button("❤️ Save as Favorite", size="sm")
+                            generation_info = gr.Markdown(visible=False)
+                            stats_display = gr.Markdown(
+                                """
+                                ### 📊 Your Creative Stats
+                                🎨 Images Created: 0  
+                                ⭐ Favorites: 0  
+                                🎯 Current Streak: 0 days
+                                """
+                            )
+                    for btn, idea in inspiration_buttons:
+                        btn.click(lambda x=idea: x, outputs=user_idea)
+
+                    def get_random_idea():
+                        return enhancer.get_surprise_prompt()
+
+                    random_prompt_btn.click(get_random_idea, outputs=user_idea)
+
+                    def generate_simple(idea, mode, steps, seed, progress=gr.Progress()):
+                        if not idea.strip():
+                            encouragements = [
+                                "💭 What magical thing should we create?",
+                                "🎨 Share your creative idea!",
+                                "✨ What's in your imagination?",
+                                "🌟 Tell me what you'd like to see!",
+                            ]
+                            return None, random.choice(encouragements), ""
+
+                        progress(0.2, desc="🎨 Preparing your prompt...")
+
+                        if mode == "🎲 Surprise Me!":
+                            base_prompt = enhancer.get_surprise_prompt(idea)
+                            mode_settings = {"steps": steps or 25, "guidance": 7.5}
+                        else:
+                            mode_settings = CreativePromptEnhancer.CREATIVE_MODES.get(mode, {})
+                            mode_prefix = mode_settings.get("prefix", "")
+                            mode_suffix = mode_settings.get("suffix", "")
+                            base_prompt = f"{mode_prefix} {idea}, {mode_suffix}".strip()
+                            if state.model_status.get("ollama", False):
+                                progress(0.3, desc="🤖 Enhancing with AI...")
+                                from core.ollama import generate_prompt
+                                base_prompt = generate_prompt(state, base_prompt)
+
+                        progress(0.4, desc="🎨 Creating your image...")
+
+                        params = {
+                            "prompt": base_prompt,
+                            "negative_prompt": "blurry, bad quality, distorted, ugly",
+                            "steps": int(steps or mode_settings.get("steps", 25)),
+                            "guidance": float(mode_settings.get("guidance", 7.5)),
+                            "seed": int(seed) if seed != -1 else -1,
+                            "width": 1024,
+                            "height": 1024,
+                            "save_to_gallery_flag": True,
+                        }
+
+                        state.last_generation_params = params
+
+                        image, status = generate_image(state, params)
+
+                        if image:
+                            success_messages = [
+                                "🎉 Wow! Look what you created!",
+                                "✨ Amazing! You're a natural artist!",
+                                "🌟 Beautiful work! Keep creating!",
+                                "🎨 Fantastic! Your creativity is shining!",
+                                "🚀 Incredible! You're on fire!",
+                                "💫 Magical! This is stunning!",
+                                "🌈 Brilliant! What a masterpiece!",
+                            ]
+                            info = f"""
+                            <details>
+                            <summary>✨ Creation Details</summary>
+
+                            **Mode:** {mode}  
+                            **Prompt:** {base_prompt[:100]}...  
+                            **Steps:** {params['steps']}  
+                            **Seed:** {params.get('seed', 'Random')}
+                            </details>
+                            """
+                            return image, random.choice(success_messages), info
+                        return None, "😅 Oops! Let's try again with different settings...", ""
+
+                    generate_btn.click(
+                        generate_simple,
+                        inputs=[user_idea, creative_mode, custom_steps, custom_seed],
+                        outputs=[output_image_simple, status_text, generation_info],
+                    ).then(lambda: gr.update(visible=True), outputs=generation_info)
+
+                    def create_variation(image):
+                        if image is None:
+                            return None, "🎨 Create an image first!"
+                        if not state.last_generation_params:
+                            return None, "❌ No generation parameters found"
+                        variation_params = state.last_generation_params.copy()
+                        variation_modifiers = [
+                            "slightly different version of",
+                            "alternative take on",
+                            "new interpretation of",
+                            "fresh perspective on",
+                        ]
+                        original_prompt = variation_params.get("prompt", "")
+                        variation_params["prompt"] = f"{random.choice(variation_modifiers)} {original_prompt}"
+                        variation_params["seed"] = -1
+                        new_image, status = generate_image(state, variation_params)
+                        if new_image:
+                            return new_image, "🔄 Created a fresh variation!"
+                        return image, "❌ Variation failed, keeping original"
+
+                    remix_btn.click(create_variation, inputs=[output_image_simple], outputs=[output_image_simple, status_text])
+
+                    def enhance_image(image):
+                        if image is None:
+                            return None, "🎨 Create an image first!"
+                        return image, "✨ Enhanced! (Coming soon: upscaling, style transfer, and more!)"
+
+                    enhance_btn.click(enhance_image, inputs=[output_image_simple], outputs=[output_image_simple, status_text])
+
+                with gr.Tab("🎭 Style Explorer"):
+                    gr.Markdown("## Explore Different Art Styles\n\nTry your idea in multiple styles at once!")
+                    with gr.Row():
+                        style_idea = gr.Textbox(label="Your base idea", placeholder="Enter what you want to create...", lines=2)
+                        selected_styles = gr.CheckboxGroup(
+                            choices=[
+                                "🎨 Oil Painting",
+                                "💧 Watercolor",
+                                "✏️ Pencil Sketch",
+                                "🎌 Anime/Manga",
+                                "📸 Photography",
+                                "🎮 Digital Art",
+                            ],
+                            label="Select styles to try:",
+                            value=["🎨 Oil Painting", "📸 Photography"],
+                        )
+                    explore_btn = gr.Button("🎨 Create in All Selected Styles", variant="primary")
+                    style_gallery = gr.Gallery(label="Style Variations", show_label=True, elem_id="style_gallery", columns=3, rows=2, height="auto")
+                    style_status = gr.Markdown()
+
+                    def explore_styles(idea, styles, progress=gr.Progress()):
+                        if not idea.strip():
+                            return [], "💭 Please enter an idea first!"
+                        if not styles:
+                            return [], "🎨 Please select at least one style!"
+                        results = []
+                        style_prompts = {
+                            "🎨 Oil Painting": "oil painting, thick brushstrokes, traditional art",
+                            "💧 Watercolor": "watercolor painting, soft colors, flowing",
+                            "✏️ Pencil Sketch": "detailed pencil sketch, grayscale, artistic",
+                            "🎌 Anime/Manga": "anime style, manga art, vibrant colors",
+                            "📸 Photography": "professional photography, high resolution, realistic",
+                            "🎮 Digital Art": "digital illustration, modern art, crisp details",
+                        }
+                        total = len(styles)
+                        for i, style in enumerate(styles):
+                            progress((i + 1) / total, desc=f"Creating {style}...")
+                            style_suffix = style_prompts.get(style, "artistic style")
+                            full_prompt = f"{idea}, {style_suffix}, high quality, detailed"
+                            params = {
+                                "prompt": full_prompt,
+                                "negative_prompt": "low quality, blurry, distorted",
+                                "steps": 20,
+                                "guidance": 7.5,
+                                "width": 768,
+                                "height": 768,
+                                "save_to_gallery_flag": True,
+                            }
+                            image, _ = generate_image(state, params)
+                            if image:
+                                results.append((image, style))
+                        if results:
+                            return results, f"✨ Created {len(results)} style variations!"
+                        return [], "❌ Generation failed, please try again"
+
+                    explore_btn.click(explore_styles, inputs=[style_idea, selected_styles], outputs=[style_gallery, style_status])
             with gr.Tab("🎨 Create"):
                 with gr.Tabs():
                     with gr.Tab("Generate"):
