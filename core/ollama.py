@@ -418,9 +418,17 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
 def analyze_image(state: AppState, image: Image.Image, question: str = "Describe this image in detail") -> str:
     if not image:
         return "Please upload an image first."
-    if not state.model_status["multimodal"] or not hasattr(state, 'ollama_vision_model'):
+    if not state.model_status["multimodal"] or not hasattr(state, "ollama_vision_model"):
         return "❌ Ollama vision model not available. Please ensure a vision-capable model is configured."
+
     try:
+        width, height = image.size
+        if width * height > 4096 * 4096:
+            return "❌ Image exceeds 16MP limit."
+        if width > 1920 or height > 1920:
+            image = image.copy()
+            image.thumbnail((1920, 1920), Image.Resampling.LANCZOS)
+
         buffered = io.BytesIO()
         image.save(buffered, format="PNG")
         img_base64 = base64.b64encode(buffered.getvalue()).decode()
