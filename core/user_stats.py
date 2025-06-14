@@ -11,7 +11,7 @@ class UserStats:
 
     def __init__(self) -> None:
         self.stats_file = Path("user_data/stats.json")
-        self.stats_file.parent.mkdir(exist_ok=True)
+        self.stats_file.parent.mkdir(parents=True, exist_ok=True)
         self.load_stats()
 
     def load_stats(self) -> None:
