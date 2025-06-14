@@ -163,7 +163,7 @@ def save_chat_history_async(state: AppState) -> None:
             logger.error("Failed to save chat history: %s", e)
 
     future = executor.submit(_write)
-    future.result()
+    logger.debug("Background task for saving chat history submitted.")
 
 
 # ==================================================================
