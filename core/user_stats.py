@@ -36,7 +36,6 @@ class UserStats:
                 "total_chats": 0,
                 "favorite_styles": {},
                 "daily_creations": {},
-                "achievements": [],
                 "creation_times": [],
             }
 
