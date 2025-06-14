@@ -125,7 +125,7 @@ class SDXLConfig(BaseModel):
 
         self.cuda_settings = {
             "device": "cuda:0" if profile.vram_gb > 0 else "cpu",
-            "dtype": "float16",
+            "dtype": "float16" if profile.vram_gb > 0 else "float32",
             "enable_tf32": profile.enable_tf32,
             "memory_fraction": 0.95,
         }
