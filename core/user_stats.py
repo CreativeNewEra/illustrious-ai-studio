@@ -18,7 +18,18 @@ class UserStats:
         """Load user statistics."""
         if self.stats_file.exists():
             with open(self.stats_file) as f:
-                self.data = json.load(f)
+                try:
+                    self.data = json.load(f)
+                except json.JSONDecodeError:
+                    print("Warning: The stats file is corrupted. Reinitializing data.")
+                    self.data = {
+                        "total_images": 0,
+                        "total_chats": 0,
+                        "favorite_styles": {},
+                        "daily_creations": {},
+                        "achievements": [],
+                        "creation_times": [],
+                    }
         else:
             self.data = {
                 "total_images": 0,
