@@ -196,8 +196,11 @@ def init_ollama(state: AppState) -> Optional[str]:
         - Handles network timeouts and connection errors
     """
     try:
-        response = breaker.call(
-            lambda: requests.get(f"{CONFIG.ollama_base_url}/api/tags", timeout=5)
+        response = call_with_circuit_breaker(
+            breaker,
+            requests.get,
+            f"{CONFIG.ollama_base_url}/api/tags",
+            timeout=5
         )
         if response.status_code != 200:
             logger.error("Ollama server not responding")
