@@ -126,12 +126,13 @@ class AppState:
     )
     """
     Storage for chat conversation history organized by session.
-    
+
     Structure: {session_id: [(user_message, assistant_response), ...]}
-    
-    Each session maintains its own conversation history, allowing
-    multiple concurrent chat sessions with proper context isolation.
-    The history is kept in memory and lost on application restart.
+
+    Each session keeps up to 100 message pairs (``deque(maxlen=100)``).
+    This allows multiple concurrent chat sessions with proper context
+    isolation. The history is kept in memory and lost on application
+    restart.
     """
     
     # ==============================================================
