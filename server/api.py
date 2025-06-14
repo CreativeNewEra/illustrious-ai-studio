@@ -48,6 +48,8 @@ import torch
 from core import sdxl, ollama
 from core.sdxl import generate_image
 from core.image_generator import ImageGenerator
+from celery.result import AsyncResult
+from .tasks import celery_app, generate_image_task
 from core.ollama import chat_completion, analyze_image
 from core.state import AppState
 from core.config import CONFIG
@@ -202,32 +204,8 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
                 "seed": request.seed,
             }
 
-            # Generate image with improved error handling
-            generator = ImageGenerator(state)
-            image, status_msg = generator.generate(params)
-            
-            if image is None:
-                code = 507 if "out of memory" in status_msg.lower() else 500
-                raise HTTPException(status_code=code, detail=status_msg)
-            
-            # Convert image to base64 with proper error handling
-            try:
-                buffered = io.BytesIO()
-                image.save(buffered, format="PNG")
-                buffered.seek(0)  # Reset buffer position
-                img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                buffered.close()  # Properly close the buffer
-            except Exception as e:
-                logger.error(f"Error encoding image to base64: {e}")
-                raise HTTPException(
-                    status_code=500,
-                    detail=(
-                        f"❌ Failed to encode image: {str(e)}. "
-                        "Check disk space and permissions."
-                    ),
-                )
-            
-            return {"success": True, "image_base64": img_base64, "message": status_msg}
+            task = generate_image_task.delay(params)
+            return {"job_id": task.id}
             
         except HTTPException:
             # Re-raise HTTP exceptions
@@ -241,6 +219,17 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
                     "Check your model path or GPU memory usage."
                 ),
             )
+
+    @app.get("/status/{job_id}")
+    async def task_status(job_id: str):
+        """Check the status of a background image generation job."""
+        result = AsyncResult(job_id, app=celery_app)
+        response = {"state": result.state}
+        if result.state == "SUCCESS":
+            response["result"] = result.result
+        elif result.state == "FAILURE":
+            response["error"] = str(result.info)
+        return response
 
     @app.post("/chat")
     async def mcp_chat(request: ChatRequest, state: AppState = Depends(get_state)):
