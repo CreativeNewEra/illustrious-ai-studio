@@ -50,6 +50,8 @@ from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
 import requests
 
+from .circuit import CircuitBreaker, CircuitBreakerOpen
+
 from .state import AppState
 from .sdxl import generate_image, save_to_gallery, TEMP_DIR
 from .config import CONFIG
@@ -59,6 +61,9 @@ logger = logging.getLogger(__name__)
 
 # Single thread pool for background disk writes
 executor = ThreadPoolExecutor(max_workers=1)
+
+# Circuit breaker for Ollama API requests
+breaker = CircuitBreaker()
 
 # ==================================================================
 # CONSTANTS AND CONFIGURATION
@@ -191,7 +196,12 @@ def init_ollama(state: AppState) -> Optional[str]:
         - Handles network timeouts and connection errors
     """
     try:
-        response = requests.get(f"{CONFIG.ollama_base_url}/api/tags", timeout=5)
+        response = call_with_circuit_breaker(
+            breaker,
+            requests.get,
+            f"{CONFIG.ollama_base_url}/api/tags",
+            timeout=5
+        )
         if response.status_code != 200:
             logger.error("Ollama server not responding")
             return None
@@ -211,10 +221,12 @@ def init_ollama(state: AppState) -> Optional[str]:
             "messages": [{"role": "user", "content": "Hi"}],
             "stream": False,
         }
-        test_response = requests.post(
-            f"{CONFIG.ollama_base_url}/api/chat",
-            json=test_data,
-            timeout=30,
+        test_response = breaker.call(
+            lambda: requests.post(
+                f"{CONFIG.ollama_base_url}/api/chat",
+                json=test_data,
+                timeout=30,
+            )
         )
         if test_response.status_code == 200:
             state.model_status["ollama"] = True
@@ -234,6 +246,9 @@ def init_ollama(state: AppState) -> Optional[str]:
             
             return target_model
         logger.error("Failed to test Ollama model: %s", test_response.text)
+    except CircuitBreakerOpen:
+        logger.error("Ollama API temporarily unavailable (circuit open)")
+        return None
     except Exception as e:
         logger.error("Failed to initialize Ollama: %s", e)
     state.model_status["ollama"] = False
@@ -269,7 +284,11 @@ def chat_completion(state: AppState, messages: List[dict], temperature: float = 
             "stream": False,
             "options": {"temperature": temperature, "num_predict": max_tokens},
         }
-        response = requests.post(f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60)
+        response = breaker.call(
+            lambda: requests.post(
+                f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60
+            )
+        )
         if response.status_code == 200:
             result = response.json()
             return result.get("message", {}).get("content", "No response generated")
@@ -278,6 +297,9 @@ def chat_completion(state: AppState, messages: List[dict], temperature: float = 
             f"❌ Chat completion failed: {response.status_code}. "
             "Ensure the Ollama server is reachable."
         )
+    except CircuitBreakerOpen:
+        logger.warning("CircuitBreakerOpen exception occurred during chat completion.")
+        return "❌ Service temporarily unavailable. Please try again later."
     except Exception as e:
         logger.error("Ollama completion failed: %s", e)
         return (
@@ -437,7 +459,11 @@ def analyze_image(state: AppState, image: Image.Image, question: str = "Describe
             "messages": [{"role": "user", "content": question, "images": [img_base64]}],
             "stream": False,
         }
-        response = requests.post(f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60)
+        response = breaker.call(
+            lambda: requests.post(
+                f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60
+            )
+        )
         if response.status_code == 200:
             result = response.json()
             return result.get("message", {}).get("content", "No analysis generated")
@@ -446,6 +472,8 @@ def analyze_image(state: AppState, image: Image.Image, question: str = "Describe
             f"❌ Analysis failed: {response.status_code}. "
             "Ensure the Ollama server is reachable."
         )
+    except CircuitBreakerOpen:
+        return "❌ Service temporarily unavailable. Please try again later."
     except Exception as e:
         logger.error("Image analysis failed: %s", e)
         return (
