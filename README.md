@@ -2,6 +2,8 @@
 
 A powerful local AI application that combines **Stable Diffusion XL (SDXL)** image generation with **Ollama LLM** capabilities, including vision models for image analysis.
 
+> **🚀 Want to Contribute?** Check out our [Comprehensive Development Guide](COMPREHENSIVE_DEVELOPMENT_GUIDE.md) to get started with co-development in 30 minutes!
+
 ## 🆕 Latest Improvements
 
 ### 🚀 **Automated Setup & Model Management**
