@@ -6,6 +6,7 @@ import types
 import importlib
 import sys
 import pytest
+import base64
 
 def load_app():
     import os
@@ -60,11 +61,36 @@ def setup_app(monkeypatch):
     app.app_state.ollama_model = 'dummy'
     app.app_state.model_status.update({'sdxl': True, 'ollama': True, 'multimodal': True})
     import server.api as api
+    import server.tasks as tasks
     monkeypatch.setattr(api, 'generate_image', lambda state, params: (Image.new('RGB',(64,64),'blue'), 'done'))
     monkeypatch.setattr(api, 'chat_completion', lambda state, *a, **k: dummy_chat_completion(*a, **k))
     monkeypatch.setattr(api, 'analyze_image', lambda state, img, q='': dummy_analyze_image(img, q))
     monkeypatch.setattr(app, 'clear_gpu_memory', lambda: None)
     monkeypatch.setattr(sys.modules['__main__'], 'app', app, raising=False)
+
+    results = {}
+
+    class DummyResult:
+        def __init__(self, data):
+            self.id = 'job1'
+            self.data = data
+            self.state = 'SUCCESS'
+
+        @property
+        def result(self):
+            return self.data
+
+    def fake_delay(params):
+        img = Image.new('RGB', (64, 64), 'blue')
+        buf = io.BytesIO()
+        img.save(buf, format='PNG')
+        encoded = base64.b64encode(buf.getvalue()).decode()
+        result = {'success': True, 'image_base64': encoded, 'message': 'done'}
+        results['job1'] = result
+        return DummyResult(result)
+
+    monkeypatch.setattr(tasks.generate_image_task, 'delay', fake_delay)
+    monkeypatch.setattr(api, 'AsyncResult', lambda job_id, app=None: types.SimpleNamespace(state='SUCCESS', result=results[job_id]))
     yield
 
 def get_client():
@@ -83,9 +109,13 @@ def test_generate_image_endpoint():
     data = {"prompt": "hi"}
     resp = client.post('/generate-image', json=data)
     assert resp.status_code == 200
-    result = resp.json()
-    assert result['success'] is True
-    assert 'image_base64' in result
+    job = resp.json()
+    assert 'job_id' in job
+    status = client.get(f"/status/{job['job_id']}")
+    assert status.status_code == 200
+    data = status.json()
+    assert data['state'] == 'SUCCESS'
+    assert 'image_base64' in data['result']
 
 
 def test_chat_endpoint():

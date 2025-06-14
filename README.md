@@ -146,6 +146,17 @@ Use the **Model Loader** section on the System Info tab to load SDXL or Ollama
 models on demand when starting with `--lazy-load`.
 Create new projects from the header and switch between them to view individual galleries.
 
+### Background Tasks with Celery
+
+Image generation runs asynchronously via **Celery** with a Redis broker. Start Redis and run a worker:
+
+```bash
+redis-server &
+celery -A server.tasks worker --loglevel=info
+```
+
+The `/generate-image` endpoint now returns a `job_id`. Poll `/status/{job_id}` to retrieve the image once the task finishes.
+
 ### Memory Management
 ```bash
 # For image generation heavy workloads
