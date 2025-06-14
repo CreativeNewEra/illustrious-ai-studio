@@ -44,6 +44,7 @@ import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from collections import deque
 
 from PIL import Image
 import requests
@@ -81,7 +82,7 @@ def load_chat_history(state: AppState) -> None:
     Notes:
         - Handles file corruption gracefully
         - Creates empty history if file doesn't exist
-        - Converts stored lists back to tuples for consistency
+        - Converts stored lists to deque of tuples for consistency
     """
     try:
         if CHAT_HISTORY_FILE.exists():
@@ -91,7 +92,9 @@ def load_chat_history(state: AppState) -> None:
             # Convert loaded data to proper format
             with state.atomic_operation():
                 for session_id, history in data.items():
-                    state.chat_history_store[session_id] = [tuple(msg) for msg in history]
+                    dq = deque(maxlen=100)
+                    dq.extend(tuple(msg) for msg in history)
+                    state.chat_history_store[session_id] = dq
 
             logger.info(f"Loaded chat history for {len(data)} sessions")
             
@@ -112,7 +115,7 @@ def save_chat_history(state: AppState) -> None:
         
     Notes:
         - Creates directory if it doesn't exist
-        - Converts tuples to lists for JSON serialization
+        - Converts deque entries of tuples to lists for JSON serialization
         - Uses UTF-8 encoding for international characters
         - Includes proper error handling
     """
@@ -122,7 +125,7 @@ def save_chat_history(state: AppState) -> None:
 
         with state.atomic_operation():
             serializable = {
-                sid: [list(msg) for msg in history]
+                sid: [list(msg) for msg in list(history)]
                 for sid, history in state.chat_history_store.items()
             }
 
@@ -329,8 +332,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
     if not message.strip():
         return chat_history or [], ""
     with state.atomic_operation():
-        if session_id not in state.chat_history_store:
-            state.chat_history_store[session_id] = []
+        state.chat_history_store[session_id]  # ensure deque exists
     if message.startswith("/tool"):
         response = _execute_tool_command(message[len("/tool"):])
     elif message.lower().startswith("#generate") or "generate image" in message.lower():
@@ -366,7 +368,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
         )
         messages = [{"role": "system", "content": system_prompt}]
         with state.atomic_operation():
-            recent_history = state.chat_history_store[session_id][-10:]
+            recent_history = list(state.chat_history_store[session_id])[-10:]
         for msg in recent_history:
             messages.extend([
                 {"role": "user", "content": msg[0]},

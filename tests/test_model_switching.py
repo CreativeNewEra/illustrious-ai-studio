@@ -1,6 +1,7 @@
 import os
 import sys
 from core.config import CONFIG
+from collections import deque
 
 
 def test_switch_sdxl_model_missing(monkeypatch):
@@ -38,7 +39,7 @@ def test_switch_ollama_model(monkeypatch):
     from core.state import AppState
     state = AppState()
     assert state.ollama_vision_model is None
-    state.chat_history_store = {"s": [("hi", "there")]} 
+    state.chat_history_store = {"s": deque([("hi", "there")], maxlen=100)}
     from core import ollama
 
     def dummy_init(st):
