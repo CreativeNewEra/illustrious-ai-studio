@@ -44,6 +44,7 @@ import logging
 import os
 import tempfile
 import uuid
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple, List, Dict, TypedDict, Protocol, Callable, Any
@@ -172,6 +173,7 @@ def init_sdxl(
     """
     cfg = config or CONFIG
     pipe = None
+    start_time = time.perf_counter()
     try:
         # Validate model file exists
         if not os.path.exists(cfg.sd_model):
@@ -198,6 +200,7 @@ def init_sdxl(
         # Update application state with adapter implementing ModelProtocol
         state.sdxl_pipe = DiffusersPipelineAdapter(pipe)
         state.model_status["sdxl"] = True
+        state.metrics.record_sdxl_load(time.perf_counter() - start_time)
 
         return pipe
     except Exception as e:
@@ -248,9 +251,12 @@ def save_to_gallery(state: AppState, image: Image.Image, prompt: str, metadata: 
     return str(filepath)
 
 def generate_image(state: AppState, params: GenerationParams) -> Tuple[Optional[Image.Image], str]:
-    """Convenience wrapper around ImageGenerator."""
+    """Convenience wrapper around ImageGenerator with timing."""
+    start = time.perf_counter()
     generator = ImageGenerator(state)
-    return generator.generate(params)
+    image, status = generator.generate(params)
+    state.metrics.record_generation(time.perf_counter() - start)
+    return image, status
 
 
 

@@ -298,6 +298,10 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
                 raise HTTPException(status_code=400, detail=str(e))
         return guardian.get_memory_report()["thresholds"]
 
+    @app.get("/metrics")
+    async def get_metrics(state: AppState = Depends(get_state)):
+        return state.metrics.to_dict()
+
     return app
 
 
