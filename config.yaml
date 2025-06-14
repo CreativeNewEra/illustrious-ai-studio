@@ -18,32 +18,23 @@ generation_defaults:
 conda_env: illustrious
 gallery_dir: /tmp/illustrious_ai/gallery
 memory_stats_refresh_interval: 2.0
-
-# Memory Guardian Configuration
 memory_guardian:
   enabled: true
-  # Threshold presets: conservative, balanced, or aggressive
   profile: balanced
   auto_model_switching: true
   auto_resolution_scaling: true
   auto_batch_adjustment: true
   enable_cpu_fallback: true
   log_memory_stats: true
-  intervention_cooldown: 5.0  # seconds between interventions
-  
-  # Thresholds (percentage). Defaults depend on the selected profile.
+  intervention_cooldown: 5.0
   thresholds:
-    low: 70      # Start monitoring closely
-    medium: 85   # Begin preventive actions
-    high: 95     # Aggressive memory management
-    critical: 98 # Emergency intervention
-  
-  # Safety margins (in GB)
+    low: 70
+    medium: 85
+    high: 95
+    critical: 98
   safety_margins:
-    generation_reserve: 2.0  # Reserve for image generation
-    llm_reserve: 1.5         # Reserve for LLM operations
-  
-  # Monitoring intervals (in seconds)
+    generation_reserve: 2.0
+    llm_reserve: 1.5
   monitoring:
-    normal_interval: 2.0      # Normal monitoring frequency
-    aggressive_interval: 0.5  # When under memory pressure
+    normal_interval: 2.0
+    aggressive_interval: 0.5
