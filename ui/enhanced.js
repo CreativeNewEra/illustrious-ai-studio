@@ -42,10 +42,9 @@
   // Keyboard shortcut: Ctrl/Cmd + M toggles simple mode
   document.addEventListener('keydown', function(e){
     if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm'){
-      const wrapper = document.getElementById('simple-mode-toggle');
-      const checkbox = wrapper ? wrapper.querySelector('input[type="checkbox"]') : null;
+      const checkbox = document.getElementById('simple-mode-checkbox');
       if(checkbox){
-        checkbox.click();
+        checkbox.checked = !checkbox.checked;
         e.preventDefault();
       }
     }
