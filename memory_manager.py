@@ -7,10 +7,6 @@ Comprehensive memory management and OOM prevention tool
 import argparse
 import sys
 import time
-from pathlib import Path
-
-# Add the current directory to Python path for imports
-sys.path.insert(0, str(Path(__file__).parent))
 
 from core.memory_guardian import get_memory_guardian, MemoryPressureLevel
 from core.state import AppState

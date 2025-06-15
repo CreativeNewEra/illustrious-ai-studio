@@ -376,7 +376,7 @@ python main.py --lazy-load --open-browser
 python -m pytest tests/ -v
 
 # Check system status
-python memory_manager.py
+python -m memory_manager
 
 # Clean up and optimize
 find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
@@ -386,7 +386,7 @@ find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 
 | Problem | Instant Fix |
 |---------|-------------|
-| **Out of Memory** | Use task: `🔍 Memory Status` → Then `python memory_manager.py --clear` |
+| **Out of Memory** | Use task: `🔍 Memory Status` → Then `python -m memory_manager --clear` |
 | **Models Not Loading** | Use task: `📦 Setup Environment` → Then restart |
 | **Web UI Won't Start** | Try different port: `python main.py --port 7861` |
 | **Slow Generation** | Check GPU: `nvidia-smi` → Reduce batch size in config |
