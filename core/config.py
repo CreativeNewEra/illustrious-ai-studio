@@ -20,7 +20,6 @@ Configuration Priority (highest to lowest):
 3. Default values in SDXLConfig model
 """
 
-
 import os
 from pathlib import Path
 import tempfile
@@ -29,6 +28,10 @@ import logging
 import yaml
 from pydantic import BaseModel, validator
 from .hardware_profiler import HardwareProfiler
+
+logger = logging.getLogger(__name__)
+
+_GALLERY_BASE = Path(tempfile.gettempdir()) / "illustrious_ai"
 
 # ==================================================================
 # CONSTANTS AND PATHS
@@ -46,37 +49,37 @@ MODEL_DIR = Path(os.getenv("MODELS_DIR", "models"))
 
 class SDXLConfig(BaseModel):
     """Configuration model for Illustrious AI Studio."""
-    
+
     # ==============================================================
     # MODEL CONFIGURATION
     # ==============================================================
-    
+
     sd_model: str = str(MODEL_DIR / "Illustrious.safetensors")
-    
+
     ollama_model: str = "goekdenizguelmez/JOSIEFIED-Qwen3:8b-q6_k"
-    
+
     ollama_vision_model: str = "qwen2.5vl:7b"
-    
+
     ollama_base_url: str = "http://localhost:11434"
-    
+
     # ==============================================================
     # PERFORMANCE AND GPU SETTINGS
     # ==============================================================
-    
+
     cuda_settings: dict | None = None
-    
+
     generation_defaults: dict | None = None
-    
+
     gpu_backend: str = "cuda"
-    
+
     load_models_on_startup: bool = True
 
     # ==============================================================
     # STORAGE AND UI SETTINGS
     # ==============================================================
-    
-    gallery_dir: str = str(Path(tempfile.gettempdir()) / "illustrious_ai" / "gallery")
-    
+
+    gallery_dir: str = str(_GALLERY_BASE / "gallery")
+
     memory_guardian: dict | None = None
 
     memory_stats_refresh_interval: float = 2.0
@@ -84,7 +87,7 @@ class SDXLConfig(BaseModel):
     @validator("sd_model")
     def _check_sd_model(cls, v: str) -> str:
         if v and not Path(v).exists():
-            warnings.warn(f"SDXL model file not found: {v}")
+            warnings.warn(f"SDXL model file not found: {v}", stacklevel=2)
         return v
 
     @validator("gallery_dir")
@@ -92,7 +95,8 @@ class SDXLConfig(BaseModel):
         try:
             Path(v).mkdir(parents=True, exist_ok=True)
         except Exception as e:  # pragma: no cover - unlikely to fail in tests
-            warnings.warn(f"Unable to create gallery directory {v}: {e}")
+            msg = f"Unable to create gallery directory {v}: {e}"
+            warnings.warn(msg, stacklevel=2)
         return v
 
     @validator("cuda_settings", pre=True, always=True)
@@ -151,12 +155,14 @@ class SDXLConfig(BaseModel):
 
         return self
 
+
 # ==================================================================
 # CONFIGURATION LOADING AND MANAGEMENT
 # ==================================================================
 
+
 def load_config(path: str | None = None) -> SDXLConfig:
-    '''Load configuration from YAML with environment variable overrides.
+    """Load configuration from YAML with environment variable overrides.
 
     The priority order is:
     1. SDXLConfig defaults
@@ -180,7 +186,7 @@ def load_config(path: str | None = None) -> SDXLConfig:
         - ``MEMORY_STATS_REFRESH_INTERVAL``: UI refresh interval
         - ``LOAD_MODELS_ON_STARTUP``: Whether to load models on startup
         - ``MODELS_DIR``: Base directory for model files
-    '''
+    """
     # Start with defaults
     cfg_data: dict = {}
 
@@ -193,7 +199,7 @@ def load_config(path: str | None = None) -> SDXLConfig:
             if isinstance(file_data, dict):
                 cfg_data.update(file_data)
         except Exception as e:
-            print(f"Warning: Error loading config file {cfg_path}: {e}")
+            logger.warning("Error loading config file %s: %s", cfg_path, e)
 
     # Environment variable overrides
     env_map = {
@@ -213,11 +219,17 @@ def load_config(path: str | None = None) -> SDXLConfig:
         try:
             cfg_data["memory_stats_refresh_interval"] = float(refresh_val)
         except ValueError:
-            print(f"Warning: Invalid MEMORY_STATS_REFRESH_INTERVAL value: {refresh_val}")
+            logger.warning(
+                "Invalid MEMORY_STATS_REFRESH_INTERVAL value: %s", refresh_val
+            )
 
     env_lazy = os.getenv("LOAD_MODELS_ON_STARTUP")
     if env_lazy is not None:
-        cfg_data["load_models_on_startup"] = env_lazy.lower() not in ("false", "0", "no")
+        cfg_data["load_models_on_startup"] = env_lazy.lower() not in (
+            "false",
+            "0",
+            "no",
+        )
 
     return SDXLConfig(**cfg_data)
 
