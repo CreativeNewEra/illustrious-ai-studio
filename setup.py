@@ -148,8 +148,16 @@ class IllustriousSetup:
         """Get python executable path for conda environment."""
         if platform.system() == "Windows":
             # Try multiple possible locations on Windows
-            conda_info, _ = subprocess.run([self.conda_exe, "info", "--json"], 
-                                          capture_output=True, text=True).stdout, None
+            result = subprocess.run([
+                self.conda_exe,
+                "info",
+                "--json",
+            ], capture_output=True, text=True)
+            conda_info = result.stdout
+            if result.returncode != 0:
+                self.print_status("error", f"Failed to get conda info: {result.stderr}")
+                self.errors.append("Failed to get conda info")
+                conda_info = ""
             if conda_info:
                 try:
                     info = json.loads(conda_info)
