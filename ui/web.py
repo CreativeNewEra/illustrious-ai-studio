@@ -581,6 +581,7 @@ def create_gradio_app(state: AppState):
             state.current_project = None
         return gr.update(choices=list_projects(), value=None), f"Project '{name}' deleted"
 
+
     def show_first_run_modal():
         """Display a welcome message on first launch (simplified for Gradio compatibility)."""
         marker = FIRST_RUN_FILE
@@ -659,6 +660,8 @@ def create_gradio_app(state: AppState):
                     )
                     new_project = gr.Textbox(label="New Project", scale=2)
                     create_project_btn = gr.Button("Create", variant="secondary", size="sm")
+                    rename_to = gr.Textbox(label="Rename To", scale=2)
+                    rename_project_btn = gr.Button("Rename", variant="secondary", size="sm")
                     delete_project_btn = gr.Button("🗑️", variant="secondary", size="sm")
                 project_status = gr.Textbox(label="Project Status", interactive=False, elem_classes=["status-box"], lines=1)
 
@@ -1702,6 +1705,14 @@ def create_gradio_app(state: AppState):
         create_project_btn.click(
             fn=create_project,
             inputs=new_project,
+            outputs=[project_selector, project_status]
+        ).then(
+            fn=lambda: refresh_gallery(),
+            outputs=[gallery_component, tag_filter, page_display]
+        )
+        rename_project_btn.click(
+            fn=lambda old, new: rename_project(state, old, new),
+            inputs=[project_selector, rename_to],
             outputs=[project_selector, project_status]
         ).then(
             fn=lambda: refresh_gallery(),
@@ -2932,3 +2943,33 @@ def get_resolution_option(width, height):
         if w == width and h == height:
             return opt
     return "1024x1024 (Square - High Quality)"
+
+
+def rename_project(state: AppState, old_name: str | None, new_name: str):
+    """Rename a project directory."""
+    new_name = (new_name or "").strip()
+    if not old_name:
+        return gr.update(), "Please select a project to rename"
+    if not new_name:
+        return gr.update(), "Please enter a new name"
+    if old_name == new_name:
+        return gr.update(), "Names are identical"
+    old_path = PROJECTS_DIR / old_name
+    new_path = PROJECTS_DIR / new_name
+    if not old_path.exists():
+        return gr.update(), "Project not found"
+    if new_path.exists():
+        return gr.update(), "A project with that name already exists"
+    try:
+        new_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.move(str(old_path), str(new_path))
+    except Exception as e:  # pragma: no cover - unexpected errors
+        logger.error("Failed to rename project %s to %s: %s", old_name, new_name, e)
+        return gr.update(), f"Failed to rename project: {e}"
+    if state.current_project == old_name:
+        state.current_project = new_name
+        current_value = new_name
+    else:
+        current_value = state.current_project
+    choices = [p.name for p in PROJECTS_DIR.iterdir() if p.is_dir()]
+    return gr.update(choices=choices, value=current_value), f"Project '{old_name}' renamed to '{new_name}'"
