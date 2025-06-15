@@ -136,6 +136,9 @@ python main.py --lazy-load --web-port 8080 --api-port 8081
 # Require authentication and open a browser window
 python main.py --auth user:pass --open-browser
 
+# Create a public shareable link
+python main.py --share
+
 # Enable memory optimizations
 python main.py --optimize-memory
 ```

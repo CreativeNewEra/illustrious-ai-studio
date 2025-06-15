@@ -167,6 +167,7 @@ def main():
             print("  --no-api         : Don't start API server")
             print("  --optimize-memory: Enable memory optimizations")
             print("  --open-browser   : Open browser automatically")
+            print("  --share          : Create a public share link")
             print("  --web-port PORT  : Change web interface port")
             print("  --api-port PORT  : Change API server port")
             
