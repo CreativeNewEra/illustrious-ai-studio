@@ -10,6 +10,7 @@ import io
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import os
 
 from PIL import Image, ImageStat
 import torch
