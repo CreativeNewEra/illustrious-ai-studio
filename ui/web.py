@@ -65,6 +65,7 @@ from core.sdxl import (
     switch_sdxl_model,
     PROJECTS_DIR,
     save_to_gallery,
+    export_gallery,
 )
 from core.image_generator import ImageGenerator
 
@@ -548,6 +549,14 @@ def create_gradio_app(state: AppState):
     def copy_image_path(path: str):
         """Return the path for clipboard copy via JS."""
         return path
+
+    def export_gallery_action():
+        """Export the current gallery as a ZIP archive."""
+        try:
+            return export_gallery(state)
+        except Exception as e:  # pragma: no cover - unexpected errors
+            logger.error("Failed to export gallery: %s", e)
+            return None
 
     def list_projects():
         PROJECTS_DIR.mkdir(exist_ok=True)
@@ -1269,6 +1278,18 @@ def create_gradio_app(state: AppState):
                                 copy_path_btn = gr.Button(
                                     "📋 Copy Path",
                                     variant="secondary",
+                                    elem_classes=["secondary-button"]
+                                )
+                            with gr.Row():
+                                export_gallery_btn = gr.Button(
+                                    "📦 Export Gallery",
+                                    variant="secondary",
+                                    elem_classes=["secondary-button"]
+                                )
+                                export_gallery_download = gr.DownloadButton(
+                                    "💾 Download ZIP",
+                                    variant="secondary",
+                                    visible=False,
                                     elem_classes=["secondary-button"]
                                 )
                             with gr.Row():
@@ -2559,6 +2580,12 @@ def create_gradio_app(state: AppState):
             fn=open_image_file,
             inputs=selected_path,
             outputs=action_status,
+        )
+        export_gallery_btn.click(
+            fn=export_gallery_action,
+            outputs=export_gallery_download,
+        ).then(
+            js=toast_js("Gallery exported", "success")
         )
         try:
             copy_path_btn.click(
