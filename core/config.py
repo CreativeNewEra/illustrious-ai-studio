@@ -191,7 +191,8 @@ def load_config(path: str | None = None) -> SDXLConfig:
     cfg_data: dict = {}
 
     # Load from YAML file if it exists
-    cfg_path = Path(path or os.getenv("CONFIG_FILE", "config.yaml"))
+    cfg_env = os.getenv("CONFIG_FILE", "config.yaml")
+    cfg_path = Path(path or cfg_env)
     if cfg_path.exists():
         try:
             with open(cfg_path, "r") as f:

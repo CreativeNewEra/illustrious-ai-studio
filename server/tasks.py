@@ -2,8 +2,10 @@ from __future__ import annotations
 import os
 import base64
 import io
+from typing import Any
 from celery import Celery
 from core.image_generator import ImageGenerator
+from core.sdxl import GenerationParams
 from app import app_state
 
 # Celery configuration using Redis as broker and backend
@@ -17,7 +19,7 @@ celery_app = Celery(
 )
 
 @celery_app.task(bind=True)
-def generate_image_task(self, params: dict) -> dict:
+def generate_image_task(self, params: GenerationParams) -> dict[str, Any]:
     """Background task to generate an image using SDXL."""
     state = app_state
     if state.sdxl_pipe is None:

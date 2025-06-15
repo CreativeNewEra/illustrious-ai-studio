@@ -6,6 +6,7 @@ Provides secure filesystem operations with configurable access controls.
 
 import asyncio
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Sequence
 

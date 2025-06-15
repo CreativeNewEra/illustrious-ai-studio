@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 class PromptTemplateManager:
     """Manages prompt templates for the AI Studio."""
-    
-    def __init__(self, templates_dir: Path = None):
+
+    def __init__(self, templates_dir: Optional[Path] = None) -> None:
         self.templates_dir = templates_dir or Path("user_prompts")
         self.templates_dir.mkdir(parents=True, exist_ok=True)
         self.templates_file = self.templates_dir / "user_templates.json"
@@ -50,9 +50,15 @@ class PromptTemplateManager:
             logger.error(f"Failed to save templates: {e}")
             return False
     
-    def add_template(self, name: str, prompt: str, negative_prompt: str = "", 
-                    category: str = "General", tags: List[str] = None,
-                    settings: Dict[str, Any] = None) -> str:
+    def add_template(
+        self,
+        name: str,
+        prompt: str,
+        negative_prompt: str = "",
+        category: str = "General",
+        tags: Optional[List[str]] = None,
+        settings: Optional[Dict[str, Any]] = None,
+    ) -> str:
         """Add a new template."""
         template_id = str(uuid.uuid4())
         template = {
@@ -81,7 +87,7 @@ class PromptTemplateManager:
                 return template
         return None
     
-    def get_templates_by_category(self, category: str = None) -> List[Dict[str, Any]]:
+    def get_templates_by_category(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
         """Get templates by category, or all if no category specified."""
         if category is None:
             return self.templates["templates"]
@@ -98,7 +104,7 @@ class PromptTemplateManager:
                 results.append(template)
         return results
     
-    def update_template(self, template_id: str, **kwargs) -> bool:
+    def update_template(self, template_id: str, **kwargs: Any) -> bool:
         """Update an existing template."""
         for i, template in enumerate(self.templates["templates"]):
             if template["id"] == template_id:
@@ -137,7 +143,7 @@ class PromptTemplateManager:
         )
         return sorted_templates[:limit]
     
-    def export_templates(self, export_path: Path = None) -> str:
+    def export_templates(self, export_path: Optional[Path] = None) -> str:
         """Export templates to a JSON file."""
         if export_path is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -208,7 +214,7 @@ class PromptTemplateManager:
     def get_template_stats(self) -> Dict[str, Any]:
         """Get statistics about the template collection."""
         templates = self.templates["templates"]
-        categories = {}
+        categories: Dict[str, int] = {}
         total_usage = 0
         
         for template in templates:

@@ -31,6 +31,9 @@ from .degradation import DegradationStrategy
 
 if TYPE_CHECKING:
     from .sdxl import ModelProtocol
+    from .image_generator import ImageGenerator
+    from .hardware_profiler import HardwareProfile, HardwareProfiler
+    from .memory_guardian import MemoryGuardian
 else:
     ModelProtocol = Any
 from PIL import Image
@@ -162,6 +165,8 @@ class AppState:
     
     Used for the "regenerate" feature and parameter display in UI.
     """
+
+    image_generator: Optional["ImageGenerator"] = None
     
     # ==============================================================
     # PROJECT AND WORKSPACE STATE

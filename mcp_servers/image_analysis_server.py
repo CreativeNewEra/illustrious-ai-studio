@@ -8,6 +8,7 @@ import asyncio
 import base64
 import io
 import logging
+import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -90,6 +91,7 @@ def analyze_image_properties(image_path: Optional[str] = None, image_base64: Opt
     if image_path:
         image = load_image_from_path(image_path)
     else:
+        assert image_base64 is not None
         image = load_image_from_base64(image_base64)
     
     # Basic properties
@@ -156,6 +158,7 @@ def extract_image_colors(image_path: Optional[str] = None, image_base64: Optiona
     if image_path:
         image = load_image_from_path(image_path)
     else:
+        assert image_base64 is not None
         image = load_image_from_base64(image_base64)
     
     # Convert to RGB
@@ -170,7 +173,7 @@ def extract_image_colors(image_path: Optional[str] = None, image_base64: Optiona
     pixels = list(rgb_image.getdata())
     
     # Count color frequencies
-    color_counts = {}
+    color_counts: Dict[tuple[int, int, int], int] = {}
     for pixel in pixels:
         color_counts[pixel] = color_counts.get(pixel, 0) + 1
     
@@ -215,11 +218,13 @@ def compare_images(image1_path: Optional[str] = None, image1_base64: Optional[st
     if image1_path:
         image1 = load_image_from_path(image1_path)
     else:
+        assert image1_base64 is not None
         image1 = load_image_from_base64(image1_base64)
     
     if image2_path:
         image2 = load_image_from_path(image2_path)
     else:
+        assert image2_base64 is not None
         image2 = load_image_from_base64(image2_base64)
     
     # Basic comparison
@@ -286,6 +291,7 @@ def create_image_thumbnail(image_path: Optional[str] = None, image_base64: Optio
     if image_path:
         image = load_image_from_path(image_path)
     else:
+        assert image_base64 is not None
         image = load_image_from_base64(image_base64)
     
     # Create thumbnail

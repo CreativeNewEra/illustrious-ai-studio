@@ -28,7 +28,7 @@ import logging
 try:
     import torch
 except Exception:  # pragma: no cover - allow missing torch in tests
-    torch = None  # type: ignore
+    torch = None
 
 from .state import AppState
 from .config import CONFIG

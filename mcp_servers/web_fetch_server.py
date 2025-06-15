@@ -64,7 +64,7 @@ def load_config() -> Dict[str, Any]:
     return DEFAULT_CONFIG.copy()
 
 # Create config file if it doesn't exist
-def create_default_config():
+def create_default_config() -> None:
     """Create default configuration file."""
     if not CONFIG_FILE.exists():
         CONFIG_FILE.parent.mkdir(exist_ok=True)
@@ -78,11 +78,11 @@ CONFIG = load_config()
 
 # Rate limiting storage
 class RateLimiter:
-    def __init__(self, requests_per_minute: int, requests_per_hour: int):
+    def __init__(self, requests_per_minute: int, requests_per_hour: int) -> None:
         self.requests_per_minute = requests_per_minute
         self.requests_per_hour = requests_per_hour
-        self.minute_requests = []
-        self.hour_requests = []
+        self.minute_requests: List[float] = []
+        self.hour_requests: List[float] = []
     
     def can_make_request(self) -> bool:
         """Check if a request can be made based on rate limits."""
@@ -100,7 +100,7 @@ class RateLimiter:
         
         return True
     
-    def record_request(self):
+    def record_request(self) -> None:
         """Record a new request."""
         now = time.time()
         self.minute_requests.append(now)
