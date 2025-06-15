@@ -583,21 +583,28 @@ def create_gradio_app(state: AppState):
         return gr.update(choices=list_projects(), value=None), f"Project '{name}' deleted"
 
     def show_first_run_modal():
-        """Display a welcome message on first launch (simplified for Gradio compatibility)."""
+        """Display a multi-step tutorial on first launch."""
         marker = FIRST_RUN_FILE
-        
-        # Create a simple welcome group instead of modal
-        with gr.Group(visible=False) as welcome_group:
-            gr.Markdown(
-                "### 🎉 Welcome to Illustrious AI Studio\n"
-                "Your creative AI workspace is ready! Generate stunning artwork with SDXL and chat with AI assistants."
-            )
-            close_btn = gr.Button("Get Started", variant="primary")
+
+        with gr.Group(visible=False) as tutorial_group:
+            gr.Markdown("### 🎉 Welcome to Illustrious AI Studio")
+            with gr.Accordion("1️⃣ Generate Artwork", open=True):
+                gr.Markdown("Use the **Create** tab to craft images with SDXL.")
+            with gr.Accordion("2️⃣ Chat with AI", open=False):
+                gr.Markdown(
+                    "Talk with the assistant in the **AI Assistant** tab."
+                )
+            with gr.Accordion("3️⃣ Manage Your Library", open=False):
+                gr.Markdown(
+                    "View all creations inside the **Library** tab."
+                )
+            done_btn = gr.Button("Get Started", variant="primary")
 
         def maybe_show():
-            if not marker.exists():
-                return gr.update(visible=True)
-            return gr.update(visible=False)
+            return gr.update(visible=not marker.exists())
+
+        def open_anytime():
+            return gr.update(visible=True)
 
         def dismiss():
             try:
@@ -607,8 +614,8 @@ def create_gradio_app(state: AppState):
                 logger.error("Failed to write first run marker: %s", e)
             return gr.update(visible=False)
 
-        close_btn.click(fn=dismiss, outputs=[welcome_group])
-        return maybe_show, welcome_group
+        done_btn.click(dismiss, outputs=[tutorial_group])
+        return maybe_show, open_anytime, tutorial_group
 
     current_theme = load_theme_pref()
     theme_pref_exists = current_theme is not None
@@ -663,7 +670,7 @@ def create_gradio_app(state: AppState):
                     delete_project_btn = gr.Button("🗑️", variant="secondary", size="sm")
                 project_status = gr.Textbox(label="Project Status", interactive=False, elem_classes=["status-box"], lines=1)
 
-        open_modal_fn, first_run_modal = show_first_run_modal()
+        open_modal_fn, tutorial_fn, first_run_modal = show_first_run_modal()
 
         with gr.Tabs():
             if state.simple_mode:
@@ -1467,6 +1474,8 @@ def create_gradio_app(state: AppState):
                                 - `POST /analyze-image` - Analyze images (if multimodal available)
                                 """
                             )
+                            with gr.Accordion("Help", open=False):
+                                tutorial_btn = gr.Button("Tutorial", variant="secondary")
 
         with gr.Row():
             live_status = gr.HTML(
@@ -2810,6 +2819,11 @@ def create_gradio_app(state: AppState):
 
         demo.load(
             fn=open_modal_fn,
+            outputs=[first_run_modal]
+        )
+
+        tutorial_btn.click(
+            fn=tutorial_fn,
             outputs=[first_run_modal]
         )
         
