@@ -6,6 +6,7 @@ Provides Git repository operations and information.
 
 import asyncio
 import logging
+import os
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -299,7 +300,7 @@ def git_remote_info(repo_path: str = str(BASE_DIR)) -> List[Dict[str, str]]:
     return remotes
 
 @mcp.tool()
-def git_file_history(repo_path: str = str(BASE_DIR), filename: str, max_count: int = 10) -> List[Dict[str, Any]]:
+def git_file_history(filename: str, repo_path: str = str(BASE_DIR), max_count: int = 10) -> List[Dict[str, Any]]:
     """
     Get the commit history for a specific file.
     
