@@ -19,12 +19,14 @@ import psutil
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Callable, Any
+from typing import Any, Dict, List, Optional, Callable
 from dataclasses import dataclass
 from enum import Enum
 
+torch: Any
 try:
-    import torch
+    import torch as _torch
+    torch = _torch
 except Exception:  # pragma: no cover - allow missing torch in tests
     torch = None
 

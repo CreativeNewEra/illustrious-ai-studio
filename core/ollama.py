@@ -468,6 +468,8 @@ def analyze_image(
         except Exception as e:
             logger.error("Invalid image input: %s", e)
             return f"❌ Invalid image: {e}"
+    if not isinstance(image, Image.Image):
+        return "❌ Invalid image input."
     if not state.model_status["multimodal"] or not hasattr(state, "ollama_vision_model"):
         return "❌ Ollama vision model not available. Please ensure a vision-capable model is configured."
 

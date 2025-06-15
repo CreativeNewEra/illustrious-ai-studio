@@ -4,15 +4,19 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
+torch: Any
 try:
-    import torch
+    import torch as _torch
+    torch = _torch
 except Exception:  # pragma: no cover - allow missing torch
     torch = None
 
+psutil: Any
 try:
-    import psutil
+    import psutil as _psutil
+    psutil = _psutil
 except Exception:  # pragma: no cover - allow missing psutil
     psutil = None
 
