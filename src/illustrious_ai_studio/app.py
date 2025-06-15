@@ -21,7 +21,6 @@ import logging
 
 from .core.logging_utils import configure_logging
 
-configure_logging("INFO")
 logger = logging.getLogger(__name__)
 
 # ==================================================================
