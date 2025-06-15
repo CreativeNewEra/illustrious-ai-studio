@@ -2965,7 +2965,7 @@ def rename_project(state: AppState, old_name: str | None, new_name: str):
         shutil.move(str(old_path), str(new_path))
     except Exception as e:  # pragma: no cover - unexpected errors
         logger.error("Failed to rename project %s to %s: %s", old_name, new_name, e)
-        return gr.update(), f"Failed to rename project: {e}"
+        return gr.update(), "An error occurred while renaming the project."
     if state.current_project == old_name:
         state.current_project = new_name
         current_value = new_name
