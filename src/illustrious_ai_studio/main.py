@@ -25,17 +25,17 @@ import sys
 from pathlib import Path
 
 # UI and server components
-from ui.web import create_gradio_app
-from server.api import create_api_app
-from server.logging_utils import RequestIdFilter
+from .ui.web import create_gradio_app
+from .server.api import create_api_app
+from .server.logging_utils import RequestIdFilter
 
 # Core functionality
-from core.sdxl import init_sdxl
-from core.ollama import init_ollama
-from core.state import AppState
-from core.memory import clear_gpu_memory
-from core.memory_guardian import start_memory_guardian, stop_memory_guardian
-from core.hardware_profiler import HardwareProfiler
+from .core.sdxl import init_sdxl
+from .core.ollama import init_ollama
+from .core.state import AppState
+from .core.memory import clear_gpu_memory
+from .core.memory_guardian import start_memory_guardian, stop_memory_guardian
+from .core.hardware_profiler import HardwareProfiler
 
 # Web server
 import uvicorn
@@ -150,7 +150,7 @@ class IllustriousAIStudio:
 
         profiler = HardwareProfiler()
         profile = profiler.detect_hardware()
-        from core.config import CONFIG
+        from .core.config import CONFIG
         CONFIG.apply_hardware_profile()
         self.app_state.hardware_profile = profile
         self.logger.info(
@@ -464,7 +464,7 @@ class IllustriousAIStudio:
         Returns:
             bool: True if model file passes all checks, False otherwise
         """
-        from core.config import CONFIG
+        from .core.config import CONFIG
         import os
         
         model_path = CONFIG.sd_model
@@ -499,7 +499,7 @@ class IllustriousAIStudio:
         Returns:
             bool: True if Ollama server is accessible, False otherwise
         """
-        from core.config import CONFIG
+        from .core.config import CONFIG
         import requests
         
         try:

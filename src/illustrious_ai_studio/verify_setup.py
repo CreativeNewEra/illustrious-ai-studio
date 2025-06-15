@@ -207,10 +207,10 @@ class SetupVerifier:
         
         try:
             # Test imports
-            from core.sdxl import init_sdxl
-            from core.ollama import init_ollama
-            from core.state import AppState
-            from core.prompt_templates import template_manager
+            from .core.sdxl import init_sdxl
+            from .core.ollama import init_ollama
+            from .core.state import AppState
+            from .core.prompt_templates import template_manager
             
             self.print_success("Core modules can be imported")
             self.results["features"]["imports"] = True

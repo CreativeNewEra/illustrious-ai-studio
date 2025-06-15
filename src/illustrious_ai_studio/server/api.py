@@ -45,15 +45,15 @@ import torch
 # CORE FUNCTIONALITY IMPORTS
 # ==================================================================
 
-from core import sdxl, ollama
-from core.sdxl import generate_image
-from core.image_generator import ImageGenerator
+from ..core import sdxl, ollama
+from ..core.sdxl import generate_image
+from ..core.image_generator import ImageGenerator
 from celery.result import AsyncResult
 from .tasks import celery_app, generate_image_task
-from core.ollama import chat_completion, analyze_image
-from core.state import AppState
-from core.config import CONFIG
-from core.memory_guardian import get_memory_guardian
+from ..core.ollama import chat_completion, analyze_image
+from ..core.state import AppState
+from ..core.config import CONFIG
+from ..core.memory_guardian import get_memory_guardian
 from .logging_utils import request_id_var
 
 logger = logging.getLogger(__name__)
@@ -313,7 +313,7 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
 
 def run_mcp_server(state: AppState, auto_load: bool = True) -> None:
     import uvicorn
-    from core.memory_guardian import start_memory_guardian, stop_memory_guardian
+    from ..core.memory_guardian import start_memory_guardian, stop_memory_guardian
 
     app = create_api_app(state, auto_load=auto_load)
 

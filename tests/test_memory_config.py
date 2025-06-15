@@ -1,4 +1,4 @@
-from core.config import CONFIG
+from illustrious_ai_studio.core.config import CONFIG
 
 
 def test_config_overrides(monkeypatch):
@@ -8,8 +8,8 @@ def test_config_overrides(monkeypatch):
         "monitoring": {"normal_interval": 3.0, "aggressive_interval": 1.0},
     }
     monkeypatch.setattr(CONFIG, "memory_guardian", custom, raising=False)
-    from core.state import AppState
-    from core.memory_guardian import MemoryGuardian
+    from illustrious_ai_studio.core.state import AppState
+    from illustrious_ai_studio.core.memory_guardian import MemoryGuardian
     state = AppState()
     assert state.ollama_vision_model is None
     guardian = MemoryGuardian(state)
@@ -30,8 +30,8 @@ def test_defaults_preserved(monkeypatch):
         "monitoring": {"aggressive_interval": 0.3},
     }
     monkeypatch.setattr(CONFIG, "memory_guardian", partial, raising=False)
-    from core.state import AppState
-    from core.memory_guardian import MemoryGuardian
+    from illustrious_ai_studio.core.state import AppState
+    from illustrious_ai_studio.core.memory_guardian import MemoryGuardian
     state2 = AppState()
     assert state2.ollama_vision_model is None
     guardian = MemoryGuardian(state2)

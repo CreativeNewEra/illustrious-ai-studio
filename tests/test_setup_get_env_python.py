@@ -4,7 +4,7 @@ import importlib.util
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location(
-    "setup_script", Path(__file__).resolve().parents[1] / "setup.py"
+    "setup_script", Path(__file__).resolve().parents[1] / "src/illustrious_ai_studio/setup_cli.py"
 )
 setup_script = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(setup_script)

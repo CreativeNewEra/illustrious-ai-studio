@@ -1,5 +1,5 @@
-from core.state import AppState
-from core.memory_guardian import MemoryGuardian, PROFILE_PRESETS
+from illustrious_ai_studio.core.state import AppState
+from illustrious_ai_studio.core.memory_guardian import MemoryGuardian, PROFILE_PRESETS
 
 def test_profile_update_runtime():
     guardian = MemoryGuardian(AppState())

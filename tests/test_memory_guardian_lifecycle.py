@@ -1,6 +1,6 @@
 def test_guardian_recreated_after_stop():
-    from core.state import AppState
-    from core.memory_guardian import (
+    from illustrious_ai_studio.core.state import AppState
+    from illustrious_ai_studio.core.memory_guardian import (
         start_memory_guardian,
         stop_memory_guardian,
         get_memory_guardian,

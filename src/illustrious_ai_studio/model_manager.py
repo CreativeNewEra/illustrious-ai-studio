@@ -11,8 +11,8 @@ import os
 from colorama import init, Fore, Style
 from pathlib import Path
 
-from core.memory import clear_gpu_memory
-from core.config import CONFIG
+from .core.memory import clear_gpu_memory
+from .core.config import CONFIG
 
 init(autoreset=True)
 

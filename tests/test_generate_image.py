@@ -34,7 +34,7 @@ def load_app():
         torch.Generator = DummyGenerator
         torch.float16 = 'float16'
         sys.modules['torch'] = torch
-    return importlib.import_module('app')
+    return importlib.import_module('illustrious_ai_studio.app')
 
 class DummyPipe:
     def generate(self, *args, **kwargs):

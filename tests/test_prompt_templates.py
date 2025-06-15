@@ -1,4 +1,4 @@
-from core.prompt_templates import PromptTemplateManager
+from illustrious_ai_studio.core.prompt_templates import PromptTemplateManager
 
 
 def test_nested_template_directory(tmp_path):

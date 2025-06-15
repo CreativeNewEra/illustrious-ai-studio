@@ -21,17 +21,23 @@ application state and FastAPI app instance.
 # CORE API AND UI COMPONENTS
 # ==================================================================
 
-from server.api import create_api_app, GenerateImageRequest, ChatRequest, AnalyzeImageRequest, run_mcp_server  # noqa: F401
+from .server.api import (
+    create_api_app,
+    GenerateImageRequest,
+    ChatRequest,
+    AnalyzeImageRequest,
+    run_mcp_server,
+)  # noqa: F401
 # These imports are exposed for external use as part of the module's convenience layer.
 # They allow external scripts and integrations to access core API functionality directly.
-from ui.web import create_gradio_app  # noqa: F401
-from core.state import AppState
+from .ui.web import create_gradio_app  # noqa: F401
+from .core.state import AppState
 
 # ==================================================================
 # IMAGE GENERATION FUNCTIONALITY (SDXL)
 # ==================================================================
 
-from core.sdxl import (  # noqa: F401
+from .core.sdxl import (  # noqa: F401
     generate_image,        # Main image generation function
     init_sdxl,            # Initialize SDXL model pipeline
     save_to_gallery,      # Save generated images to gallery
@@ -44,7 +50,7 @@ from core.sdxl import (  # noqa: F401
 # CHAT AND LANGUAGE MODEL FUNCTIONALITY (OLLAMA)
 # ==================================================================
 
-from core.ollama import (  # noqa: F401
+from .core.ollama import (  # noqa: F401
     chat_completion,      # Direct chat completion API
     handle_chat,          # High-level chat handling with history
     generate_prompt,      # AI-assisted prompt generation
@@ -56,7 +62,7 @@ from core.ollama import (  # noqa: F401
 # MEMORY AND SYSTEM UTILITIES
 # ==================================================================
 
-from core.memory import clear_gpu_memory, get_model_status  # noqa: F401
+from .core.memory import clear_gpu_memory, get_model_status  # noqa: F401
 
 # ==================================================================
 # GLOBAL APPLICATION STATE AND INSTANCES

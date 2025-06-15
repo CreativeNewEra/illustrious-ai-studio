@@ -55,7 +55,7 @@ import gradio as gr
 # ==================================================================
 
 # Image generation and model management
-from core.sdxl import (
+from ..core.sdxl import (
     generate_image,
     generate_with_notifications,
     TEMP_DIR,
@@ -69,30 +69,30 @@ from core.sdxl import (
     save_to_gallery,
     export_gallery,
 )
-from core.image_generator import ImageGenerator
-from core.sdxl import GenerationParams
+from ..core.image_generator import ImageGenerator
+from ..core.sdxl import GenerationParams
 
 # Configuration and state management
-from core.config import CONFIG
-from core.state import AppState
+from ..core.config import CONFIG
+from ..core.state import AppState
 
 # Chat and language model functionality  
-from core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
-from core import sdxl, ollama
-from core.generation_presets import GENERATION_PRESETS, DEFAULT_PRESET
+from ..core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
+from ..core import sdxl, ollama
+from ..core.generation_presets import GENERATION_PRESETS, DEFAULT_PRESET
 
 # Memory and system monitoring
-from core.memory import get_model_status, get_memory_stats_markdown, get_memory_stats_wrapper
-from core.memory_guardian import (
+from ..core.memory import get_model_status, get_memory_stats_markdown, get_memory_stats_wrapper
+from ..core.memory_guardian import (
     start_memory_guardian,
     stop_memory_guardian, 
     get_memory_guardian,
 )
 
 # Additional UI utilities
-from core.prompt_templates import template_manager
-from core.prompt_analyzer import analyze_prompt, PromptAnalyzer, auto_enhance_prompt
-from core.gallery_filters import load_gallery_filter, save_gallery_filter
+from ..core.prompt_templates import template_manager
+from ..core.prompt_analyzer import analyze_prompt, PromptAnalyzer, auto_enhance_prompt
+from ..core.gallery_filters import load_gallery_filter, save_gallery_filter
 
 # ==================================================================
 # CONSTANTS AND CONFIGURATION
@@ -784,7 +784,7 @@ def create_gradio_app(state: AppState):
                             base_prompt = f"{mode_prefix} {idea}, {mode_suffix}".strip()
                             if state.model_status.get("ollama", False):
                                 progress(0.3, desc="🤖 Enhancing with AI...")
-                                from core.ollama import generate_prompt
+                                from ..core.ollama import generate_prompt
                                 base_prompt = generate_prompt(state, base_prompt)
 
                         progress(0.4, desc="🎨 Creating your image...")

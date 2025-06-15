@@ -63,65 +63,71 @@ def stub_dependencies():
         sys.modules['diffusers.pipelines'] = pipelines
         sys.modules['diffusers.pipelines.stable_diffusion_xl'] = sdxl_mod
         sys.modules['diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl'] = submod
-    if 'ui' not in sys.modules:
-        sys.modules['ui'] = types.ModuleType('ui')
-    if 'ui.web' not in sys.modules:
-        web = types.ModuleType('ui.web')
+    if 'illustrious_ai_studio.ui' not in sys.modules:
+        sys.modules['illustrious_ai_studio.ui'] = types.ModuleType('illustrious_ai_studio.ui')
+    if 'illustrious_ai_studio.ui.web' not in sys.modules:
+        web = types.ModuleType('illustrious_ai_studio.ui.web')
         def create_gradio_app(state):
             class DummyApp:
                 def launch(self, *a, **k):
                     pass
             return DummyApp()
         web.create_gradio_app = create_gradio_app
-        sys.modules['ui.web'] = web
-    if 'server' not in sys.modules:
-        sys.modules['server'] = types.ModuleType('server')
-    if 'server.api' not in sys.modules:
-        api = types.ModuleType('server.api')
+        sys.modules['illustrious_ai_studio.ui.web'] = web
+    if 'illustrious_ai_studio.server' not in sys.modules:
+        sys.modules['illustrious_ai_studio.server'] = types.ModuleType('illustrious_ai_studio.server')
+    if 'illustrious_ai_studio.server.api' not in sys.modules:
+        api = types.ModuleType('illustrious_ai_studio.server.api')
         def create_api_app(state):
             class Dummy:
                 pass
             return Dummy()
         api.create_api_app = create_api_app
-        sys.modules['server.api'] = api
-    if 'server.logging_utils' not in sys.modules:
-        log_mod = types.ModuleType('server.logging_utils')
+        sys.modules['illustrious_ai_studio.server.api'] = api
+    if 'illustrious_ai_studio.server.logging_utils' not in sys.modules:
+        log_mod = types.ModuleType('illustrious_ai_studio.server.logging_utils')
         class RequestIdFilter:
             def filter(self, record):
                 return True
         log_mod.RequestIdFilter = RequestIdFilter
         log_mod.request_id_var = None
-        sys.modules['server.logging_utils'] = log_mod
-    if 'core' not in sys.modules:
-        sys.modules['core'] = types.ModuleType('core')
-    for mod_name in ['core.sdxl', 'core.ollama', 'core.state', 'core.memory',
-                     'core.memory_guardian', 'core.hardware_profiler']:
+        sys.modules['illustrious_ai_studio.server.logging_utils'] = log_mod
+    if 'illustrious_ai_studio.core' not in sys.modules:
+        sys.modules['illustrious_ai_studio.core'] = types.ModuleType('illustrious_ai_studio.core')
+    for mod_name in [
+        'illustrious_ai_studio.core.sdxl',
+        'illustrious_ai_studio.core.ollama',
+        'illustrious_ai_studio.core.state',
+        'illustrious_ai_studio.core.memory',
+        'illustrious_ai_studio.core.memory_guardian',
+        'illustrious_ai_studio.core.hardware_profiler',
+    ]:
         if mod_name not in sys.modules:
             module = types.ModuleType(mod_name)
-            if mod_name == 'core.sdxl':
+            if mod_name == 'illustrious_ai_studio.core.sdxl':
                 def init_sdxl(*a, **k):
                     pass
                 module.init_sdxl = init_sdxl
-            if mod_name == 'core.ollama':
+            if mod_name == 'illustrious_ai_studio.core.ollama':
                 def init_ollama(*a, **k):
                     pass
                 module.init_ollama = init_ollama
-            if mod_name == 'core.state':
+            if mod_name == 'illustrious_ai_studio.core.state':
                 class AppState:
                     pass
                 module.AppState = AppState
-            if mod_name == 'core.memory':
+            if mod_name == 'illustrious_ai_studio.core.memory':
                 def clear_gpu_memory():
                     pass
                 module.clear_gpu_memory = clear_gpu_memory
-            if mod_name == 'core.memory_guardian':
+            if mod_name == 'illustrious_ai_studio.core.memory_guardian':
                 def start_memory_guardian(*a, **k):
                     pass
                 def stop_memory_guardian():
                     pass
                 module.start_memory_guardian = start_memory_guardian
                 module.stop_memory_guardian = stop_memory_guardian
-            if mod_name == 'core.hardware_profiler':
+            if mod_name == 'illustrious_ai_studio.core.hardware_profiler':
                 class HardwareProfiler:
                     def start(self):
                         pass
@@ -150,13 +156,13 @@ def stub_dependencies():
 def stub_core_modules():
     """Provide stubs for core modules used in tests."""
     # Ensure any placeholder ui modules from stub_dependencies do not interfere
-    for mod in ['ui.web', 'ui']:
+    for mod in ['illustrious_ai_studio.ui.web', 'illustrious_ai_studio.ui']:
         if mod in sys.modules:
             del sys.modules[mod]
-    core_pkg = types.ModuleType('core')
-    sys.modules.setdefault('core', core_pkg)
+    core_pkg = types.ModuleType('illustrious_ai_studio.core')
+    sys.modules.setdefault('illustrious_ai_studio.core', core_pkg)
 
-    sdxl = types.ModuleType('core.sdxl')
+    sdxl = types.ModuleType('illustrious_ai_studio.core.sdxl')
     sdxl.generate_image = lambda *a, **k: None
     sdxl.generate_with_notifications = lambda *a, **k: None
     sdxl.TEMP_DIR = Path('/tmp')
@@ -169,74 +175,74 @@ def stub_core_modules():
     sdxl.save_to_gallery = lambda *a, **k: None
     sdxl.export_gallery = lambda *a, **k: None
     sdxl.PROJECTS_DIR = Path('/tmp')
-    sys.modules['core.sdxl'] = sdxl
+    sys.modules['illustrious_ai_studio.core.sdxl'] = sdxl
     setattr(core_pkg, 'sdxl', sdxl)
 
-    config = types.ModuleType('core.config')
+    config = types.ModuleType('illustrious_ai_studio.core.config')
     config.CONFIG = {}
-    sys.modules['core.config'] = config
+    sys.modules['illustrious_ai_studio.core.config'] = config
     setattr(core_pkg, 'config', config)
 
-    state = types.ModuleType('core.state')
+    state = types.ModuleType('illustrious_ai_studio.core.state')
     class DummyState:
         ...
     state.AppState = DummyState
-    sys.modules['core.state'] = state
+    sys.modules['illustrious_ai_studio.core.state'] = state
     setattr(core_pkg, 'state', state)
 
-    ollama = types.ModuleType('core.ollama')
+    ollama = types.ModuleType('illustrious_ai_studio.core.ollama')
     ollama.generate_prompt = lambda *a, **k: None
     ollama.handle_chat = lambda *a, **k: None
     ollama.analyze_image = lambda *a, **k: None
     ollama.init_ollama = lambda *a, **k: None
-    sys.modules['core.ollama'] = ollama
+    sys.modules['illustrious_ai_studio.core.ollama'] = ollama
     setattr(core_pkg, 'ollama', ollama)
 
-    ig = types.ModuleType('core.image_generator')
+    ig = types.ModuleType('illustrious_ai_studio.core.image_generator')
     class ImageGenerator:
         pass
     ig.ImageGenerator = ImageGenerator
-    sys.modules['core.image_generator'] = ig
+    sys.modules['illustrious_ai_studio.core.image_generator'] = ig
     setattr(core_pkg, 'image_generator', ig)
 
-    gp = types.ModuleType('core.generation_presets')
+    gp = types.ModuleType('illustrious_ai_studio.core.generation_presets')
     gp.GENERATION_PRESETS = {}
     gp.DEFAULT_PRESET = {}
-    sys.modules['core.generation_presets'] = gp
+    sys.modules['illustrious_ai_studio.core.generation_presets'] = gp
     setattr(core_pkg, 'generation_presets', gp)
 
-    memory = types.ModuleType('core.memory')
+    memory = types.ModuleType('illustrious_ai_studio.core.memory')
     memory.get_model_status = lambda *a, **k: None
     memory.get_memory_stats_markdown = lambda *a, **k: None
     memory.get_memory_stats_wrapper = lambda *a, **k: None
-    sys.modules['core.memory'] = memory
+    sys.modules['illustrious_ai_studio.core.memory'] = memory
     setattr(core_pkg, 'memory', memory)
 
-    mg = types.ModuleType('core.memory_guardian')
+    mg = types.ModuleType('illustrious_ai_studio.core.memory_guardian')
     mg.start_memory_guardian = lambda *a, **k: None
     mg.stop_memory_guardian = lambda *a, **k: None
     mg.get_memory_guardian = lambda *a, **k: None
-    sys.modules['core.memory_guardian'] = mg
+    sys.modules['illustrious_ai_studio.core.memory_guardian'] = mg
     setattr(core_pkg, 'memory_guardian', mg)
 
-    pt = types.ModuleType('core.prompt_templates')
+    pt = types.ModuleType('illustrious_ai_studio.core.prompt_templates')
     pt.template_manager = None
-    sys.modules['core.prompt_templates'] = pt
+    sys.modules['illustrious_ai_studio.core.prompt_templates'] = pt
     setattr(core_pkg, 'prompt_templates', pt)
 
-    pa = types.ModuleType('core.prompt_analyzer')
+    pa = types.ModuleType('illustrious_ai_studio.core.prompt_analyzer')
     pa.analyze_prompt = lambda *a, **k: None
     class PromptAnalyzer:
         pass
     pa.PromptAnalyzer = PromptAnalyzer
     pa.auto_enhance_prompt = lambda *a, **k: None
-    sys.modules['core.prompt_analyzer'] = pa
+    sys.modules['illustrious_ai_studio.core.prompt_analyzer'] = pa
     setattr(core_pkg, 'prompt_analyzer', pa)
 
-    gf = types.ModuleType('core.gallery_filters')
+    gf = types.ModuleType('illustrious_ai_studio.core.gallery_filters')
     gf.load_gallery_filter = lambda *a, **k: None
     gf.save_gallery_filter = lambda *a, **k: None
-    sys.modules['core.gallery_filters'] = gf
+    sys.modules['illustrious_ai_studio.core.gallery_filters'] = gf
     setattr(core_pkg, 'gallery_filters', gf)
 
 

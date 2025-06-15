@@ -8,7 +8,7 @@ from pathlib import Path
 
 def test_save_and_load_gallery_filter(tmp_path, monkeypatch):
     monkeypatch.syspath_prepend(os.getcwd())
-    from core import gallery_filters
+    from illustrious_ai_studio.core import gallery_filters
 
     filter_file = tmp_path / "filter.json"
     monkeypatch.setattr(gallery_filters, "GALLERY_FILTER_FILE", filter_file)

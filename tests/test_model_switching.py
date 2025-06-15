@@ -1,14 +1,14 @@
 import os
 import sys
-from core.config import CONFIG
+from illustrious_ai_studio.core.config import CONFIG
 from collections import deque
 
 
 def test_switch_sdxl_model_missing(monkeypatch):
-    from core.state import AppState
+    from illustrious_ai_studio.core.state import AppState
     state = AppState()
     assert state.ollama_vision_model is None
-    from core import sdxl
+    from illustrious_ai_studio.core import sdxl
     monkeypatch.setattr(os.path, "exists", lambda p: False)
     old = CONFIG.sd_model
     result = sdxl.switch_sdxl_model(state, "/new/path")
@@ -18,10 +18,10 @@ def test_switch_sdxl_model_missing(monkeypatch):
 
 
 def test_switch_sdxl_model_success(monkeypatch):
-    from core.state import AppState
+    from illustrious_ai_studio.core.state import AppState
     state = AppState()
     assert state.ollama_vision_model is None
-    from core import sdxl
+    from illustrious_ai_studio.core import sdxl
     monkeypatch.setattr(os.path, "exists", lambda p: True)
 
     def dummy_init(st):
@@ -36,11 +36,11 @@ def test_switch_sdxl_model_success(monkeypatch):
 
 
 def test_switch_ollama_model(monkeypatch):
-    from core.state import AppState
+    from illustrious_ai_studio.core.state import AppState
     state = AppState()
     assert state.ollama_vision_model is None
     state.chat_history_store = {"s": deque([("hi", "there")], maxlen=100)}
-    from core import ollama
+    from illustrious_ai_studio.core import ollama
 
     def dummy_init(st):
         st.ollama_model = CONFIG.ollama_model

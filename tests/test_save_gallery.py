@@ -5,8 +5,8 @@ from PIL import Image
 
 
 def test_save_to_gallery_creates_directory(tmp_path, monkeypatch):
-    from core import sdxl
-    from core.state import AppState
+    from illustrious_ai_studio.core import sdxl
+    from illustrious_ai_studio.core.state import AppState
 
     gallery_dir = tmp_path / "gallery"
     # Ensure directory does not exist beforehand
