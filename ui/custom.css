@@ -453,6 +453,19 @@ button[data-testid*="primary"]:hover {
     }
 }
 
+/* Drop zone styling for file uploads */
+.drop-zone {
+    border: 2px dashed var(--secondary-500);
+    background: var(--secondary-50);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+.drop-zone.drag-over {
+    background: var(--secondary-100);
+}
+
 /* Final override to ensure our styles are applied */
 .gradio-container {
     --primary: #d35400 !important;
