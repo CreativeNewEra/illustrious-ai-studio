@@ -1,3 +1,18 @@
+"""
+Illustrious AI Studio - Memory Guardian
+
+An automated system for monitoring GPU and system memory usage and
+performing interventions to avoid out-of-memory errors.
+
+KEY CLASSES:
+- ``MemoryStats``: captures a snapshot of GPU and RAM usage.
+- ``MemoryThresholds``: user-configurable thresholds and safety margins.
+- ``MemoryGuardian``: thread-based monitor that triggers interventions.
+
+Utility helpers allow starting or stopping the guardian from the
+application state and checking available memory before launching jobs.
+"""
+
 import gc
 import logging
 import psutil
