@@ -1,11 +1,8 @@
 import json
-import sys
-import os
 
 import pytest
 
-if os.getcwd() not in sys.path:
-    sys.path.insert(0, os.getcwd())
+
 
 
 

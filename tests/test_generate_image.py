@@ -5,9 +5,6 @@ import sys
 import pytest
 
 def load_app():
-    import os
-    if os.getcwd() not in sys.path:
-        sys.path.insert(0, os.getcwd())
     if 'gradio' not in sys.modules:
         sys.modules['gradio'] = types.ModuleType('gradio')
     if 'diffusers' not in sys.modules:

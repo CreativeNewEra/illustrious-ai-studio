@@ -3,9 +3,6 @@ import types
 
 def test_model_loader_button(monkeypatch):
     events = {}
-    import os, sys
-    if os.getcwd() not in sys.path:
-        sys.path.insert(0, os.getcwd())
     import ui.web as web
     from core.state import AppState
 

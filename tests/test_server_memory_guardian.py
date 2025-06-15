@@ -1,9 +1,5 @@
-import os
 import sys
 import types
-
-if os.getcwd() not in sys.path:
-    sys.path.insert(0, os.getcwd())
 
 
 def test_guardian_active_on_server_start(monkeypatch):

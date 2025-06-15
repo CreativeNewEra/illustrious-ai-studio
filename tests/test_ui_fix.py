@@ -1,5 +1,3 @@
-import os
-import sys
 import ast
 import importlib.util
 import logging
@@ -7,8 +5,6 @@ import types
 from pathlib import Path
 
 # Ensure project root is on the path for imports
-if os.getcwd() not in sys.path:
-    sys.path.insert(0, os.getcwd())
 
 
 # The `_stub_core_modules` function has been moved to `conftest.py` as a pytest fixture.
