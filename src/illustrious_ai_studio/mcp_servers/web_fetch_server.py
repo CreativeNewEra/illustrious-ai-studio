@@ -20,9 +20,10 @@ from markdownify import markdownify as md
 
 from mcp.server.fastmcp import FastMCP
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("web-fetch-server")
+from ..core.logging_utils import configure_logging
+
+configure_logging("INFO")
+logger = logging.getLogger(__name__)
 
 # Initialize the FastMCP server
 mcp = FastMCP("Web Fetch Server")

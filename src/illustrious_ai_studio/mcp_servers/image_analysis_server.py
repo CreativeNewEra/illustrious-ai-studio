@@ -16,9 +16,10 @@ from PIL import Image, ImageStat
 import torch
 from mcp.server.fastmcp import FastMCP
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("image-analysis-server")
+from ..core.logging_utils import configure_logging
+
+configure_logging("INFO")
+logger = logging.getLogger(__name__)
 
 # Initialize the FastMCP server
 mcp = FastMCP("Image Analysis Server")

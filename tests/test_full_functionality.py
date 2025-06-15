@@ -17,8 +17,10 @@ if torch is None:
     pytest.skip("torch not available", allow_module_level=True)
 from colorama import init, Fore, Style
 
+from illustrious_ai_studio.core.logging_utils import configure_logging
+
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+configure_logging("INFO")
 logger = logging.getLogger(__name__)
 
 # Initialize colorama for colored output

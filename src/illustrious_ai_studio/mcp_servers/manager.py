@@ -16,9 +16,10 @@ from typing import Dict, List, Optional, Any
 import threading
 import time
 
-# Set up logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("mcp-manager")
+from ..core.logging_utils import configure_logging
+
+configure_logging("INFO")
+logger = logging.getLogger(__name__)
 
 class MCPServerManager:
     """Manages multiple MCP servers."""
