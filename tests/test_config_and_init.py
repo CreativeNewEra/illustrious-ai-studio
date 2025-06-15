@@ -49,3 +49,41 @@ def test_init_ollama_no_model(monkeypatch):
     result = ollama.init_ollama(state)
     assert result is None
     assert state.model_status["ollama"] is False
+
+
+def test_init_ollama_circuit_breaker(monkeypatch):
+    import types, sys, importlib
+    from core.circuit import CircuitBreaker
+
+    sys.modules.pop('core.state', None)
+    from core.state import AppState
+
+    sdxl_stub = types.ModuleType("core.sdxl")
+    sdxl_stub.generate_image = lambda *a, **k: None
+    sdxl_stub.save_to_gallery = lambda *a, **k: None
+    sdxl_stub.TEMP_DIR = "/tmp"
+    sys.modules['core.sdxl'] = sdxl_stub
+
+    sys.modules.pop('core.ollama', None)
+    ollama = importlib.import_module('core.ollama')
+
+    state = AppState()
+
+    # Use a fresh circuit breaker to avoid interference with other tests
+    breaker = CircuitBreaker()
+    monkeypatch.setattr(ollama, "breaker", breaker, raising=False)
+
+    def fail(*a, **k):
+        raise Exception("connection failed")
+
+    monkeypatch.setattr(ollama.requests, "get", fail, raising=False)
+
+    # Trigger failures to open the circuit
+    for _ in range(3):
+        assert ollama.init_ollama(state) is None
+        assert state.model_status["ollama"] is False
+
+    assert breaker.state == "OPEN"
+
+    # Subsequent call should be short-circuited
+    assert ollama.init_ollama(state) is None
