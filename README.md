@@ -345,19 +345,19 @@ The **Memory Guardian** provides automatic OOM prevention with real-time monitor
 
 ```bash
 # Monitor memory status
-python memory_manager.py --status
+python -m memory_manager --status
 
 # Interactive memory monitoring
-python memory_manager.py --monitor
+python -m memory_manager --monitor
 
 # Generate comprehensive memory report
-python memory_manager.py --report
+python -m memory_manager --report
 
 # Test memory pressure handling
-python memory_manager.py --test-pressure critical
+python -m memory_manager --test-pressure critical
 
 # Clear GPU memory manually
-python memory_manager.py --clear
+python -m memory_manager --clear
 ```
 
 **Key Features:**
@@ -387,7 +387,7 @@ python test_memory_guardian.py
 ### Troubleshooting GPU OOM
 With Memory Guardian active, OOM issues should be automatically prevented. If you still encounter problems:
 
-1. Check Memory Guardian status: `python memory_manager.py --status`
+1. Check Memory Guardian status: `python -m memory_manager --status`
 2. Run `python model_manager.py --image-mode` before generating
 3. Reduce image size or steps
 4. Check GPU usage with `nvidia-smi` (CUDA) or `rocm-smi`/`rocminfo` (ROCm)

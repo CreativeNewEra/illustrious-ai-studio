@@ -115,7 +115,7 @@ If you still encounter CUDA OOM errors:
 
 #### **If Problems Persist**:
 1. Check logs: `tail -f logs/illustrious_ai_studio.log`
-2. Clear GPU memory: `python memory_manager.py --clear`
+2. Clear GPU memory: `python -m memory_manager --clear`
 3. Restart with fresh models: `python main.py --lazy-load`
 4. Run the test suite: `python test_ui_fix.py`
 
@@ -129,7 +129,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 #### **Memory Pressure Testing**
 ```bash
-python memory_manager.py --test-pressure critical
+python -m memory_manager --test-pressure critical
 ```
 
 #### **Model Validation**
