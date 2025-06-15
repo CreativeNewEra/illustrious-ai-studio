@@ -1,9 +1,11 @@
 """User statistics tracking utilities."""
 
 import json
+import logging
 from pathlib import Path
 from datetime import datetime, date
-from typing import Dict, Any
+
+logger = logging.getLogger(__name__)
 
 
 class UserStats:
@@ -21,7 +23,9 @@ class UserStats:
                 try:
                     self.data = json.load(f)
                 except json.JSONDecodeError:
-                    print("Warning: The stats file is corrupted. Reinitializing data.")
+                    logger.warning(
+                        "The stats file is corrupted. " "Reinitializing data."
+                    )
                     self.data = {
                         "total_images": 0,
                         "total_chats": 0,
@@ -43,10 +47,14 @@ class UserStats:
         """Track a new image creation."""
         self.data["total_images"] += 1
 
-        self.data["favorite_styles"][style] = self.data["favorite_styles"].get(style, 0) + 1
+        self.data["favorite_styles"][style] = (
+            self.data["favorite_styles"].get(style, 0) + 1
+        )
 
         today = date.today().isoformat()
-        self.data["daily_creations"][today] = self.data["daily_creations"].get(today, 0) + 1
+        self.data["daily_creations"][today] = (
+            self.data["daily_creations"].get(today, 0) + 1
+        )
 
         self.data["creation_times"].append(datetime.now().isoformat())
 
@@ -73,16 +81,20 @@ class UserStats:
     def get_stats_display(self) -> str:
         """Get formatted stats for display."""
         total = self.data["total_images"]
-        favorites = len([k for k, v in self.data["favorite_styles"].items() if v > 2])
+        # fmt: off
+        favorites = len(
+            [k for k, v in self.data["favorite_styles"].items() if v > 2]
+        )
+        # fmt: on
         streak = self.get_streak()
 
-        return f"""
-        ### 📊 Your Creative Stats
-        🎨 Images Created: {total}  
-        ⭐ Favorite Styles: {favorites}  
-        🎯 Current Streak: {streak} days
-        🏆 Next Achievement: {self.get_next_achievement()}
-        """
+        return (
+            "### 📊 Your Creative Stats\n"
+            f"🎨 Images Created: {total}\n"
+            f"⭐ Favorite Styles: {favorites}\n"
+            f"🎯 Current Streak: {streak} days\n"
+            f"🏆 Next Achievement: {self.get_next_achievement()}"
+        )
 
     def get_next_achievement(self) -> str:
         """Get the next achievement to work towards."""
@@ -107,4 +119,3 @@ class UserStats:
         """Save statistics to file."""
         with open(self.stats_file, "w") as f:
             json.dump(self.data, f, indent=2)
-
