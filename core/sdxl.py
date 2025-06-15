@@ -45,6 +45,7 @@ import os
 import tempfile
 import uuid
 import time
+import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, Tuple, List, Dict, TypedDict, Protocol, Callable, Any
@@ -249,6 +250,20 @@ def save_to_gallery(state: AppState, image: Image.Image, prompt: str, metadata: 
     with open(metadata_file, "w") as f:
         json.dump(metadata_info, f, indent=2)
     return str(filepath)
+
+
+def export_gallery(state: AppState, export_path: Path | None = None) -> str:
+    """Bundle the active gallery directory into a ZIP archive."""
+    gallery_dir = _get_active_gallery_dir(state)
+    if export_path is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        export_path = TEMP_DIR / f"gallery_{timestamp}.zip"
+
+    with zipfile.ZipFile(export_path, "w") as zf:
+        for file in gallery_dir.glob("*"):
+            if file.is_file():
+                zf.write(file, arcname=file.name)
+    return str(export_path)
 
 def generate_image(state: AppState, params: GenerationParams) -> Tuple[Optional[Image.Image], str]:
     """Convenience wrapper around ImageGenerator with timing."""
