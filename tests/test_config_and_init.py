@@ -23,6 +23,7 @@ def test_load_config_file_and_env(tmp_path, monkeypatch):
 def test_init_sdxl_missing_model(tmp_path, monkeypatch):
     from core import sdxl
     from core.state import AppState
+
     state = AppState()
     assert state.ollama_vision_model is None
     assert state.ollama_vision_model is None
@@ -36,10 +37,12 @@ def test_init_sdxl_missing_model(tmp_path, monkeypatch):
 def test_init_ollama_no_model(monkeypatch):
     from core import ollama
     from core.state import AppState
+
     state = AppState()
 
     class Resp:
         status_code = 200
+
         def json(self):
             return {"models": [{"name": "other"}]}
 
@@ -49,3 +52,26 @@ def test_init_ollama_no_model(monkeypatch):
     result = ollama.init_ollama(state)
     assert result is None
     assert state.model_status["ollama"] is False
+
+
+def test_init_ollama_no_name_error(monkeypatch):
+    """Ensure init_ollama does not raise NameError when dependencies are patched."""
+    from core import ollama
+    from core.state import AppState
+
+    state = AppState()
+
+    class Resp:
+        status_code = 200
+
+        def json(self):
+            return {"models": [{"name": ollama.CONFIG.ollama_model}]}
+
+    monkeypatch.setattr(ollama.requests, "get", lambda *a, **k: Resp())
+    monkeypatch.setattr(ollama.requests, "post", lambda *a, **k: Resp())
+    monkeypatch.setattr(ollama, "load_chat_history", lambda st: None)
+
+    try:
+        ollama.init_ollama(state)
+    except NameError as e:
+        pytest.fail(f"init_ollama raised NameError: {e}")

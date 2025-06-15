@@ -43,7 +43,7 @@ import io
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Callable
 from collections import deque
 from typing import Deque
 from concurrent.futures import ThreadPoolExecutor
@@ -66,6 +66,20 @@ executor = ThreadPoolExecutor(max_workers=1)
 
 # Circuit breaker for Ollama API requests
 breaker = CircuitBreaker()
+
+
+def call_with_retries(func: Callable[[], requests.Response], retries: int = 3, delay: float = 1.0) -> requests.Response:
+    """Execute func via breaker.call with simple retry logic."""
+    for attempt in range(retries):
+        try:
+            return breaker.call(func)
+        except CircuitBreakerOpen:
+            raise
+        except Exception:
+            if attempt >= retries - 1:
+                raise
+            logger.warning("Request failed. Retrying %d/%d", attempt + 1, retries)
+            time.sleep(delay)
 
 # ==================================================================
 # CONSTANTS AND CONFIGURATION
@@ -202,7 +216,7 @@ def init_ollama(state: AppState) -> Optional[str]:
     """
     start_time = time.perf_counter()
     try:
-        response = breaker.call(
+        response = call_with_retries(
             lambda: requests.get(f"{CONFIG.ollama_base_url}/api/tags", timeout=5)
         )
         if response.status_code != 200:
