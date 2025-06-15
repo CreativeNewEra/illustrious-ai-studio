@@ -96,8 +96,6 @@ from core.gallery_filters import load_gallery_filter, save_gallery_filter
 
 logger = logging.getLogger(__name__)
 
-# Theme preference storage
-THEME_PREF_FILE = TEMP_DIR / "theme_pref.json"
 
 # Marker for first run modal
 FIRST_RUN_FILE = TEMP_DIR / "first_run_complete"
@@ -366,44 +364,6 @@ def create_gradio_app(state: AppState):
     simple_toast_js = toast_status_js(0)
     
     # ==============================================================
-    # THEME MANAGEMENT FUNCTIONS
-    # ==============================================================
-    
-    def load_theme_pref():
-        """
-        Load user's theme preference from persistent storage.
-        
-        Returns:
-            str: Theme name ('dark' or 'light') or None if not set
-        """
-        try:
-            if THEME_PREF_FILE.exists():
-                with open(THEME_PREF_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    return data.get("theme", "dark")
-        except Exception as e:
-            logger.error("Error loading theme preference: %s", e)
-        return None
-
-    def save_theme_pref(choice: str):
-        """
-        Save user's theme preference to persistent storage.
-        
-        Args:
-            choice: Theme name to save
-            
-        Returns:
-            str: The saved theme choice
-        """
-        try:
-            TEMP_DIR.mkdir(parents=True, exist_ok=True)
-            with open(THEME_PREF_FILE, "w", encoding="utf-8") as f:
-                json.dump({"theme": choice}, f)
-        except Exception as e:
-            logger.error("Error saving theme preference: %s", e)
-        return choice
-
-    # ==============================================================
     # GALLERY MANAGEMENT FUNCTIONS
     # ==============================================================
 
@@ -605,16 +565,11 @@ def create_gradio_app(state: AppState):
             except Exception as e:  # pragma: no cover - unexpected errors
                 logger.error("Failed to write first run marker: %s", e)
             return gr.update(visible=False)
-
         close_btn.click(fn=dismiss, outputs=[welcome_group])
         return maybe_show, welcome_group
 
-    current_theme = load_theme_pref()
-    theme_pref_exists = current_theme is not None
-    if current_theme is None:
-        current_theme = "dark"
+    current_theme = "dark"
     with gr.Blocks(
-        title="Illustrious AI Studio",
         theme="default",
         css=css_file
     ) as demo:
@@ -1679,10 +1634,7 @@ def create_gradio_app(state: AppState):
         
         # Event Handlers
         theme_selector.change(
-            fn=lambda m: save_theme_pref(m.lower()) if m else None,
-            inputs=theme_selector,
-            outputs=[],
-            js="(mode) => { if(mode === 'Dark'){ document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } }"
+            js="(mode) => { localStorage.setItem('illustrious_theme', mode.toLowerCase()); if(mode === 'Dark'){ document.documentElement.classList.add('dark'); } else { document.documentElement.classList.remove('dark'); } }"
         )
         def toggle_simple(val: bool):
             state.simple_mode = val
@@ -1744,7 +1696,6 @@ def create_gradio_app(state: AppState):
 
         def update_prompt_value(value):
             generation_state.prompt = value or ""
-            # No return value needed as outputs=[] in .change()
 
         def update_negative_prompt_value(value):
             generation_state.negative_prompt = value or ""
@@ -2233,24 +2184,6 @@ def create_gradio_app(state: AppState):
             outputs=[recent_prompts]
         )
 
-        demo.load(
-            js=f"""
-() => {{
-  const hasPref = {str(theme_pref_exists).lower()};
-  let mode;
-  if(hasPref) {{
-    mode = '{current_theme}';
-  }} else {{
-    mode = 'dark';
-  }}
-  if(mode === 'dark') {{
-    document.documentElement.classList.add('dark');
-  }} else {{
-    document.documentElement.classList.remove('dark');
-  }}
-}}
-"""
-        )
 
         demo.load(
             js="""
@@ -2806,14 +2739,6 @@ def create_gradio_app(state: AppState):
         )
         
         # Component change handlers to track values
-        prompt.change(fn=update_prompt_value, inputs=[prompt], outputs=[])
-        negative_prompt.change(fn=update_negative_prompt_value, inputs=[negative_prompt], outputs=[])
-        steps.change(fn=update_steps_value, inputs=[steps], outputs=[])
-        guidance.change(fn=update_guidance_value, inputs=[guidance], outputs=[])
-        seed.change(fn=update_seed_value, inputs=[seed], outputs=[])
-        save_gallery.change(fn=update_save_gallery_value, inputs=[save_gallery], outputs=[])
-        resolution.change(fn=update_resolution_value, inputs=[resolution], outputs=[])
-        auto_best.change(fn=update_auto_best_value, inputs=[auto_best], outputs=[])
         
         # Quick Style Button Handlers
         def apply_style_prefix(current_prompt, style_prefix):

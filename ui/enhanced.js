@@ -49,4 +49,24 @@
       }
     }
   });
+
+  // Theme persistence using localStorage
+  function applyTheme(mode){
+    document.documentElement.classList.toggle('dark', mode === 'dark');
+  }
+
+  function loadStoredTheme(){
+    const saved = localStorage.getItem('illustrious_theme');
+    applyTheme(saved === 'light' ? 'light' : 'dark');
+  }
+
+  document.addEventListener('DOMContentLoaded', loadStoredTheme);
+
+  document.addEventListener('change', function(e){
+    if(e.target && e.target.id === 'theme-selector'){
+      const mode = e.target.value.toLowerCase();
+      localStorage.setItem('illustrious_theme', mode);
+      applyTheme(mode);
+    }
+  });
 })();
