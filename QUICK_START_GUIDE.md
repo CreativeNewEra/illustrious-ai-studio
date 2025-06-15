@@ -125,6 +125,11 @@ python main.py --quick-start --web-port 8080 --open-browser
 python main.py --quick-start
 ```
 
+### Public Share Link
+```bash
+python main.py --share
+```
+
 ### Debug Mode
 ```bash
 python main.py --quick-start --log-level DEBUG

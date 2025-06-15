@@ -13,6 +13,7 @@ def test_defaults():
     assert args.no_api is False
     assert args.web_port == 7860
     assert args.api_port == 8000
+    assert args.share is False
     assert args.log_level == "INFO"
     assert args.memory_profile is None
     assert args.memory_threshold is None
@@ -21,11 +22,12 @@ def test_defaults():
 def test_flags_and_ports():
     from main import create_parser
     parser = create_parser()
-    args = parser.parse_args(["--lazy-load", "--no-api", "--web-port", "9000", "--api-port", "1234"])
+    args = parser.parse_args(["--lazy-load", "--no-api", "--web-port", "9000", "--api-port", "1234", "--share"])
     assert args.lazy_load is True
     assert args.no_api is True
     assert args.web_port == 9000
     assert args.api_port == 1234
+    assert args.share is True
 
 def test_memory_cli_options():
     from main import create_parser

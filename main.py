@@ -90,10 +90,12 @@ def create_parser() -> argparse.ArgumentParser:
                        help="Do not start API server")
     
     # Security and UI options
-    parser.add_argument("--auth", 
+    parser.add_argument("--auth",
                        help="Gradio auth in user:pass or u1:p1,u2:p2 format")
-    parser.add_argument("--open-browser", action="store_true", 
+    parser.add_argument("--open-browser", action="store_true",
                        help="Open browser automatically on launch")
+    parser.add_argument("--share", action="store_true",
+                       help="Create a public shareable link")
     
     # Performance and debugging
     parser.add_argument("--optimize-memory", action="store_true", 
@@ -315,7 +317,7 @@ class IllustriousAIStudio:
         gradio_app.launch(
             server_name="127.0.0.1",  # Local access only for security
             server_port=self.args.web_port,
-            share=True,  # Enable Gradio sharing for remote access
+            share=self.args.share,  # Enable Gradio sharing if --share is set
             auth=auth,
             show_error=True,  # Show detailed error messages
             inbrowser=self.args.open_browser,  # Auto-open browser if requested
