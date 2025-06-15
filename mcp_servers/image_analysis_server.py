@@ -91,7 +91,8 @@ def analyze_image_properties(image_path: Optional[str] = None, image_base64: Opt
     if image_path:
         image = load_image_from_path(image_path)
     else:
-        assert image_base64 is not None
+        if image_base64 is None:
+            raise ValueError("image_base64 must not be None")
         image = load_image_from_base64(image_base64)
     
     # Basic properties
