@@ -202,6 +202,7 @@ pytest
 - **Resolution Selector**: Choose from 7 optimized resolutions (512x512 to 1024x1024, portrait/landscape)
 - Enter prompts or use "Enhance Prompt" for AI improvement
 - Press **Ctrl+Enter** (or **Cmd+Enter** on macOS) to generate
+- Toggle **Simple Mode** with **Ctrl+M** (or **Cmd+M** on macOS)
 - Adjust parameters: steps, guidance scale, seed
 - Images auto-saved to gallery
 - **New**: Use saved prompt templates for consistent results

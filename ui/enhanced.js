@@ -38,4 +38,16 @@
     else if(status.startsWith('❌')) type = 'error';
     window.showToast(status, type);
   };
+
+  // Keyboard shortcut: Ctrl/Cmd + M toggles simple mode
+  document.addEventListener('keydown', function(e){
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'm'){
+      const wrapper = document.getElementById('simple-mode-toggle');
+      const checkbox = wrapper ? wrapper.querySelector('input[type="checkbox"]') : null;
+      if(checkbox){
+        checkbox.click();
+        e.preventDefault();
+      }
+    }
+  });
 })();
