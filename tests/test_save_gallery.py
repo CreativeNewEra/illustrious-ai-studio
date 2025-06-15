@@ -1,10 +1,7 @@
 import os
-import sys
 from pathlib import Path
 from PIL import Image
 
-if os.getcwd() not in sys.path:
-    sys.path.insert(0, os.getcwd())
 
 
 def test_save_to_gallery_creates_directory(tmp_path, monkeypatch):

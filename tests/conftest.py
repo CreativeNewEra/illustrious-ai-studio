@@ -1,6 +1,20 @@
 import sys
 import types
+from pathlib import Path
 import pytest
+
+
+@pytest.fixture(scope="session", autouse=True)
+def add_project_root_to_path():
+    """Prepend the project root directory to ``sys.path`` for tests."""
+    root = Path(__file__).resolve().parents[1]
+    if str(root) not in sys.path:
+        sys.path.insert(0, str(root))
+    try:
+        yield
+    finally:
+        if str(root) in sys.path:
+            sys.path.remove(str(root))
 
 @pytest.fixture(scope="session", autouse=True)
 def stub_dependencies():

@@ -1,6 +1,5 @@
 import json
 import os
-import sys
 from pathlib import Path
 
 # Removed global modification of sys.path

@@ -5,9 +5,6 @@ import zipfile
 from pathlib import Path
 from PIL import Image
 
-if os.getcwd() not in sys.path:
-    sys.path.insert(0, os.getcwd())
-
 
 def test_export_gallery_contains_images_and_metadata(tmp_path, monkeypatch):
     import importlib, importlib.util, types

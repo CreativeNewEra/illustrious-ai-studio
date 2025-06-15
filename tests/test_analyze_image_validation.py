@@ -1,9 +1,5 @@
-import os
 import sys
 from PIL import Image
-
-if os.getcwd() not in sys.path:
-    sys.path.insert(0, os.getcwd())
 
 from core.state import AppState
 import types
