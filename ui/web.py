@@ -554,9 +554,12 @@ def create_gradio_app(state: AppState):
         """Export the current gallery as a ZIP archive."""
         try:
             return export_gallery(state)
-        except Exception as e:  # pragma: no cover - unexpected errors
-            logger.error("Failed to export gallery: %s", e)
+        except (IOError, OSError, zipfile.BadZipFile) as e:  # Handle specific errors
+            logger.error("Failed to export gallery due to a file-related error: %s", e)
             return None
+        except Exception as e:  # Log and re-raise unexpected errors
+            logger.error("Unexpected error during gallery export: %s", e)
+            raise
 
     def list_projects():
         PROJECTS_DIR.mkdir(exist_ok=True)
