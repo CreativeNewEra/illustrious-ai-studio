@@ -188,6 +188,28 @@ All code follows comprehensive commenting standards:
 - Concurrent request handling
 - Caching of expensive operations
 
+### Pre-commit Hooks
+
+Code style and static analysis are enforced with `pre-commit`. Install the tool
+and set up the Git hook by running:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+Update hook versions with:
+
+```bash
+pre-commit autoupdate
+```
+
+You can manually run all checks using:
+
+```bash
+pre-commit run --all-files
+```
+
 ## 🔍 Debugging and Troubleshooting
 
 ### Logging System
