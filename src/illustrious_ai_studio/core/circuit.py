@@ -1,6 +1,7 @@
 # simple circuit breaker implementation
 import time
 from typing import Callable, Any
+import asyncio
 
 
 class CircuitBreakerOpen(Exception):
@@ -50,3 +51,18 @@ class CircuitBreaker:
     def _reset(self) -> None:
         self._failures = 0
         self._state = "CLOSED"
+
+    async def call_async(self, func: Callable[[], Any]) -> Any:
+        """Asynchronously execute a function with circuit breaker logic."""
+        if self._state == "OPEN":
+            if (time.time() - self._opened_at) < self.recovery_timeout:
+                raise CircuitBreakerOpen("Circuit breaker is open")
+            self._state = "HALF_OPEN"
+        try:
+            result = await func()
+        except Exception:
+            self._record_failure()
+            raise
+        else:
+            self._reset()
+            return result

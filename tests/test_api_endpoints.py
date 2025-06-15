@@ -45,10 +45,10 @@ class DummyPipe:
     def generate(self, *args, **kwargs):
         return types.SimpleNamespace(images=[Image.new('RGB', (64, 64), 'blue')])
 
-def dummy_chat_completion(messages, temperature=0.7, max_tokens=256):
+async def dummy_chat_completion(messages, temperature=0.7, max_tokens=256):
     return "ok"
 
-def dummy_analyze_image(image, question=""): 
+async def dummy_analyze_image(image, question=""):
     return "blue"
 
 @pytest.fixture(autouse=True)

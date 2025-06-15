@@ -46,10 +46,22 @@ def test_init_ollama_no_model(monkeypatch):
         def json(self):
             return {"models": [{"name": "other"}]}
 
-    monkeypatch.setattr(ollama.requests, "get", lambda *a, **k: Resp())
-    monkeypatch.setattr(ollama.requests, "post", lambda *a, **k: Resp())
+    class DummyClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+        async def get(self, *a, **k):
+            return Resp()
+
+        async def post(self, *a, **k):
+            return Resp()
+
+    monkeypatch.setattr(ollama.httpx, "AsyncClient", lambda *a, **k: DummyClient())
     monkeypatch.setattr(ollama.CONFIG, "ollama_model", "missing")
-    result = ollama.init_ollama(state)
+    result = ollama.init_ollama_sync(state)
     assert result is None
     assert state.model_status["ollama"] is False
 
@@ -67,11 +79,23 @@ def test_init_ollama_no_name_error(monkeypatch):
         def json(self):
             return {"models": [{"name": ollama.CONFIG.ollama_model}]}
 
-    monkeypatch.setattr(ollama.requests, "get", lambda *a, **k: Resp())
-    monkeypatch.setattr(ollama.requests, "post", lambda *a, **k: Resp())
+    class DummyClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, exc_type, exc, tb):
+            pass
+
+        async def get(self, *a, **k):
+            return Resp()
+
+        async def post(self, *a, **k):
+            return Resp()
+
+    monkeypatch.setattr(ollama.httpx, "AsyncClient", lambda *a, **k: DummyClient())
     monkeypatch.setattr(ollama, "load_chat_history", lambda st: None)
 
     try:
-        ollama.init_ollama(state)
+        ollama.init_ollama_sync(state)
     except NameError as e:
         pytest.fail(f"init_ollama raised NameError: {e}")

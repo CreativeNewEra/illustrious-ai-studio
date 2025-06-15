@@ -31,7 +31,7 @@ from .server.logging_utils import RequestIdFilter
 
 # Core functionality
 from .core.sdxl import init_sdxl
-from .core.ollama import init_ollama
+from .core.ollama import init_ollama_sync as init_ollama
 from .core.state import AppState
 from .core.memory import clear_gpu_memory
 from .core.memory_guardian import start_memory_guardian, stop_memory_guardian

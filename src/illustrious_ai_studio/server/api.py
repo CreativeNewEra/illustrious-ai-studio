@@ -148,7 +148,7 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
             if state.sdxl_pipe is None:
                 sdxl.init_sdxl(state)
             if state.ollama_model is None:
-                ollama.init_ollama(state)
+                await ollama.init_ollama(state)
 
     @app.get("/status")
     async def server_status(state: AppState = Depends(get_state)):
@@ -239,7 +239,7 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
                 detail="Ollama model not available. Is the Ollama server running?",
             )
         messages = [{"role": "user", "content": request.message}]
-        response = chat_completion(state, messages, request.temperature, request.max_tokens)
+        response = await chat_completion(state, messages, request.temperature, request.max_tokens)
         return {"response": response, "session_id": request.session_id}
 
     @app.post("/analyze-image")
@@ -257,7 +257,7 @@ def create_api_app(state: AppState, auto_load: bool = True) -> FastAPI:
                 status_code=400,
                 detail=f"Invalid image data: {e}. Ensure the input is valid base64.",
             )
-        analysis = analyze_image(state, image, request.question)
+        analysis = await analyze_image(state, image, request.question)
         return {"analysis": analysis}
 
     @app.post("/switch-models")

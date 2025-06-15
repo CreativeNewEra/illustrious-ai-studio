@@ -77,7 +77,12 @@ from ..core.config import CONFIG
 from ..core.state import AppState
 
 # Chat and language model functionality  
-from ..core.ollama import generate_prompt, handle_chat, analyze_image, init_ollama
+from ..core.ollama import (
+    generate_prompt,
+    handle_chat,
+    analyze_image_sync as analyze_image,
+    init_ollama_sync as init_ollama,
+)
 from ..core import sdxl, ollama
 from ..core.generation_presets import GENERATION_PRESETS, DEFAULT_PRESET
 
@@ -2737,7 +2742,7 @@ def create_gradio_app(state: AppState):
             if load_s:
                 sdxl.init_sdxl(state)
             if load_o or load_v:
-                ollama.init_ollama(state)
+                ollama.init_ollama_sync(state)
             return (
                 get_model_status(state),
                 get_memory_stats_markdown(state),

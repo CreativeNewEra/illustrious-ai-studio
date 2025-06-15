@@ -30,7 +30,11 @@ if shutil.which('ollama') is None:
 # Import our modules
 from illustrious_ai_studio.core.state import AppState
 from illustrious_ai_studio.core.sdxl import init_sdxl, generate_image
-from illustrious_ai_studio.core.ollama import init_ollama, generate_prompt, analyze_image
+from illustrious_ai_studio.core.ollama import (
+    init_ollama_sync as init_ollama,
+    generate_prompt,
+    analyze_image_sync as analyze_image,
+)
 from illustrious_ai_studio.core.memory import clear_gpu_memory
 
 
