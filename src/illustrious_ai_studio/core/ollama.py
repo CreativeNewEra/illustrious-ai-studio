@@ -307,7 +307,17 @@ def switch_ollama_model(state: AppState, name: str) -> bool:
     logger.info("Switching Ollama model to %s", name)
     return init_ollama_sync(state) is not None
 
+def init_ollama_sync(state: AppState) -> Optional[str]:
+    """Synchronous wrapper for init_ollama."""
+    try:
+        if asyncio.get_running_loop():
+            # If an event loop is running, schedule the coroutine and wait for it
+            return asyncio.run_coroutine_threadsafe(init_ollama(state), asyncio.get_running_loop()).result()
+    except RuntimeError:
+        # No event loop is running, safe to use asyncio.run
+        return asyncio.run(init_ollama(state))
 
+    return None
 async def chat_completion(state: AppState, messages: List[dict], temperature: float = 0.7, max_tokens: int = 256) -> str:
     if not state.ollama_model:
         return (
