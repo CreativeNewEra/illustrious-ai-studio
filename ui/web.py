@@ -128,6 +128,20 @@ EXAMPLE_PROMPTS = [
     "Cute anime character holding an umbrella in the rain",
 ]
 
+# ------------------------------------------------------------------
+# Toast Notification Helpers
+# ------------------------------------------------------------------
+
+def toast_js(message: str, type_: str = "info") -> str:
+    """Return a JS snippet that displays a toast when executed."""
+    escaped = message.replace("'", "\\'")
+    return f"() => window.showToast('{escaped}', '{type_}')"
+
+
+def toast_status_js(index: int = 0) -> str:
+    """Return JS snippet to display toast from a function output."""
+    return f"(...args) => window.notifyStatus(args[{index}] || '')"
+
 
 # ------------------------------------------------------------------
 # Creative prompt helper for simple mode
@@ -304,7 +318,8 @@ def create_gradio_app(state: AppState):
         - Settings: Configuration, themes, and preferences
     """
     # Load enhanced CSS styling for modern visual design
-    css_file = (Path(__file__).parent / "custom.css").read_text()
+    css_file = (Path(__file__).parent / "enhanced.css").read_text()
+    css_file += "\n" + (Path(__file__).parent / "custom.css").read_text()
 
     custom_css = """
     .primary-btn {
@@ -344,6 +359,11 @@ def create_gradio_app(state: AppState):
     # JavaScript functions for loading indicators and UI enhancements
     show_loading_js = "() => { const el = document.querySelector('.loading-indicator'); if(el){ el.style.display='block'; } }"
     hide_loading_js = "() => { const el = document.querySelector('.loading-indicator'); if(el){ el.style.display='none'; } }"
+
+    # Load additional JS utilities (toast system)
+    enhanced_js_file = (Path(__file__).parent / "enhanced.js").read_text()
+    status_toast_js = toast_status_js(1)
+    simple_toast_js = toast_status_js(0)
     
     # ==============================================================
     # THEME MANAGEMENT FUNCTIONS
@@ -2016,6 +2036,8 @@ def create_gradio_app(state: AppState):
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
                 js=show_loading_js,
             ).then(
+                js=status_toast_js
+            ).then(
                 fn=refresh_gallery,
                 inputs=None,
                 outputs=[gallery_component, tag_filter, page_display],
@@ -2032,6 +2054,8 @@ def create_gradio_app(state: AppState):
                 inputs=[],
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
             ).then(
+                js=status_toast_js
+            ).then(
                 fn=refresh_gallery,
                 inputs=None,
                 outputs=[gallery_component, tag_filter, page_display],
@@ -2047,6 +2071,8 @@ def create_gradio_app(state: AppState):
                 inputs=[],
                 outputs=[output_image, generation_status, recent_prompts],
                 js=show_loading_js,
+            ).then(
+                js=status_toast_js
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
@@ -2064,6 +2090,8 @@ def create_gradio_app(state: AppState):
                 inputs=[],
                 outputs=[output_image, generation_status, recent_prompts],
             ).then(
+                js=status_toast_js
+            ).then(
                 fn=refresh_gallery,
                 inputs=None,
                 outputs=[gallery_component, tag_filter, page_display],
@@ -2076,9 +2104,11 @@ def create_gradio_app(state: AppState):
         try:
             quick_generate_btn.click(
                 fn=quick_generate_image, # No inputs needed as it uses global state
-                inputs=[], 
+                inputs=[],
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
                 js=show_loading_js,
+            ).then(
+                js=status_toast_js
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
@@ -2095,6 +2125,8 @@ def create_gradio_app(state: AppState):
                 fn=quick_generate_image, # No inputs needed
                 inputs=[],
                 outputs=[output_image, generation_status, recent_prompts, regenerate_btn],
+            ).then(
+                js=status_toast_js
             ).then(
                 fn=refresh_gallery,
                 inputs=None,
@@ -2234,6 +2266,9 @@ def create_gradio_app(state: AppState):
             }
             """
         )
+
+        # Load toast notification utilities
+        demo.load(js=enhanced_js_file)
 
         def prepare_download(image):
             if image is None:
@@ -2460,6 +2495,8 @@ def create_gradio_app(state: AppState):
             inputs=[template_name, template_category, template_tags, prompt, negative_prompt],
             outputs=template_save_status
         ).then(
+            js=simple_toast_js
+        ).then(
             fn=lambda: refresh_template_list(),
             outputs=template_list
         )
@@ -2475,6 +2512,8 @@ def create_gradio_app(state: AppState):
             inputs=template_list,
             outputs=template_save_status
         ).then(
+            js=simple_toast_js
+        ).then(
             fn=lambda: refresh_template_list(),
             outputs=template_list
         )
@@ -2482,12 +2521,16 @@ def create_gradio_app(state: AppState):
         export_btn.click(
             fn=export_templates,
             outputs=export_download
+        ).then(
+            js=toast_js("Templates exported", "success")
         )
         
         import_file.change(
             fn=import_templates,
             inputs=[import_file, import_merge],
             outputs=template_save_status
+        ).then(
+            js=simple_toast_js
         ).then(
             fn=lambda: refresh_template_list(),
             outputs=template_list
