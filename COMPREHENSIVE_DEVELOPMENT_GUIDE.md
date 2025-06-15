@@ -337,7 +337,7 @@ git checkout -b feature/your-feature-name
 # 3. Install in development mode
 pip install -e .
 
-# 4. Install pre-commit hooks (optional but recommended)
+# 4. Install pre-commit hooks
 pip install pre-commit
 pre-commit install
 ```
@@ -423,6 +423,20 @@ def init_sdxl(config: SDXLConfig) -> StableDiffusionXLPipeline:
         ModelLoadError: If model fails to load
     """
 ```
+
+### Linting & Formatting
+
+The project uses **pre-commit** to run [Black](https://github.com/psf/black) and
+[Flake8](https://flake8.pycqa.org) on all commits. Hooks are installed during
+the [development environment setup](#setting-up-your-development-environment).
+
+```bash
+# Manually run all checks
+pre-commit run --all-files
+```
+
+These checks also run automatically in CI. Ensure your changes pass locally
+before opening a pull request.
 
 ### Logging and Debugging
 
