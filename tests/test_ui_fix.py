@@ -4,6 +4,8 @@ import ast
 import importlib.util
 import logging
 import types
+
+from conftest import stub_core_modules
 from pathlib import Path
 
 # Ensure project root is on the path for imports
@@ -11,11 +13,11 @@ if os.getcwd() not in sys.path:
     sys.path.insert(0, os.getcwd())
 
 
-# The `_stub_core_modules` function has been moved to `conftest.py` as a pytest fixture.
-# Use the `stub_core_modules` fixture in test functions as needed.
+# The `stub_core_modules` helper is defined in `conftest.py`.
+# Import and call it in test helpers or tests as needed.
 def _parse_resolution():
     """Load the parse_resolution function from ui/web.py without importing the entire module."""
-    _stub_core_modules()
+    stub_core_modules()
     file_path = Path(__file__).resolve().parent.parent / "ui" / "web.py"
     source = file_path.read_text()
     tree = ast.parse(source, filename=str(file_path))
