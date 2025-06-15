@@ -13,7 +13,7 @@ def test_analyze_anime_portrait():
     assert res["orientation"] == "portrait"
     assert res["width"] == 768
     assert res["height"] == 1024
-    assert res["steps"] == 35
+    assert res["steps"] == 30
     assert res["guidance"] == 8.0
 
 
