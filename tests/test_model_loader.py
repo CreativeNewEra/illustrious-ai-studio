@@ -143,7 +143,6 @@ def test_project_rename(monkeypatch, tmp_path):
     dummy_gr = types.ModuleType('gr')
     dummy_gr.update = lambda *a, **k: None
     monkeypatch.setattr(web, 'gr', dummy_gr)
-    monkeypatch.setattr(web.sdxl, 'PROJECTS_DIR', tmp_path)
     monkeypatch.setattr(web, 'PROJECTS_DIR', tmp_path)
 
     (tmp_path / 'old' / 'gallery').mkdir(parents=True)
