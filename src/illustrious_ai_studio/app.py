@@ -17,6 +17,13 @@ The module exposes all major components and provides a pre-configured
 application state and FastAPI app instance.
 """
 
+import logging
+
+from .core.logging_utils import configure_logging
+
+configure_logging("INFO")
+logger = logging.getLogger(__name__)
+
 # ==================================================================
 # CORE API AND UI COMPONENTS
 # ==================================================================

@@ -17,17 +17,15 @@ The application can run in various modes:
 
 import argparse
 import logging
-import logging.handlers
 import os
 import signal
 import threading
 import sys
-from pathlib import Path
 
 # UI and server components
 from .ui.web import create_gradio_app
 from .server.api import create_api_app
-from .server.logging_utils import RequestIdFilter
+from .core.logging_utils import configure_logging
 
 # Core functionality
 from .core.sdxl import init_sdxl
@@ -145,7 +143,8 @@ class IllustriousAIStudio:
         """
         self.args = args
         self._configure_environment()
-        self.logger = self._setup_logging(args.log_level)
+        configure_logging(args.log_level)
+        self.logger = logging.getLogger(__name__)
         self.app_state = AppState()
 
         profiler = HardwareProfiler()
@@ -206,58 +205,6 @@ class IllustriousAIStudio:
             os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
             # Disable Ollama model persistence to save memory
             os.environ.setdefault("OLLAMA_KEEP_ALIVE", "0")
-
-    # ------------------------------------------------------------------
-    @staticmethod
-    def _setup_logging(level: str) -> logging.Logger:
-        """
-        Configure application logging with both file and console output.
-        
-        Creates a rotating file handler for persistent logs and a console
-        handler for immediate feedback. Also configures log levels for
-        various third-party libraries to reduce noise.
-        
-        Args:
-            level: Logging level (DEBUG, INFO, WARNING, ERROR)
-            
-        Returns:
-            logging.Logger: Configured logger instance
-        """
-        # Create logs directory if it doesn't exist
-        log_dir = Path("logs")
-        log_dir.mkdir(exist_ok=True)
-        
-        # Set up rotating file handler (10MB max, 5 backup files)
-        file_handler = logging.handlers.RotatingFileHandler(
-            log_dir / "illustrious_ai_studio.log",
-            maxBytes=10 * 1024 * 1024,
-            backupCount=5
-        )
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(request_id)s - %(message)s"
-        )
-        file_handler.setFormatter(formatter)
-        file_handler.addFilter(RequestIdFilter())
-        
-        # Set up console handler with simpler format
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(
-            logging.Formatter("%(levelname)s: %(message)s [%(request_id)s]")
-        )
-        console_handler.addFilter(RequestIdFilter())
-
-        # Configure root logger and add handlers
-        root = logging.getLogger()
-        root.setLevel(level.upper())
-        root.addHandler(file_handler)
-        root.addHandler(console_handler)
-        
-        # Adjust log levels for third-party libraries to reduce noise
-        logging.getLogger("gradio").setLevel(logging.INFO)
-        logging.getLogger("httpx").setLevel(logging.WARNING)
-        logging.getLogger("urllib3").setLevel(logging.WARNING)
-        
-        return logging.getLogger(__name__)
 
     # ==================================================================
     # PRIVATE METHODS - SERVER MANAGEMENT

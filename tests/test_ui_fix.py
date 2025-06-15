@@ -1,6 +1,9 @@
 import ast
 import importlib.util
 import logging
+from illustrious_ai_studio.core.logging_utils import configure_logging
+
+configure_logging("INFO")
 import types
 
 from conftest import stub_core_modules
