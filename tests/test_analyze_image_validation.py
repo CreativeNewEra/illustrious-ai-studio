@@ -1,7 +1,7 @@
 import sys
 from PIL import Image
 
-from core.state import AppState
+from illustrious_ai_studio.core.state import AppState
 import types
 
 

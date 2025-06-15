@@ -1,4 +1,4 @@
-from core.prompt_analyzer import analyze_prompt
+from illustrious_ai_studio.core.prompt_analyzer import analyze_prompt
 
 
 def test_analyze_anime_portrait():

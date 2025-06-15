@@ -1,8 +1,8 @@
 from datetime import datetime
 
 
-from core.state import AppState
-from core.memory_guardian import MemoryGuardian, MemoryStats, MemoryPressureLevel
+from illustrious_ai_studio.core.state import AppState
+from illustrious_ai_studio.core.memory_guardian import MemoryGuardian, MemoryStats, MemoryPressureLevel
 
 
 def _dummy_intervention():

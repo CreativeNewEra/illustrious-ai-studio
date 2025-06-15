@@ -8,7 +8,13 @@ import sys
 import logging
 from pathlib import Path
 from PIL import Image
-import torch
+try:
+    import torch
+except Exception:  # pragma: no cover - optional dependency
+    torch = None
+import pytest
+if torch is None:
+    pytest.skip("torch not available", allow_module_level=True)
 from colorama import init, Fore, Style
 
 # Configure logging
@@ -19,11 +25,11 @@ logger = logging.getLogger(__name__)
 init(autoreset=True)
 
 # Import our modules
-from core.state import AppState
-from core.sdxl import init_sdxl, generate_image
-from core.ollama import init_ollama, generate_prompt, analyze_image
-from core.memory import get_model_status
-from core.config import CONFIG
+from illustrious_ai_studio.core.state import AppState
+from illustrious_ai_studio.core.sdxl import init_sdxl, generate_image
+from illustrious_ai_studio.core.ollama import init_ollama, generate_prompt, analyze_image
+from illustrious_ai_studio.core.memory import get_model_status
+from illustrious_ai_studio.core.config import CONFIG
 
 
 class FunctionalityTester:

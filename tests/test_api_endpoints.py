@@ -38,7 +38,7 @@ def load_app():
         torch.Generator = DummyGenerator
         torch.float16 = 'float16'
         sys.modules['torch'] = torch
-    return importlib.import_module('app')
+    return importlib.import_module('illustrious_ai_studio.app')
 
 # Dummy implementations
 class DummyPipe:
@@ -57,8 +57,8 @@ def setup_app(monkeypatch):
     app.app_state.sdxl_pipe = DummyPipe()
     app.app_state.ollama_model = 'dummy'
     app.app_state.model_status.update({'sdxl': True, 'ollama': True, 'multimodal': True})
-    import server.api as api
-    import server.tasks as tasks
+    import illustrious_ai_studio.server.api as api
+    import illustrious_ai_studio.server.tasks as tasks
     monkeypatch.setattr(api, 'generate_image', lambda state, params: (Image.new('RGB',(64,64),'blue'), 'done'))
     monkeypatch.setattr(api, 'chat_completion', lambda state, *a, **k: dummy_chat_completion(*a, **k))
     monkeypatch.setattr(api, 'analyze_image', lambda state, img, q='': dummy_analyze_image(img, q))
@@ -175,7 +175,7 @@ def test_analyze_image_invalid_input():
 def test_switch_models_endpoint(monkeypatch):
     client = get_client()
     calls = {}
-    import server.api as api
+    import illustrious_ai_studio.server.api as api
     monkeypatch.setattr(api.sdxl, 'switch_sdxl_model', lambda state, p: calls.setdefault('sdxl', p) or True)
     monkeypatch.setattr(api.ollama, 'switch_ollama_model', lambda state, n: calls.setdefault('ollama', n) or True)
     resp = client.post('/switch-models', json={"sd_model": "a", "ollama_model": "b"})

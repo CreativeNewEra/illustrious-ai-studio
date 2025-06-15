@@ -14,7 +14,13 @@ from pathlib import Path
 def _parse_resolution():
     """Load the parse_resolution function from ui/web.py without importing the entire module."""
     stub_core_modules()
-    file_path = Path(__file__).resolve().parent.parent / "ui" / "web.py"
+    file_path = (
+        Path(__file__).resolve().parent.parent
+        / "src"
+        / "illustrious_ai_studio"
+        / "ui"
+        / "web.py"
+    )
     source = file_path.read_text()
     tree = ast.parse(source, filename=str(file_path))
     func_node = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == "parse_resolution")

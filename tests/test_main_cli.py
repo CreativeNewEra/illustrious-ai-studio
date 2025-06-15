@@ -1,5 +1,5 @@
 def test_defaults():
-    from main import create_parser
+    from illustrious_ai_studio.main import create_parser
     parser = create_parser()
     args = parser.parse_args([])
     assert args.lazy_load is False
@@ -13,7 +13,7 @@ def test_defaults():
 
 
 def test_flags_and_ports():
-    from main import create_parser
+    from illustrious_ai_studio.main import create_parser
     parser = create_parser()
     args = parser.parse_args(["--lazy-load", "--no-api", "--web-port", "9000", "--api-port", "1234", "--share"])
     assert args.lazy_load is True
@@ -23,7 +23,7 @@ def test_flags_and_ports():
     assert args.share is True
 
 def test_memory_cli_options():
-    from main import create_parser
+    from illustrious_ai_studio.main import create_parser
     parser = create_parser()
     args = parser.parse_args([
         "--memory-profile", "aggressive",

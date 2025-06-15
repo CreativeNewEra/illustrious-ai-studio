@@ -3,8 +3,8 @@ import types
 
 def test_model_loader_button(monkeypatch):
     events = {}
-    import ui.web as web
-    from core.state import AppState
+    import illustrious_ai_studio.ui.web as web
+    from illustrious_ai_studio.core.state import AppState
 
     class DummyComp:
         def __init__(self, *a, label=None, **k):

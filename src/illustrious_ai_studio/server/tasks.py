@@ -4,8 +4,8 @@ import base64
 import io
 from typing import Any
 from celery import Celery
-from core.image_generator import ImageGenerator
-from core.sdxl import GenerationParams
+from ..core.image_generator import ImageGenerator
+from ..core.sdxl import GenerationParams
 from app import app_state
 
 # Celery configuration using Redis as broker and backend

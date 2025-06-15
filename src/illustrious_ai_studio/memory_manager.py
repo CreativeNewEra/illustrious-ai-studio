@@ -8,9 +8,9 @@ import argparse
 import sys
 import time
 
-from core.memory_guardian import get_memory_guardian, MemoryPressureLevel
-from core.state import AppState
-from core.config import CONFIG
+from .core.memory_guardian import get_memory_guardian, MemoryPressureLevel
+from .core.state import AppState
+from .core.config import CONFIG
 from typing import Any
 
 torch: Any

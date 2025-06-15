@@ -8,9 +8,9 @@ from conftest import stub_core_modules
 
 def load_web_module():
     stub_core_modules()
-    if 'ui.web' in sys.modules:
-        return importlib.reload(sys.modules['ui.web'])
-    return importlib.import_module('ui.web')
+    if 'illustrious_ai_studio.ui.web' in sys.modules:
+        return importlib.reload(sys.modules['illustrious_ai_studio.ui.web'])
+    return importlib.import_module('illustrious_ai_studio.ui.web')
 
 
 def test_parse_resolution_empty_string():

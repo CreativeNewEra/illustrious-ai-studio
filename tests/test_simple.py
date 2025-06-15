@@ -10,7 +10,10 @@ import subprocess
 import time
 from pathlib import Path
 from PIL import Image
-import torch
+try:
+    import torch
+except Exception:  # pragma: no cover - torch may be missing
+    torch = None
 from colorama import init, Fore, Style
 import shutil
 import pytest
@@ -25,10 +28,10 @@ if shutil.which('ollama') is None:
     pytest.skip("Ollama not installed", allow_module_level=True)
 
 # Import our modules
-from core.state import AppState
-from core.sdxl import init_sdxl, generate_image
-from core.ollama import init_ollama, generate_prompt, analyze_image
-from core.memory import clear_gpu_memory
+from illustrious_ai_studio.core.state import AppState
+from illustrious_ai_studio.core.sdxl import init_sdxl, generate_image
+from illustrious_ai_studio.core.ollama import init_ollama, generate_prompt, analyze_image
+from illustrious_ai_studio.core.memory import clear_gpu_memory
 
 
 def print_header(text):

@@ -7,8 +7,8 @@ import pytest
 
 
 def test_history_saved_and_loaded(tmp_path, monkeypatch):
-    from core.state import AppState
-    import core.ollama as ollama
+    from illustrious_ai_studio.core.state import AppState
+    from illustrious_ai_studio.core import ollama
 
     state = AppState()
     assert state.ollama_vision_model is None

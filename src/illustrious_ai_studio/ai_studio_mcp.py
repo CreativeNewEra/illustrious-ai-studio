@@ -2,9 +2,9 @@
 import logging
 import threading
 
-from ui.web import create_gradio_app
-from server.api import run_mcp_server
-from core.state import AppState
+from .ui.web import create_gradio_app
+from .server.api import run_mcp_server
+from .core.state import AppState
 
 logger = logging.getLogger(__name__)
 

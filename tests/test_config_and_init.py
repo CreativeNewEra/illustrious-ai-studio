@@ -1,6 +1,6 @@
 import pytest
 
-from core import config
+from illustrious_ai_studio.core import config
 
 
 def test_load_config_file_and_env(tmp_path, monkeypatch):
@@ -21,8 +21,8 @@ def test_load_config_file_and_env(tmp_path, monkeypatch):
 
 
 def test_init_sdxl_missing_model(tmp_path, monkeypatch):
-    from core import sdxl
-    from core.state import AppState
+    from illustrious_ai_studio.core import sdxl
+    from illustrious_ai_studio.core.state import AppState
 
     state = AppState()
     assert state.ollama_vision_model is None
@@ -35,8 +35,8 @@ def test_init_sdxl_missing_model(tmp_path, monkeypatch):
 
 
 def test_init_ollama_no_model(monkeypatch):
-    from core import ollama
-    from core.state import AppState
+    from illustrious_ai_studio.core import ollama
+    from illustrious_ai_studio.core.state import AppState
 
     state = AppState()
 
@@ -56,8 +56,8 @@ def test_init_ollama_no_model(monkeypatch):
 
 def test_init_ollama_no_name_error(monkeypatch):
     """Ensure init_ollama does not raise NameError when dependencies are patched."""
-    from core import ollama
-    from core.state import AppState
+    from illustrious_ai_studio.core import ollama
+    from illustrious_ai_studio.core.state import AppState
 
     state = AppState()
 

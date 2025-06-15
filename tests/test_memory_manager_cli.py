@@ -1,4 +1,4 @@
-from memory_manager import create_parser
+from illustrious_ai_studio.memory_manager import create_parser
 
 
 def test_memory_manager_args():

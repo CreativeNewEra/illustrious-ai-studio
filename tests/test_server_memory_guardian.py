@@ -3,9 +3,9 @@ import types
 
 
 def test_guardian_active_on_server_start(monkeypatch):
-    from core.state import AppState
-    import server.api as api
-    from core.memory_guardian import get_memory_guardian
+    from illustrious_ai_studio.core.state import AppState
+    import illustrious_ai_studio.server.api as api
+    from illustrious_ai_studio.core.memory_guardian import get_memory_guardian
 
     app_state = AppState()
     started = {}
