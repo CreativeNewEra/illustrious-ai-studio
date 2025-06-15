@@ -51,11 +51,11 @@ from .core.sdxl import (  # noqa: F401
 # ==================================================================
 
 from .core.ollama import (  # noqa: F401
-    chat_completion,      # Direct chat completion API
+    chat_completion_sync as chat_completion,  # Direct chat completion API
     handle_chat,          # High-level chat handling with history
     generate_prompt,      # AI-assisted prompt generation
-    analyze_image,        # Multi-modal image analysis
-    init_ollama,          # Initialize Ollama connection and models
+    analyze_image_sync as analyze_image,  # Multi-modal image analysis
+    init_ollama_sync as init_ollama,      # Initialize Ollama connection and models
 )
 
 # ==================================================================

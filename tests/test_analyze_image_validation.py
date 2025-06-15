@@ -15,8 +15,8 @@ def load_analyze_image():
     sys.modules['core.sdxl'] = dummy
     if 'core.ollama' in sys.modules:
         del sys.modules['core.ollama']
-    module = __import__('core.ollama', fromlist=['analyze_image', 'MAX_IMAGE_PIXELS'])
-    return module.analyze_image, module.MAX_IMAGE_PIXELS
+    module = __import__('core.ollama', fromlist=['analyze_image_sync', 'MAX_IMAGE_PIXELS'])
+    return module.analyze_image_sync, module.MAX_IMAGE_PIXELS
 
 
 def test_analyze_image_rejects_large_image():

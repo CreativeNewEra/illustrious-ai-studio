@@ -43,14 +43,15 @@ import io
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple, Callable, Awaitable
 from collections import deque
 from typing import Deque
 from concurrent.futures import ThreadPoolExecutor
 import time
 
 from PIL import Image
-import requests
+import httpx
+import asyncio
 
 from .circuit import CircuitBreaker, CircuitBreakerOpen
 
@@ -68,7 +69,7 @@ executor = ThreadPoolExecutor(max_workers=1)
 breaker = CircuitBreaker()
 
 
-def call_with_retries(func: Callable[[], requests.Response], retries: int = 3, delay: float = 1.0) -> requests.Response:
+def call_with_retries(func: Callable[[], httpx.Response], retries: int = 3, delay: float = 1.0) -> httpx.Response:
     """Execute func via breaker.call with simple retry logic."""
     for attempt in range(retries):
         try:
@@ -80,6 +81,22 @@ def call_with_retries(func: Callable[[], requests.Response], retries: int = 3, d
                 raise
             logger.warning("Request failed. Retrying %d/%d", attempt + 1, retries)
             time.sleep(delay)
+
+
+async def call_with_retries_async(
+    func: Callable[[], Awaitable[httpx.Response]], retries: int = 3, delay: float = 1.0
+) -> httpx.Response:
+    """Async version of call_with_retries using breaker.call_async."""
+    for attempt in range(retries):
+        try:
+            return await breaker.call_async(func)
+        except CircuitBreakerOpen:
+            raise
+        except Exception:
+            if attempt >= retries - 1:
+                raise
+            logger.warning("Request failed. Retrying %d/%d", attempt + 1, retries)
+            await asyncio.sleep(delay)
 
 # ==================================================================
 # CONSTANTS AND CONFIGURATION
@@ -194,7 +211,7 @@ def save_chat_history_async(state: AppState) -> None:
 # OLLAMA MODEL INITIALIZATION AND MANAGEMENT
 # ==================================================================
 
-def init_ollama(state: AppState) -> Optional[str]:
+async def init_ollama(state: AppState) -> Optional[str]:
     """
     Initialize Ollama connection and verify model availability.
     
@@ -216,9 +233,10 @@ def init_ollama(state: AppState) -> Optional[str]:
     """
     start_time = time.perf_counter()
     try:
-        response = call_with_retries(
-            lambda: requests.get(f"{CONFIG.ollama_base_url}/api/tags", timeout=5)
-        )
+        async with httpx.AsyncClient() as client:
+            response = await call_with_retries_async(
+                lambda: client.get(f"{CONFIG.ollama_base_url}/api/tags", timeout=5)
+            )
         if response.status_code != 200:
             logger.error("Ollama server not responding")
             return None
@@ -238,13 +256,14 @@ def init_ollama(state: AppState) -> Optional[str]:
             "messages": [{"role": "user", "content": "Hi"}],
             "stream": False,
         }
-        test_response = breaker.call(
-            lambda: requests.post(
-                f"{CONFIG.ollama_base_url}/api/chat",
-                json=test_data,
-                timeout=30,
+        async with httpx.AsyncClient() as client:
+            test_response = await breaker.call_async(
+                lambda: client.post(
+                    f"{CONFIG.ollama_base_url}/api/chat",
+                    json=test_data,
+                    timeout=30,
+                )
             )
-        )
         if test_response.status_code == 200:
             state.model_status["ollama"] = True
             state.ollama_model = target_model
@@ -286,10 +305,20 @@ def switch_ollama_model(state: AppState, name: str) -> bool:
     save_chat_history_async(state)
     CONFIG.ollama_model = name
     logger.info("Switching Ollama model to %s", name)
-    return init_ollama(state) is not None
+    return init_ollama_sync(state) is not None
 
+def init_ollama_sync(state: AppState) -> Optional[str]:
+    """Synchronous wrapper for init_ollama."""
+    try:
+        if asyncio.get_running_loop():
+            # If an event loop is running, schedule the coroutine and wait for it
+            return asyncio.run_coroutine_threadsafe(init_ollama(state), asyncio.get_running_loop()).result()
+    except RuntimeError:
+        # No event loop is running, safe to use asyncio.run
+        return asyncio.run(init_ollama(state))
 
-def chat_completion(state: AppState, messages: List[dict], temperature: float = 0.7, max_tokens: int = 256) -> str:
+    return None
+async def chat_completion(state: AppState, messages: List[dict], temperature: float = 0.7, max_tokens: int = 256) -> str:
     if not state.ollama_model:
         return (
             "❌ Ollama model not loaded. Please check your Ollama setup. "
@@ -302,11 +331,12 @@ def chat_completion(state: AppState, messages: List[dict], temperature: float = 
             "stream": False,
             "options": {"temperature": temperature, "num_predict": max_tokens},
         }
-        response = breaker.call(
-            lambda: requests.post(
-                f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60
+        async with httpx.AsyncClient() as client:
+            response = await breaker.call_async(
+                lambda: client.post(
+                    f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60
+                )
             )
-        )
         if response.status_code == 200:
             result = response.json()
             return result.get("message", {}).get("content", "No response generated")
@@ -336,7 +366,7 @@ def generate_prompt(state: AppState, user_input: str) -> str:
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_input},
     ]
-    enhanced = chat_completion(state, messages, temperature=0.8)
+    enhanced = chat_completion_sync(state, messages, temperature=0.8)
     return enhanced if not enhanced.startswith("❌") else user_input
 
 
@@ -374,7 +404,7 @@ def generate_creative_prompt(state: AppState, user_input: str, style: str = "enh
         {"role": "user", "content": f"Create a prompt for: {user_input}"},
     ]
 
-    enhanced = chat_completion(state, messages, temperature=0.9, max_tokens=150)
+    enhanced = chat_completion_sync(state, messages, temperature=0.9, max_tokens=150)
     return enhanced if not enhanced.startswith("❌") else user_input
 
 
@@ -442,7 +472,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
                 {"role": "assistant", "content": msg[1]},
             ])
         messages.append({"role": "user", "content": message})
-        response = chat_completion(state, messages)
+        response = chat_completion_sync(state, messages)
         if "<think>" in response and "</think>" in response:
             parts = response.split("</think>")
             if len(parts) > 1:
@@ -455,7 +485,7 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
     return chat_history, ""
 
 
-def analyze_image(
+async def analyze_image(
     state: AppState, image: Image.Image | str | io.IOBase, question: str = "Describe this image in detail"
 ) -> str:
     if not image:
@@ -490,11 +520,12 @@ def analyze_image(
             "messages": [{"role": "user", "content": question, "images": [img_base64]}],
             "stream": False,
         }
-        response = breaker.call(
-            lambda: requests.post(
-                f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60
+        async with httpx.AsyncClient() as client:
+            response = await breaker.call_async(
+                lambda: client.post(
+                    f"{CONFIG.ollama_base_url}/api/chat", json=data, timeout=60
+                )
             )
-        )
         if response.status_code == 200:
             result = response.json()
             return result.get("message", {}).get("content", "No analysis generated")
@@ -511,3 +542,27 @@ def analyze_image(
             f"❌ Analysis failed: {e}. "
             "Ensure the Ollama server is running."
         )
+
+
+def init_ollama_sync(state: AppState) -> Optional[str]:
+    """Synchronous wrapper for init_ollama."""
+    return asyncio.run(init_ollama(state))
+
+
+def chat_completion_sync(
+    state: AppState,
+    messages: List[dict],
+    temperature: float = 0.7,
+    max_tokens: int = 256,
+) -> str:
+    """Synchronous wrapper for chat_completion."""
+    return asyncio.run(chat_completion(state, messages, temperature, max_tokens))
+
+
+def analyze_image_sync(
+    state: AppState,
+    image: Image.Image | str | io.IOBase,
+    question: str = "Describe this image in detail",
+) -> str:
+    """Synchronous wrapper for analyze_image."""
+    return asyncio.run(analyze_image(state, image, question))

@@ -45,7 +45,7 @@ def test_switch_ollama_model(monkeypatch):
     def dummy_init(st):
         st.ollama_model = CONFIG.ollama_model
         return CONFIG.ollama_model
-    monkeypatch.setattr(ollama, "init_ollama", dummy_init)
+    monkeypatch.setattr(ollama, "init_ollama_sync", dummy_init)
 
     res = ollama.switch_ollama_model(state, "new-model")
     assert res is True
