@@ -44,6 +44,7 @@ import sys
 import shutil
 import random
 from datetime import datetime
+from PIL import Image
 from typing import List, Tuple, Optional
 
 import gradio as gr
@@ -1333,6 +1334,13 @@ def create_gradio_app(state: AppState):
                                                 container=True,
                                                 sources=["upload", "clipboard"]
                                             )
+                                            drop_file = gr.File(
+                                                label="Drop Image Here",
+                                                file_types=["image"],
+                                                elem_classes=["drop-zone"],
+                                            )
+                                            drop_file.upload(load_image_from_file, drop_file, input_image)
+                                            drop_file.clear(lambda: None, None, input_image)
                                             analysis_question = gr.Textbox(
                                                 label="Artistic Inquiry",
                                                 value="Describe this artwork in detail",
@@ -2932,3 +2940,17 @@ def get_resolution_option(width, height):
         if w == width and h == height:
             return opt
     return "1024x1024 (Square - High Quality)"
+
+
+def load_image_from_file(file_obj):
+    """Load an image object from a gr.File value."""
+    if not file_obj:
+        return None
+    try:
+        if isinstance(file_obj, list):
+            file_obj = file_obj[0]
+        path = getattr(file_obj, "name", file_obj)
+        return Image.open(path)
+    except Exception as e:
+        logger.warning("Failed to load dropped image: %s", e)
+        return None

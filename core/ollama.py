@@ -440,9 +440,19 @@ def handle_chat(state: AppState, message: str, session_id: str = "default", chat
     return chat_history, ""
 
 
-def analyze_image(state: AppState, image: Image.Image, question: str = "Describe this image in detail") -> str:
+def analyze_image(
+    state: AppState, image: Image.Image | str | io.IOBase, question: str = "Describe this image in detail"
+) -> str:
     if not image:
         return "Please upload an image first."
+
+    if isinstance(image, (str, Path)) or hasattr(image, "name") and not isinstance(image, Image.Image):
+        try:
+            path = image if isinstance(image, (str, Path)) else image.name
+            image = Image.open(path)
+        except Exception as e:
+            logger.error("Invalid image input: %s", e)
+            return f"❌ Invalid image: {e}"
     if not state.model_status["multimodal"] or not hasattr(state, "ollama_vision_model"):
         return "❌ Ollama vision model not available. Please ensure a vision-capable model is configured."
 
