@@ -70,6 +70,9 @@ breaker = CircuitBreaker()
 # CONSTANTS AND CONFIGURATION
 # ==================================================================
 
+# Maximum number of pixels allowed for image analysis (16MP)
+MAX_IMAGE_PIXELS = 16_000_000
+
 # File for persistent chat history storage
 CHAT_HISTORY_FILE = Path(TEMP_DIR) / "chat_history.json"
 
@@ -459,7 +462,8 @@ def analyze_image(
     try:
         width, height = image.size
         if width * height > MAX_IMAGE_PIXELS:
-            return "❌ Image exceeds 16MP limit."
+            limit_mp = MAX_IMAGE_PIXELS // 1_000_000
+            return f"❌ Image exceeds {limit_mp}MP limit."
         if width > 1920 or height > 1920:
             image = image.copy()
             image.thumbnail((1920, 1920), Image.Resampling.LANCZOS)
