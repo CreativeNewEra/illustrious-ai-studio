@@ -26,7 +26,7 @@ from enum import Enum
 try:
     import torch
 except Exception:  # pragma: no cover - allow missing torch in tests
-    torch = None  # type: ignore
+    torch = None
 
 from .config import CONFIG
 from .memory import clear_gpu_memory
@@ -457,7 +457,7 @@ class MemoryGuardian:
         """Get comprehensive memory report"""
         current_stats = self.get_memory_stats()
         
-        report = {
+        report: Dict[str, Any] = {
             "guardian_status": "active" if self.is_monitoring else "inactive",
             "interventions_count": self.interventions_count,
             "oom_prevented_count": self.oom_prevented_count,

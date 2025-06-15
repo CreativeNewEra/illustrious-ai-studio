@@ -220,7 +220,7 @@ class MCPServerManager:
     
     def run(self) -> None:
         """Run the MCP server manager."""
-        def signal_handler(signum, frame):
+        def signal_handler(signum: int, frame: Any) -> None:
             logger.info("Received shutdown signal")
             self.stop_all()
             sys.exit(0)
@@ -248,7 +248,7 @@ class MCPServerManager:
         finally:
             self.stop_all()
 
-def main():
+def main() -> None:
     """Main entry point."""
     import argparse
     

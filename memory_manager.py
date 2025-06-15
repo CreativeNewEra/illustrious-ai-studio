@@ -14,7 +14,7 @@ from core.config import CONFIG
 try:
     import torch
 except Exception:  # pragma: no cover - allow missing torch in tests
-    torch = None  # type: ignore
+    torch = None
 
 def create_parser():
     """Create argument parser for memory manager CLI"""

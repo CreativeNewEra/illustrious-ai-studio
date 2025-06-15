@@ -9,12 +9,12 @@ from typing import List, Tuple
 try:
     import torch
 except Exception:  # pragma: no cover - allow missing torch
-    torch = None  # type: ignore
+    torch = None
 
 try:
     import psutil
 except Exception:  # pragma: no cover - allow missing psutil
-    psutil = None  # type: ignore
+    psutil = None
 
 logger = logging.getLogger(__name__)
 

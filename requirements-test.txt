@@ -4,4 +4,6 @@ Pillow>=9.0.0,<11.0.0
 PyYAML>=6.0,<7.0
 httpx>=0.27
 mypy>=1.7
+types-requests
+types-PyYAML
 

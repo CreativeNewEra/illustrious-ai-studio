@@ -48,7 +48,7 @@ import time
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Tuple, List, Dict, TypedDict, Protocol, Callable, Any
+from typing import Optional, Tuple, List, Dict, TypedDict, Protocol, Callable, Any, cast
 import asyncio
 
 from PIL import Image
@@ -58,6 +58,7 @@ from diffusers.pipelines.stable_diffusion_xl.pipeline_stable_diffusion_xl import
 from .memory import clear_gpu_memory
 from .memory_guardian import get_memory_guardian
 from .state import AppState
+from .config import SDXLConfig
 from .image_generator import ImageGenerator
 from .config import CONFIG
 
@@ -378,14 +379,14 @@ def switch_sdxl_model(state: AppState, path: str) -> bool:
     logger.info("Switching SDXL model to %s", path)
     return init_sdxl(state) is not None
 
-def get_available_models() -> List[Dict[str, str]]:
+def get_available_models() -> List[Dict[str, object]]:
     """Scan models directory for available SDXL checkpoints."""
     models_dir = Path("models")
     if not models_dir.exists():
         logger.warning("Models directory not found: %s", models_dir)
         return []
     
-    models = []
+    models: List[Dict[str, object]] = []
     for model_file in models_dir.glob("*.safetensors"):
         if model_file.is_file():
             # Get file size in MB
@@ -399,7 +400,7 @@ def get_available_models() -> List[Dict[str, str]]:
                 "is_current": str(model_file) == CONFIG.sd_model
             })
     
-    return sorted(models, key=lambda x: x["display_name"])
+    return sorted(models, key=lambda x: str(x["display_name"]))
 
 def get_model_display_name(filename: str) -> str:
     """Convert model filename to user-friendly display name."""
@@ -527,9 +528,9 @@ def batch_generate(
     for i, prm in enumerate(prompts):
         if progress:
             progress(i / total, f"Generating {i+1}/{total}")
-        params = dict(shared_settings)
-        params["prompt"] = prm
-        img, _ = generate_image(state, params)
+        generation_params = cast(GenerationParams, dict(shared_settings))
+        generation_params["prompt"] = prm
+        img, _ = generate_image(state, generation_params)
         results.append(img)
     return results
 

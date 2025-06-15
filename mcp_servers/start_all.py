@@ -23,7 +23,7 @@ def start_server(script_path: Path | str, port: int) -> subprocess.Popen:
         env=env
     )
 
-def main():
+def main() -> None:
     """Start all MCP servers."""
     base = Path(os.getenv('MCP_DIR', Path(__file__).parent))
     servers = {

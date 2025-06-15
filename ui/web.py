@@ -43,9 +43,10 @@ import subprocess
 import sys
 import shutil
 import random
+import zipfile
 from datetime import datetime
 from PIL import Image
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Any, cast
 
 import gradio as gr
 
@@ -69,6 +70,7 @@ from core.sdxl import (
     export_gallery,
 )
 from core.image_generator import ImageGenerator
+from core.sdxl import GenerationParams
 
 # Configuration and state management
 from core.config import CONFIG
@@ -787,7 +789,7 @@ def create_gradio_app(state: AppState):
 
                         progress(0.4, desc="🎨 Creating your image...")
 
-                        params = {
+                        params: GenerationParams = {
                             "prompt": base_prompt,
                             "negative_prompt": "blurry, bad quality, distorted, ugly",
                             "steps": int(steps or mode_settings.get("steps", 25)),
@@ -798,10 +800,10 @@ def create_gradio_app(state: AppState):
                             "save_to_gallery_flag": True,
                         }
 
-                        state.last_generation_params = params
+                        state.last_generation_params = cast(Dict[str, Any], params)
 
                         # Lazily create the ImageGenerator once per state
-                        if not hasattr(state, "image_generator"):
+                        if not hasattr(state, "image_generator") or state.image_generator is None:
                             state.image_generator = ImageGenerator(state)
 
                         image, status = state.image_generator.generate(params)
@@ -839,7 +841,7 @@ def create_gradio_app(state: AppState):
                             return None, "🎨 Create an image first!"
                         if not state.last_generation_params:
                             return None, "❌ No generation parameters found"
-                        variation_params = state.last_generation_params.copy()
+                        variation_params = cast(GenerationParams, state.last_generation_params.copy())
                         variation_modifiers = [
                             "slightly different version of",
                             "alternative take on",
@@ -903,7 +905,7 @@ def create_gradio_app(state: AppState):
                             progress((i + 1) / total, desc=f"Creating {style}...")
                             style_suffix = style_prompts.get(style, "artistic style")
                             full_prompt = f"{idea}, {style_suffix}, high quality, detailed"
-                            params = {
+                            params: GenerationParams = {
                                 "prompt": full_prompt,
                                 "negative_prompt": "low quality, blurry, distorted",
                                 "steps": 20,
@@ -1866,10 +1868,14 @@ def create_gradio_app(state: AppState):
                 
                 if auto_flag:
                     analysis = analyze_prompt(p)
-                    st = analysis.get("steps", st) if analysis else st
-                    g = analysis.get("guidance", g) if analysis else g
-                    width = analysis.get("width", 1024) if analysis else 1024
-                    height = analysis.get("height", 1024) if analysis else 1024
+                    if analysis:
+                        st = int(analysis.get("steps", st))
+                        g = float(analysis.get("guidance", g))
+                        width = int(analysis.get("width", 1024))
+                        height = int(analysis.get("height", 1024))
+                    else:
+                        width = 1024
+                        height = 1024
                 else:
                     width, height = parse_resolution(res)
                 
@@ -1921,7 +1927,7 @@ def create_gradio_app(state: AppState):
                 logger.info(f"UI: Validated parameters - prompt='{p[:50]}...', steps={st}, guidance={g}, seed={se}, dimensions={width}x{height}")
                 
                 # Generate the image with resolution
-                params = {
+                params: GenerationParams = {
                     "prompt": p,
                     "negative_prompt": n,
                     "steps": st,
@@ -2019,7 +2025,7 @@ def create_gradio_app(state: AppState):
                 )
 
             # Create proper GenerationParams
-            gen_params = {
+            gen_params: GenerationParams = {
                 "prompt": p,
                 "negative_prompt": n,
                 "steps": int(st),
@@ -2226,7 +2232,7 @@ def create_gradio_app(state: AppState):
 
 
         def apply_generation_preset(name: str):
-            preset = GENERATION_PRESETS.get(name, GENERATION_PRESETS.get("balanced"))
+            preset: dict[str, float] = GENERATION_PRESETS.get(name, GENERATION_PRESETS.get("balanced", {}))
             steps_val = preset.get("steps", 30)
             guidance_val = preset.get("guidance", 7.5)
             res_option = get_resolution_option(preset.get("width", 1024), preset.get("height", 1024))

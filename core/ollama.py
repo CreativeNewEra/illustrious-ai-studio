@@ -45,6 +45,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from collections import deque
+from typing import Deque
 from concurrent.futures import ThreadPoolExecutor
 import time
 
@@ -105,7 +106,7 @@ def load_chat_history(state: AppState) -> None:
             # Convert loaded data to proper format
             with state.atomic_operation():
                 for session_id, history in data.items():
-                    dq = deque(maxlen=100)
+                    dq: Deque[tuple[str, str]] = deque(maxlen=100)
                     dq.extend(tuple(msg) for msg in history)
                     state.chat_history_store[session_id] = dq
 
@@ -201,11 +202,8 @@ def init_ollama(state: AppState) -> Optional[str]:
     """
     start_time = time.perf_counter()
     try:
-        response = call_with_circuit_breaker(
-            breaker,
-            requests.get,
-            f"{CONFIG.ollama_base_url}/api/tags",
-            timeout=5
+        response = breaker.call(
+            lambda: requests.get(f"{CONFIG.ollama_base_url}/api/tags", timeout=5)
         )
         if response.status_code != 200:
             logger.error("Ollama server not responding")

@@ -13,12 +13,13 @@ import importlib
 import torch
 import requests
 from colorama import init, Fore, Style
+from typing import Any, Dict, cast
 
 init(autoreset=True)
 
 class SetupVerifier:
     def __init__(self):
-        self.results = {
+        self.results: dict[str, dict[str, object]] = {
             "system": {},
             "dependencies": {},
             "models": {},
@@ -271,7 +272,9 @@ class SetupVerifier:
             if not self.results.get("system", {}).get("cuda"):
                 self.print_info("Install CUDA PyTorch: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121")
             
-            if not self.results["models"].get("ollama_models", {}).get("vision"):
+            models = cast(Dict[str, Any], self.results.get("models", {}))
+            vision_available = bool(models.get("ollama_models", {}).get("vision"))
+            if not vision_available:
                 self.print_info("Install vision model: ollama pull qwen2.5-vision:7b")
             
             missing_deps = [name for pkg, name in {
