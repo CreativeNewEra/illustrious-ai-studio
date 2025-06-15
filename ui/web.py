@@ -648,6 +648,7 @@ def create_gradio_app(state: AppState):
                     value=state.simple_mode,
                     label="Simple Mode",
                     interactive=True,
+                    elem_id="simple-mode-toggle",
                 )
                 with gr.Row():
                     project_selector = gr.Dropdown(
