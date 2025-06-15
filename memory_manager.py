@@ -11,8 +11,12 @@ import time
 from core.memory_guardian import get_memory_guardian, MemoryPressureLevel
 from core.state import AppState
 from core.config import CONFIG
+from typing import Any
+
+torch: Any
 try:
-    import torch
+    import torch as _torch
+    torch = _torch
 except Exception:  # pragma: no cover - allow missing torch in tests
     torch = None
 

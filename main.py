@@ -415,9 +415,9 @@ class IllustriousAIStudio:
                 self.logger.info("🔄 Loading SDXL model (this may take a few minutes)...")
                 start_time = time.time()
                 try:
-                    result = init_sdxl(self.app_state)
+                    sdxl_result = init_sdxl(self.app_state)
                     elapsed = time.time() - start_time
-                    if result:
+                    if sdxl_result:
                         self.logger.info(f"✅ SDXL model loaded successfully in {elapsed:.1f}s")
                     else:
                         self.logger.warning("⚠️ SDXL model failed to load - continuing without it")
@@ -436,9 +436,9 @@ class IllustriousAIStudio:
                 self.logger.info("🔄 Initializing Ollama models...")
                 start_time = time.time()
                 try:
-                    result = init_ollama(self.app_state)
+                    ollama_result = init_ollama(self.app_state)
                     elapsed = time.time() - start_time
-                    if result:
+                    if ollama_result:
                         self.logger.info(f"✅ Ollama initialized successfully in {elapsed:.1f}s")
                     else:
                         self.logger.warning("⚠️ Ollama initialization failed - continuing without it")

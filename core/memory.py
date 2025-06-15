@@ -23,10 +23,13 @@ and provides consistent interfaces regardless of hardware availability.
 
 import gc
 import logging
+from typing import Any
 
 # Optional PyTorch import with graceful fallback for testing
+torch: Any
 try:
-    import torch
+    import torch as _torch
+    torch = _torch
 except Exception:  # pragma: no cover - allow missing torch in tests
     torch = None
 
